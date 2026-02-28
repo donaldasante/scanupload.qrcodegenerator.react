@@ -1,0 +1,51 @@
+# ASP.NET Core (.NET Framework)
+# Build and test ASP.NET Core projects targeting the full .NET Framework.
+# Add steps that publish symbols, save build artifacts, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+
+trigger:
+  tags:
+    include:
+      - release.*
+
+pool:
+  vmImage: "ubuntu-latest"
+
+variables:
+  - group: scanupload-qrcodegenerator-react-variables
+
+steps:
+  - checkout: self
+    fetchDepth: 0
+
+  - script: |
+      git config --global user.email "azdo_ci@scanupload.net"
+      git config --global user.name "Azure DevOps CI"
+      git config --global http.postBuffer 524288000
+
+      git remote add github https://$(GITHUB_PAT)@github.com/donaldasante/scanupload.qrcodegenerator.react || true
+
+      git push github HEAD:refs/heads/main
+      git push github --tags --force
+    displayName: Mirror repo to ScanUpload.QrCodeGenerator.React GitHub
+
+  - task: NodeTool@0
+    inputs:
+      versionSpec: "20.x"
+    displayName: "Install Node.js"
+
+  - script: npm ci
+    displayName: "Install npm dependencies"
+
+  - script: |
+      VERSION=$(node -p "require('./package.json').version")
+      echo "Publishing version: $VERSION"
+    displayName: "Log package version"
+
+  - script: npm run build
+    displayName: "Build library"
+
+  - script: |
+      echo "//registry.npmjs.org/:_authToken=$(NPM_TOKEN)" > .npmrc
+      npm publish --access public
+    displayName: "Publish to npmjs"
