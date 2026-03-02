@@ -143,9 +143,17 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
 
     let disposed = false;
     let connection: HubConnection | null | undefined = null;
+    // AbortController lets us cancel an in-flight session request when this
+    // effect cleans up. This is critical for React StrictMode, which mounts →
+    // unmounts → remounts every effect in development. Without aborting, both
+    // the first (discarded) and second (real) mount fire a session POST, and the
+    // second mount silently reuses the first session while a second orphaned
+    // session is created server-side — causing the QR code to point to a
+    // session whose hub the component is not actually listening on.
+    const abortController = new AbortController();
 
     const start = async () => {
-      const hubUrl = await getHubUrlAsync();
+      const hubUrl = await getHubUrlAsync(abortController.signal);
 
       if (disposed) return;
 
@@ -177,6 +185,14 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
 
     return () => {
       disposed = true;
+
+      // Cancel any in-flight session fetch so the remount starts completely
+      // fresh. Without this, the second mount would see sessionRef.current
+      // already populated (by the first mount's still-resolving request) and
+      // silently skip creating a new session, leaving a mismatch between the
+      // QR code URL and the hub the component is actually connected to.
+      abortController.abort();
+      sessionRef.current = null;
 
       if (connection) {
         connection.stop().catch(console.error);
@@ -243,7 +259,7 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
     }
   }
 
-  const getSessionInformationAsync = async () => {
+  const getSessionInformationAsync = async (signal?: AbortSignal) => {
     if (sessionRef.current) return;
     setLoading(true);
     try {
@@ -252,21 +268,22 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
         { lastSessionIds: lastSessionIdsRef.current },
         {
           timeout: 300000,
+          signal,
         },
       );
+      // Don't update state if the effect that triggered this call was cleaned up
+      if (signal?.aborted) return;
       sessionRef.current = response;
       const deviceLoginHubUrl = buildDeviceLoginUrl(response);
-      //console.log("Generated Device login URL:", deviceLoginHubUrl);
       setDeviceLoginUrl(deviceLoginHubUrl);
       setLastSessionIds([response.sessionId]);
     } catch (error) {
+      // Ignore errors caused by intentional abort (StrictMode cleanup / unmount)
+      if (signal?.aborted) return;
       if (!retry) {
-        //console.log("Enabling retry button...");
         setRetry(true);
         setLoading(false);
       }
-    } finally {
-      //setLoading(false);
     }
   };
 
@@ -392,13 +409,13 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
     return connection;
   };
 
-  const getHubUrlAsync = async (): Promise<string> => {
-    await getSessionInformationAsync();
+  const getHubUrlAsync = async (signal?: AbortSignal): Promise<string> => {
+    await getSessionInformationAsync(signal);
     return sessionRef.current!.hubUrl!;
   };
 
   const getDataAsync = async (): Promise<HubConnection | null | undefined> => {
-    const hub = await getHubUrlAsync();
+    const hub = await getHubUrlAsync(undefined);
     const connection = await createHubConnectionAsync(hub);
     return connection;
   };
