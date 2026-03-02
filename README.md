@@ -7,9 +7,16 @@ SignalR connection and renders a live preview of every uploaded file.
 
 ---
 
+## Backend-end integrations
+
+This official react client library is designed to work seamlessly with the
+ScanUpload backend proxy:
+
+- [ScanUpload.Api.Client](https://github.com/donaldasante/scanupload.api.client)
+  – ScanUpload Backend proxy (dotnet)
+
 ## Table of Contents
 
-- [How It Works](#how-it-works)
 - [Installation](#installation)
 - [Backend API Requirements](#backend-api-requirements)
 - [Usage](#usage)
@@ -18,86 +25,6 @@ SignalR connection and renders a live preview of every uploaded file.
 - [SignalR Events](#signalr-events)
 - [File Preview Modes](#file-preview-modes)
 - [Session Lifecycle](#session-lifecycle)
-
----
-
-## How It Works
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant D as 🖥️ Client Front End
-    participant P as 🔁 Client Backend<br/>Proxy (.NET)
-    participant Auth as 🔐 ScanUpload<br/>Auth Server
-    participant H as ScanUpload Hub
-    participant M as 📱 Mobile Device
-
-    Note over D,P: All HTTP requests are routed through the client backend proxy
-    Note over D,H: SignalR WebSocket connects directly to ScanUpload Hub — no proxy
-
-    D->>P: POST /session { lastSessionIds }
-    P->>Auth: Client credentials grant
-    Auth-->>P: access_token
-    P->>H: POST /session (Bearer token)
-    H-->>P: { sessionId, accessToken, hubUrl, deviceLoginUrl }
-    P-->>D: { sessionId, accessToken, hubUrl, deviceLoginUrl }
-    D->>D: Encode deviceLoginUrl as QR code
-
-    D->>P: POST /token (refreshTokenUrl)
-    P->>Auth: Client credentials grant
-    Auth-->>P: access_token
-    P-->>D: { access_token, expires_in }
-
-    D->>+H: Direct WebSocket to hubUrl (Bearer token)
-    H-->>-D: Connected ✓
-
-    M->>M: Scan QR code → open deviceLoginUrl
-    M->>H: POST sessionId to authenticate
-    H-->>M: Bearer token (for uploads & hub events)
-    note over M,H: Mobile uses this Bearer token for all subsequent requests
-    M->>H: Upload files (Authorization: Bearer <token>)
-    M->>H: Connect to hub & send SignalR events (Bearer <token>)
-
-    H-)D: FileAdded / FileProgress / FileRemoved
-    D->>D: Update file list in real time
-```
-
-### Step-by-step flow
-
-1. **Session creation** – On mount, the component `POST`s to `sessionUrl` (your
-   client backend proxy —
-   [ScanUpload.Api.Client](https://www.nuget.org/packages/ScanUpload.Api.Client/))
-   with any previously-known `sessionIds` stored in `localStorage`. The proxy
-   authenticates with the **ScanUpload Auth Server** using OAuth 2.0 client
-   credentials and forwards the request to the **ScanUpload Hub**, which returns
-   a `sessionId`, a short-lived `accessToken`, a `hubUrl`, and a
-   `deviceLoginUrl`.
-2. **QR code display** – `deviceLoginUrl` is encoded into a QR code rendered on
-   screen.
-3. **Token refresh** – Before opening (and periodically during) the SignalR
-   connection, the component `POST`s to `refreshTokenUrl` (also routed through
-   the proxy). The proxy exchanges client credentials with the ScanUpload Auth
-   Server and returns a fresh Bearer token. Tokens are proactively refreshed
-   with a 60-second buffer before expiry.
-4. **SignalR connection (direct)** – The component opens a WebSocket connection
-   **directly** to `hubUrl`, bypassing the proxy entirely, and authenticates
-   using the Bearer token from step 3. The connection uses WebSockets
-   preferentially with exponential back-off reconnection (1 s → 2 s → 4 s → 8 s
-   → 16 s, capped at 16 s).
-5. **Mobile authentication & upload** – When the mobile user scans the QR code
-   and opens `deviceLoginUrl`, they `POST` the `sessionId` to the ScanUpload Hub
-   to authenticate. The Hub responds with a Bearer token scoped to that session.
-   The mobile device then uses this token for all subsequent requests: uploading
-   files and sending SignalR events back to the Hub (e.g. progress updates).
-6. **File events** – As the mobile user uploads files, the ScanUpload Hub pushes
-   events to the Client Front End component which updates the file list in real
-   time.
-7. **Reload / Reset** – The QR code can be refreshed either by clicking a
-   _Reload_ button or by clicking the QR code itself (see
-   `clickQrCodeToReload`). Reloading tears down the old session and requests a
-   new one via the proxy.
-
----
 
 ## Installation
 
