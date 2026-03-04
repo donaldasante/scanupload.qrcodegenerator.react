@@ -1,6 +1,10 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
+if (import.meta.env.PROD) {
+  console.log = () => {};
+}
+
 import "./index.css";
 import { QrCodeGenerator } from "./QrCodeGenerator";
 

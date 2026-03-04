@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import QRCode from "react-qr-code";
 import Logo from "./components/Logo";
-import { deleteData, postData } from "./services/apiClient";
+import { postData } from "./services/apiClient";
 import { debounceAsync, isExpired, isNullOrEmpty } from "./utility/utilities";
 import { FaRedo } from "react-icons/fa";
 import { usePersistentState } from "./react/hooks/usePersistentState";
@@ -275,6 +275,7 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
       if (signal?.aborted) return;
       sessionRef.current = response;
       const deviceLoginHubUrl = buildDeviceLoginUrl(response);
+      console.log("Device Login URL:", deviceLoginHubUrl);
       setDeviceLoginUrl(deviceLoginHubUrl);
       setLastSessionIds([response.sessionId]);
     } catch (error) {
@@ -445,7 +446,12 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
     <section className={cn("p-2", classNames.root)} style={style}>
       {/* Loading overlay scoped to this component */}
       {loading && (
-        <div className={cn("absolute inset-0 bg-white/90 flex items-center justify-center rounded-md z-10", classNames.loadingOverlay)}>
+        <div
+          className={cn(
+            "absolute inset-0 bg-white/90 flex items-center justify-center rounded-md z-10",
+            classNames.loadingOverlay,
+          )}
+        >
           <div className="flex flex-col items-center text-center mt-0 gap-2">
             <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-blue-800 border-dashed"></div>
             <div className="text-center h-10 w-10">
@@ -455,7 +461,12 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
         </div>
       )}
       {!loading && retry && (
-        <div className={cn("absolute inset-0 bg-white/90 flex items-center justify-center rounded-md z-10", classNames.errorOverlay)}>
+        <div
+          className={cn(
+            "absolute inset-0 bg-white/90 flex items-center justify-center rounded-md z-10",
+            classNames.errorOverlay,
+          )}
+        >
           <div className="flex flex-col items-center text-center mt-5 gap-2">
             <div className="text-center text-xs">
               <p className="text-gray-900">Cannot create session</p>
@@ -464,7 +475,10 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
               onClick={async () => {
                 await retrySessionAsync();
               }}
-              className={cn("bg-blue-300 text-white py-1 px-2 rounded-md hover:bg-blue-500 transition-colors", classNames.errorButton)}
+              className={cn(
+                "bg-blue-300 text-white py-1 px-2 rounded-md hover:bg-blue-500 transition-colors",
+                classNames.errorButton,
+              )}
             >
               <FaRedo className="h-4 w-4" />
             </button>
@@ -475,7 +489,14 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
         {showHeader && (
           <>
             <header className="mb-2">
-              <h1 className={cn("text-xl font-semibold text-gray-600", classNames.header)}>{header}</h1>
+              <h1
+                className={cn(
+                  "text-xl font-semibold text-gray-600",
+                  classNames.header,
+                )}
+              >
+                {header}
+              </h1>
             </header>
           </>
         )}
@@ -498,15 +519,15 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
               className="w-full h-full"
             />
             {showLogo && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div
-                    className={`bg-white ${logoSize} rounded flex items-center justify-center`}
-                  >
-                    <span className="text-xs font-bold">
-                      <Logo size={size} isConnected={isConnected} />
-                    </span>
-                  </div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div
+                  className={`bg-white ${logoSize} rounded flex items-center justify-center`}
+                >
+                  <span className="text-xs font-bold">
+                    <Logo size={size} isConnected={isConnected} />
+                  </span>
                 </div>
+              </div>
             )}
           </div>
           <p className="sr-only">
@@ -519,7 +540,10 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
               onClick={async () => {
                 await retrySessionAsync();
               }}
-              className={cn("bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-blue-800 transition-colors flex flex-row items-center", classNames.reloadButton)}
+              className={cn(
+                "bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-blue-800 transition-colors flex flex-row items-center",
+                classNames.reloadButton,
+              )}
             >
               <FaRedo className="h-4 w-4" />{" "}
               <span className="ml-3">Reload</span>
@@ -527,10 +551,17 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
           </div>
         ) : (
           <div className="flex flex-row mt-3">
-            <p className={cn("text-gray-500", classNames.hintText)}>Click QR code to reload</p>
+            <p className={cn("text-gray-500", classNames.hintText)}>
+              Click QR code to reload
+            </p>
           </div>
         )}
-        <div className={cn("flex flex-row justify-center gap-1 flex-wrap", classNames.fileContainer)}>
+        <div
+          className={cn(
+            "flex flex-row justify-center gap-1 flex-wrap",
+            classNames.fileContainer,
+          )}
+        >
           {filePreviewMode === "grid" ? (
             uploadFiles.map((file, index) => (
               <DocumentPreviewer
