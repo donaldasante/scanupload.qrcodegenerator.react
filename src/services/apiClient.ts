@@ -2,7 +2,7 @@ export class ApiError extends Error {
   constructor(
     public status: number,
     public statusText: string,
-    public response?: any
+    public response?: any,
   ) {
     super(`HTTP ${status}: ${statusText}`);
     this.name = "ApiError";
@@ -16,7 +16,7 @@ export async function postData<T = any>(
     headers?: Record<string, string>;
     signal?: AbortSignal;
     timeout?: number;
-  }
+  },
 ): Promise<T> {
   const controller = new AbortController();
   const signal = controller.signal;
@@ -62,12 +62,15 @@ export async function postData<T = any>(
     if (error instanceof ApiError) {
       console.error("API Error:", error.status, error.message);
       throw error;
-    } else if (error instanceof ApiError && error.name === "AbortError") {
+    } else if (error instanceof Error && error.name === "AbortError") {
       console.error("Request was aborted");
       throw new Error("Request timeout");
     } else {
-      console.error("Network error:", error);
-      throw new Error("Network error occurred");
+      if (error instanceof Error) {
+        console.error("Network error:", error.message);
+        throw new Error("Network error occurred");
+      }
+      throw new Error("Unknown error occurred");
     }
   }
 }
@@ -78,7 +81,7 @@ export async function deleteData(
     headers?: Record<string, string>;
     signal?: AbortSignal;
     timeout?: number;
-  }
+  },
 ): Promise<void> {
   const controller = new AbortController();
   const signal = controller.signal;

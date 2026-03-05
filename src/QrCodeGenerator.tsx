@@ -191,7 +191,7 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
       // already populated (by the first mount's still-resolving request) and
       // silently skip creating a new session, leaving a mismatch between the
       // QR code URL and the hub the component is actually connected to.
-      abortController.abort();
+      abortController.abort("Component unmounted");
       sessionRef.current = null;
 
       if (connection) {
@@ -412,7 +412,7 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
 
   const getHubUrlAsync = async (signal?: AbortSignal): Promise<string> => {
     await getSessionInformationAsync(signal);
-    return sessionRef.current!.hubUrl!;
+    return sessionRef.current?.hubUrl ?? "";
   };
 
   const getDataAsync = async (): Promise<HubConnection | null | undefined> => {

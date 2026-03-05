@@ -20,7 +20,7 @@ createRoot(document.getElementById("root")!).render(
           size="large"
           showLogo={true}
           clickQrCodeToReload={true}
-          filePreviewMode="list"
+          filePreviewMode="grid"
           classNames={{
             qrWrapper: "rounded-none border-solid border-blue-500",
             reloadButton: "bg-red-500 hover:bg-red-700",
