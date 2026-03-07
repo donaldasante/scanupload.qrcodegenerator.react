@@ -310,12 +310,11 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
       return;
     }
 
-    let connection;
+    let connection: HubConnection | null | undefined;
     try {
       connection = new HubConnectionBuilder()
         .withUrl(hubUrl, {
           withCredentials: false,
-          transport: 1, //prefer wss
           accessTokenFactory: () => getAccessToken(),
         })
         .configureLogging(LogLevel.Information)
@@ -331,13 +330,14 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
         .build();
 
       connection.on("FileAdded", (message: UploadedFile) => {
-        //console.log(message);
+        console.log(message);
         setUploadedFiles((prev) =>
           prev.some((f) => f.name === message.name) ? prev : [...prev, message],
         );
       });
 
       connection.on("FileRemoved", (message: UploadedFile) => {
+        console.log(message);
         setUploadedFiles((prev) => {
           if (!prev.some((f) => f.name === message.name)) return prev;
           return prev.filter((f) => f.name !== message.name);
@@ -374,7 +374,7 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
       connection.onreconnecting((error) => {
         console.log("Connection lost, attempting to reconnect...", error);
 
-        if (retryCountRef.current >= 2) {
+        if (retryCountRef.current >= 4) {
           setIsConnected(false);
         } else {
           retryCountRef.current += 1;
@@ -382,8 +382,35 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
         console.log("Retry count:", retryCountRef.current);
       });
 
-      connection.onreconnected((connectionId) => {
+      connection.onreconnected(async (connectionId) => {
         console.log("Connection re-established:", connectionId);
+
+        try {
+          // Replace local file state with the server's current list.
+          // This covers any FileAdded / FileRemoved events missed during
+          // the disconnection window.
+          const files =
+            (await connection?.invoke<UploadedFile[]>("GetSessionFiles")) ?? [];
+          setUploadedFiles((prev) => {
+            const prevMap = new Map(prev.map((f) => [f.id, f]));
+            return files.map((serverFile) => {
+              const existing = prevMap.get(serverFile.id);
+              // Preserve the locally-cached thumbnail if we already have one,
+              // since the backend cannot supply it yet.
+              return existing
+                ? {
+                    ...serverFile,
+                    thumbnailBase64:
+                      existing.thumbnailBase64 ?? serverFile.thumbnailBase64,
+                  }
+                : serverFile;
+            });
+          });
+        } catch (err) {
+          console.error("Failed to resync files after reconnect:", err);
+          // Non-fatal: keep whatever we have locally rather than clearing.
+        }
+
         setIsConnected(true);
         setLoading(false);
         setRetry(false);
@@ -397,7 +424,7 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
         setIsConnected(false);
         setUploadedFiles([]);
       });
-      connection.serverTimeoutInMilliseconds = 30000;
+      connection.serverTimeoutInMilliseconds = 60000;
       connection.keepAliveIntervalInMilliseconds = 15000;
     } catch (error) {
       console.error("SignalR Connection failed:", error);
