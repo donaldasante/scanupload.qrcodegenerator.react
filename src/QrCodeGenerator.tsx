@@ -332,15 +332,15 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
       connection.on("FileAdded", (message: UploadedFile) => {
         console.log(message);
         setUploadedFiles((prev) =>
-          prev.some((f) => f.name === message.name) ? prev : [...prev, message],
+          prev.some((f) => f.id === message.id) ? prev : [...prev, message],
         );
       });
 
       connection.on("FileRemoved", (message: UploadedFile) => {
         console.log(message);
         setUploadedFiles((prev) => {
-          if (!prev.some((f) => f.name === message.name)) return prev;
-          return prev.filter((f) => f.name !== message.name);
+          if (!prev.some((f) => f.id === message.id)) return prev;
+          return prev.filter((f) => f.id !== message.id);
         });
       });
 
