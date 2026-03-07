@@ -1,6 +1,6 @@
 {
   "name": "@scanupload/qr-code-generator",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "A reusable qr-code-generator library using Tailwind CSS v4, React, and Vite for the ScanUpload SAAS application.",
   "main": "dist/qr-code-generator.cjs.js",
   "module": "dist/qr-code-generator.es.js",
