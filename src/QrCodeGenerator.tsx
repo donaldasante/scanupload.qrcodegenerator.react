@@ -390,7 +390,10 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
           // This covers any FileAdded / FileRemoved events missed during
           // the disconnection window.
           const files =
-            (await connection?.invoke<UploadedFile[]>("GetSessionFiles")) ?? [];
+            (await connection?.invoke<UploadedFile[]>(
+              "GetSessionFiles",
+              sessionRef.current?.sessionId,
+            )) ?? [];
           setUploadedFiles((prev) => {
             const prevMap = new Map(prev.map((f) => [f.id, f]));
             return files.map((serverFile) => {
@@ -470,7 +473,10 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
   }
 
   return (
-    <section className={cn("p-2", classNames.root)} style={style}>
+    <section
+      className={cn("relative overflow-hidden p-2", classNames.root)}
+      style={style}
+    >
       {/* Loading overlay scoped to this component */}
       {loading && (
         <div
