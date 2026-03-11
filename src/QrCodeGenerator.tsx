@@ -354,7 +354,7 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
       });
 
       connection.on(
-        "FileSendImageResized",
+        "fileSendImageResized",
         (fileId: string, thumbnailBase64: string) => {
           //console.log(fileId, "thumbnail received");
           setUploadedFiles((prev) =>
