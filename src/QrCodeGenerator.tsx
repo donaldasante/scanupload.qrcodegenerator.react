@@ -330,14 +330,14 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
         .build();
 
       connection.on("FileAdded", (message: UploadedFile) => {
-        console.log(message);
+        //console.log(message);
         setUploadedFiles((prev) =>
           prev.some((f) => f.id === message.id) ? prev : [...prev, message],
         );
       });
 
       connection.on("FileRemoved", (message: UploadedFile) => {
-        console.log(message);
+        //console.log(message);
         setUploadedFiles((prev) => {
           if (!prev.some((f) => f.id === message.id)) return prev;
           return prev.filter((f) => f.id !== message.id);
@@ -353,10 +353,17 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
         );
       });
 
-      connection.on("FilesCleared", () => {
-        //console.log("Files cleared");
-        setUploadedFiles([]);
-      });
+      connection.on(
+        "FileSendImageResized",
+        (fileId: string, thumbnailBase64: string) => {
+          //console.log(fileId, "thumbnail received");
+          setUploadedFiles((prev) =>
+            prev.map((file) =>
+              file.id === fileId ? { ...file, thumbnailBase64 } : file,
+            ),
+          );
+        },
+      );
 
       connection.on("sessionDisconnected", (sessionId: string) => {
         //console.log("Session disconnected:", sessionId);
