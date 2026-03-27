@@ -166,7 +166,6 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
       )}
       <div className="flex flex-col items-center text-center">
         {showHeader && (
-          <>
             <header className="mb-2">
               <h1
                 className={cn(
@@ -177,7 +176,6 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
                 {header}
               </h1>
             </header>
-          </>
         )}
         <div
           aria-label="QR Code for file upload"

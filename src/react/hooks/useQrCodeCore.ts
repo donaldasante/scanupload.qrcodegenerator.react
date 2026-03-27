@@ -5,9 +5,7 @@ export function useQrCodeCore(sessionUrl: string, refreshTokenUrl: string) {
     const coreRef = useRef<QrCodeGeneratorCore | null>(null);
 
     // Instantiate once — stable across re-renders.
-    if (coreRef.current === null) {
-        coreRef.current = new QrCodeGeneratorCore(sessionUrl, refreshTokenUrl);
-    }
+    coreRef.current ??= new QrCodeGeneratorCore(sessionUrl, refreshTokenUrl);
 
     const core = coreRef.current;
 

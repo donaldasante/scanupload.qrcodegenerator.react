@@ -16,7 +16,7 @@ const INITIAL_STATE: QrCodeGeneratorState = {
 
 export class QrCodeGeneratorCore {
     private _state: QrCodeGeneratorState = { ...INITIAL_STATE };
-    private _listeners = new Set<() => void>();
+    private readonly _listeners = new Set<() => void>();
     private _session: SessionResponse | null = null;
     private _connection: HubConnection | null = null;
     private _abortController: AbortController | null = null;
@@ -25,7 +25,7 @@ export class QrCodeGeneratorCore {
     private _lastSessionIds: string[] = [];
 
     // Debounced version of _getData — stable across calls, bound to this instance.
-    private _debouncedGetData = debounceAsync(() => this._getData(), 1000);
+    private readonly _debouncedGetData = debounceAsync(() => this._getData(), 1000);
 
     constructor(
         private readonly sessionUrl: string,
@@ -142,7 +142,7 @@ export class QrCodeGeneratorCore {
     }
 
     private async _getData(): Promise<HubConnection | null | undefined> {
-        const hub = await this._getHubUrlAsync(undefined);
+        const hub = await this._getHubUrlAsync();
         return this._createHubConnectionAsync(hub);
     }
 
