@@ -1,0 +1,26 @@
+{
+    "name": "@scanupload/react-demo",
+    "private": true,
+    "version": "0.0.0",
+    "description": "Dev demo app for the ScanUpload QR Code Generator React package.",
+    "scripts": {
+        "dev": "vite",
+        "build": "tsc && vite build",
+        "preview": "vite preview"
+    },
+    "dependencies": {
+        "@scanupload/qr-code-generator-react": "^0.1.7",
+        "react": ">=19",
+        "react-dom": ">=19"
+    },
+    "devDependencies": {
+        "@tailwindcss/vite": "^4.1.14",
+        "@types/react": "^19.1.8",
+        "@types/react-dom": "^19.1.6",
+        "@vitejs/plugin-react": "^4.6.0",
+        "tailwindcss": "^4.1.14",
+        "typescript": "^5.9.3",
+        "vite": "^7.1.11",
+        "vite-plugin-mkcert": "^1.17.8"
+    }
+}

@@ -1,0 +1,30 @@
+{
+    "name": "@scanupload/qr-code-generator-vanilla",
+    "version": "0.1.7",
+    "description": "Vanilla JS/TS adapter for the ScanUpload QR Code Generator core — headless controller for framework-free usage.",
+    "main": "dist/index.cjs.js",
+    "module": "dist/index.es.js",
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "tsc && vite build"
+    },
+    "dependencies": {
+        "@scanupload/qr-code-generator-core": "^0.1.7"
+    },
+    "devDependencies": {
+        "typescript": "^5.9.3",
+        "vite": "^7.1.11",
+        "vite-plugin-dts": "^4.5.4"
+    },
+    "keywords": [
+        "scanupload",
+        "qr-code",
+        "vanilla",
+        "headless"
+    ],
+    "author": "Donald Asante",
+    "license": "MIT"
+}

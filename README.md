@@ -1,120 +1,153 @@
 # @scanupload/qr-code-generator
 
-A React component that displays a QR code allowing a mobile device to securely
-upload files to a ScanUpload session. Once a mobile user scans the QR code and
-uploads files, the desktop component receives real-time status updates via a
-SignalR connection and renders a live preview of every uploaded file.
+A multi-framework QR code generator that allows a mobile device to securely
+upload files to a ScanUpload session. The desktop component receives real-time
+status updates via a SignalR connection and renders a live preview of every
+uploaded file.
+
+The project is structured as a monorepo with a **framework-agnostic core** and
+dedicated adapter packages for each UI framework.
 
 ---
 
-## Backend-end integrations
+## Packages
 
-This official react client library is designed to work seamlessly with the
-ScanUpload backend proxy:
+| Package                                                     | Description                                                           |
+| ----------------------------------------------------------- | --------------------------------------------------------------------- |
+| [`@scanupload/qr-code-generator-core`](packages/core)       | Framework-agnostic runtime — SignalR session management, state, types |
+| [`@scanupload/qr-code-generator-react`](packages/react)     | React wrapper — QR code component with file upload previews           |
+| [`@scanupload/qr-code-generator-vanilla`](packages/vanilla) | Vanilla JS/TS headless controller                                     |
 
-- [ScanUpload.Api.Client](https://github.com/donaldasante/scanupload.api.client)
-  – ScanUpload Backend proxy (dotnet)
+Angular and Svelte adapters are planned next — they will depend only on the core
+package.
 
-## Table of Contents
+---
 
-- [Installation](#installation)
-- [Backend API Requirements](#backend-api-requirements)
-- [Usage](#usage)
-- [Props Reference](#props-reference)
-- [classNames Customisation](#classnames-customisation)
-- [SignalR Events](#signalr-events)
-- [File Preview Modes](#file-preview-modes)
-- [Session Lifecycle](#session-lifecycle)
+## Monorepo Structure
+
+```
+packages/
+  core/         Framework-agnostic runtime (QrCodeGeneratorCore, types, storage adapter)
+  react/        React component, hooks, and Tailwind-based UI
+  vanilla/      Headless QrCodeController for vanilla JS/TS
+examples/
+  react-demo/   Dev demo app consuming the React package
+```
+
+## Backend Integrations
+
+- [ScanUpload.Api.Client](https://github.com/donaldasante/scanupload.api.client) — ScanUpload backend proxy (dotnet)
+
+---
 
 ## Installation
 
-The package is distributed as an ES module and CJS bundle with bundled CSS.
+### Core only (for custom framework adapters)
 
 ```bash
-npm install @scanupload/qr-code-generator
+npm install @scanupload/qr-code-generator-core
 ```
 
-### Peer dependencies
+### React
 
-| Package     | Version |
-| ----------- | ------- |
-| `react`     | `>= 19` |
-| `react-dom` | `>= 19` |
+```bash
+npm install @scanupload/qr-code-generator-react
+```
 
-### Import the stylesheet
+Peer dependencies: `react >= 19`, `react-dom >= 19`.
 
 ```ts
-import "@scanupload/qr-code-generator/dist/index.css";
+import { QrCodeGenerator } from '@scanupload/qr-code-generator-react';
+import '@scanupload/qr-code-generator-react/dist/index.css';
+```
+
+### Vanilla JS / TypeScript
+
+```bash
+npm install @scanupload/qr-code-generator-vanilla
+```
+
+```ts
+import { QrCodeController } from '@scanupload/qr-code-generator-vanilla';
+
+const ctrl = new QrCodeController({
+    sessionUrl: '/api/session',
+    refreshTokenUrl: '/api/token',
+    onChange(state) {
+        console.log('QR URL:', state.deviceLoginUrl);
+        console.log('Files:', state.uploadedFiles);
+    }
+});
+
+ctrl.start();
 ```
 
 ---
 
-## Backend API Requirements
+## Development
 
-The component communicates with two endpoints on your **client backend proxy**
-(a .NET application — see
-[ScanUpload.Api.Client on NuGet](https://www.nuget.org/packages/ScanUpload.Api.Client/)).
-The proxy is responsible for authenticating with the **ScanUpload Auth Server**
-using OAuth 2.0 client credentials and forwarding requests to the **ScanUpload
-Hub**. The component never holds client credentials — it only receives
-short-lived Bearer tokens.
+```bash
+# Install all workspace dependencies
+npm install
 
-> **The SignalR WebSocket is the exception.** The WebSocket connection to
-> `hubUrl` is opened directly from the browser to the **ScanUpload Hub** — it
-> does not pass through your proxy.
+# Build all packages (core → react → vanilla)
+npm run build
 
-```mermaid
-flowchart LR
-    subgraph Client["Client (SAAS)"]
-        D["🖥️ Client Front End"]
-        P["🔁 Client Backend Proxy"]
-    end
-
-    subgraph ScanUpload["ScanUpload"]
-        Auth["🔐 Auth Server"]
-        Hub["ScanUpload Hub"]
-    end
-
-    D -->|"POST sessionUrl"| P
-    D -->|"POST refreshTokenUrl"| P
-    P -->|"client credentials"| Auth
-    Auth -->|"access_token"| P
-    P -->|"authenticated request"| Hub
-    Hub -->|"response"| P
-    P -->|"response"| D
-    D --->|"WebSocket direct"| Hub
+# Run the React demo with hot-reload
+npm run dev
 ```
 
-## Usage
+---
 
-```ts
-import { QrCodeGenerator } from "@scanupload/qr-code-generator";
-import "@scanupload/qr-code-generator/dist/index.css";
+## Architecture
 
-export default function App() {
-  return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <form className="bg-white shadow-lg rounded-lg p-8 max-w-md">
-        <QrCodeGenerator
-          sessionUrl="/scanupload-api/session"
-          refreshTokenUrl="/scanupload-api/token"
-          showHeader={true}
-          header="Upload files from mobile device"
-          size="large"
-          showLogo={true}
-          clickQrCodeToReload={true}
-          filePreviewMode="list"
-          classNames={{
-            qrWrapper: "rounded-none border-solid border-blue-500",
-            reloadButton: "bg-red-500 hover:bg-red-700",
-            header: "text-2xl font-bold text-purple-700",
-          }}
-        />
-      </form>
-    </div>
-  );
-}
 ```
+QrCodeGeneratorCore (packages/core)
+├── @microsoft/signalr
+├── apiClient (fetch wrapper)
+├── utilities (debounce, token parsing)
+└── StorageAdapter (injected — defaults to browser localStorage)
+
+React adapter (packages/react)
+├── useQrCodeCore hook → wraps Core via useSyncExternalStore
+├── QrCodeGenerator component (Tailwind UI)
+└── File preview components
+
+Vanilla adapter (packages/vanilla)
+└── QrCodeController → wraps Core with onChange callback
+```
+
+The core never imports React, Angular, or any framework code. Framework packages
+inject platform-specific dependencies (like storage) through the
+`StorageAdapter` interface.
+
+---
+
+## Creating a New Framework Adapter
+
+1. Create `packages/<framework>/`
+2. Depend on `@scanupload/qr-code-generator-core`
+3. Instantiate `QrCodeGeneratorCore` with your framework's storage adapter
+4. Wire `subscribe()` / `getState()` to your framework's reactivity model
+5. Build your UI on top of the state
+   showHeader={true}
+   header="Upload files from mobile device"
+   size="large"
+   showLogo={true}
+   clickQrCodeToReload={true}
+   filePreviewMode="list"
+   classNames={{
+               qrWrapper: "rounded-none border-solid border-blue-500",
+               reloadButton: "bg-red-500 hover:bg-red-700",
+               header: "text-2xl font-bold text-purple-700",
+             }}
+   />
+   </form>
+   </div>
+   );
+   }
+
+````
 
 ---
 
@@ -164,7 +197,7 @@ in favour of the override you supply.
   }}
   ...
 />
-```
+````
 
 ### CSS custom properties
 

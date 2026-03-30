@@ -1,53 +1,22 @@
 {
-  "name": "@scanupload/qr-code-generator",
-  "version": "0.1.7",
-  "description": "A reusable qr-code-generator library using Tailwind CSS v4, React, and Vite for the ScanUpload SAAS application.",
-  "main": "dist/qr-code-generator.cjs.js",
-  "module": "dist/qr-code-generator.es.js",
-  "style": "dist/index.css",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist"
+  "name": "@scanupload/qr-code-generator-monorepo",
+  "private": true,
+  "description": "Monorepo for ScanUpload QR Code Generator — core, React, vanilla, and future framework packages.",
+  "workspaces": [
+    "packages/*",
+    "examples/*"
   ],
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
-  },
-  "peerDependencies": {
-    "react": ">=19",
-    "react-dom": ">=19"
+    "build": "npm run build --workspace=packages/core && npm run build --workspace=packages/react && npm run build --workspace=packages/vanilla",
+    "build:core": "npm run build --workspace=packages/core",
+    "build:react": "npm run build --workspace=packages/react",
+    "build:vanilla": "npm run build --workspace=packages/vanilla",
+    "dev": "npm run dev --workspace=examples/react-demo",
+    "lint": "eslint packages --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "devDependencies": {
-    "@microsoft/signalr": "^10.0.0",
-    "@tailwindcss/vite": "^4.1.14",
-    "@types/react": "^19.1.8",
-    "@types/react-dom": "^19.1.6",
-    "@vitejs/plugin-react": "^4.6.0",
-    "baseline-browser-mapping": "^2.10.11",
-    "lucide-react": "^0.562.0",
-    "tailwindcss": "^4.1.14",
-    "typescript": "^5.9.3",
-    "vite": "^7.1.11",
-    "vite-plugin-dts": "^4.5.4",
-    "vite-plugin-mkcert": "^1.17.8"
+    "typescript": "^5.9.3"
   },
-  "dependencies": {
-    "clsx": "^2.1.1",
-    "react": ">=19",
-    "react-dom": ">=19",
-    "react-icons": "^5.5.0",
-    "react-qr-code": "^2.0.18",
-    "tailwind-merge": "^3.5.0"
-  },
-  "keywords": [
-    "react",
-    "typescript",
-    "tailwind-v4",
-    "vite",
-    "qr-code-generator"
-  ],
   "author": "Donald Asante",
   "license": "MIT"
 }
