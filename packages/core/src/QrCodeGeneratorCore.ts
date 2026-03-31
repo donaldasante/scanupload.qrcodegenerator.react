@@ -69,20 +69,23 @@ export class QrCodeGeneratorCore {
         if (signal.aborted) return;
 
         const connection = await this._createHubConnectionAsync(hubUrl);
+        if (!connection) return;
+
         try {
-            await connection?.start();
+            await connection.start();
 
             if (signal.aborted) {
-                await connection?.stop();
+                await connection.stop();
                 return;
             }
 
-            this._connection = connection ?? null;
+            this._connection = connection;
             this._setState({ isConnected: true, loading: false, retry: false });
             console.log('SignalR Connected successfully');
         } catch (err) {
             if (!signal.aborted) {
                 console.error(err);
+                this._setState({ isConnected: false, loading: false, retry: true });
             }
         }
     }
@@ -102,10 +105,19 @@ export class QrCodeGeneratorCore {
         await this._deleteCurrentSession();
 
         const connection = await this._debouncedGetData();
-        this._connection = connection ?? null;
-        await connection?.start();
+        if (!connection) {
+            this._setState({ isConnected: false, loading: false, retry: true });
+            return;
+        }
 
-        this._setState({ isConnected: true, loading: false, retry: false });
+        try {
+            await connection.start();
+            this._connection = connection;
+            this._setState({ isConnected: true, loading: false, retry: false });
+        } catch (err) {
+            console.error(err);
+            this._setState({ isConnected: false, loading: false, retry: true });
+        }
     }
 
     // ─── Private helpers ────────────────────────────────────────────────────────

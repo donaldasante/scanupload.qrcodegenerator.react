@@ -5,48 +5,74 @@ upload files to a ScanUpload session. The desktop component receives real-time
 status updates via a SignalR connection and renders a live preview of every
 uploaded file.
 
-The project is structured as a monorepo with a **framework-agnostic core** and
-dedicated adapter packages for each UI framework.
+The project is a **monorepo** with a framework-agnostic core and dedicated
+adapter packages for React and Vanilla JS/TS.
+
+---
+
+## Repository Structure
+
+```
+packages/
+  core/       Framework-agnostic runtime — SignalR, session management, state, types
+  react/      React component, hooks, and Tailwind-based UI
+  vanilla/    QrCodeGeneratorElement for Vanilla JS/TS with built-in DOM rendering
+examples/
+  react-demo/   Vite + React dev app
+  vanilla-js/   Vite + Vanilla TS dev app
+```
 
 ---
 
 ## Packages
 
-| Package                                                     | Description                                                           |
-| ----------------------------------------------------------- | --------------------------------------------------------------------- |
-| [`@scanupload/qr-code-generator-core`](packages/core)       | Framework-agnostic runtime — SignalR session management, state, types |
-| [`@scanupload/qr-code-generator-react`](packages/react)     | React wrapper — QR code component with file upload previews           |
-| [`@scanupload/qr-code-generator-vanilla`](packages/vanilla) | Vanilla JS/TS headless controller                                     |
-
-Angular and Svelte adapters are planned next — they will depend only on the core
-package.
+| Package                                                     | Description                                                                   |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| [`@scanupload/qr-code-generator-core`](packages/core)       | Framework-agnostic runtime — SignalR session management, state, types         |
+| [`@scanupload/qr-code-generator-react`](packages/react)     | React `<QrCodeGenerator>` component with semantic CSS UI and file previews    |
+| [`@scanupload/qr-code-generator-vanilla`](packages/vanilla) | `QrCodeGeneratorElement` — self-contained DOM renderer, no framework required |
 
 ---
 
-## Monorepo Structure
+## Architecture
 
 ```
-packages/
-  core/         Framework-agnostic runtime (QrCodeGeneratorCore, types, storage adapter)
-  react/        React component, hooks, and Tailwind-based UI
-  vanilla/      Headless QrCodeController for vanilla JS/TS
-examples/
-  react-demo/   Dev demo app consuming the React package
+QrCodeGeneratorCore (packages/core)
+├── @microsoft/signalr      — real-time hub connection
+├── apiClient               — session + token fetch wrapper
+├── utilities               — debounce, token parsing
+└── StorageAdapter          — injected; defaults to localStorage
+
+React adapter (packages/react)
+├── useQrCodeCore           — useSyncExternalStore wrapper around Core
+├── QrCodeGenerator         — semantic CSS component (props-driven)
+└── DocumentPreviewer, FileList, ProgressBar, Logo
+
+Vanilla adapter (packages/vanilla)
+├── QrCodeGeneratorElement  — builds and manages its own DOM subtree
+└── generateQrSvg           — qrcode → inline SVG helper
 ```
 
-## Backend Integrations
+The core never imports React or any other framework. Framework adapters depend
+on core and inject platform-specific storage through the `StorageAdapter`
+interface.
 
-- [ScanUpload.Api.Client](https://github.com/donaldasante/scanupload.api.client) — ScanUpload backend proxy (dotnet)
+---
+
+## Backend Integration
+
+- [ScanUpload.Api.Client](https://github.com/donaldasante/scanupload.api.client) — ScanUpload backend proxy (.NET)
+
+The component needs two backend endpoints:
+
+| Endpoint          | Method | Description                                                                                   |
+| ----------------- | ------ | --------------------------------------------------------------------------------------------- |
+| `sessionUrl`      | `POST` | Creates a ScanUpload session and returns `{ sessionId, accessToken, hubUrl, deviceLoginUrl }` |
+| `refreshTokenUrl` | `POST` | Returns a fresh Bearer token `{ access_token, expires_in }`                                   |
 
 ---
 
 ## Installation
-
-### Core only (for custom framework adapters)
-
-```bash
-npm install @scanupload/qr-code-generator-core
-```
 
 ### React
 
@@ -56,10 +82,40 @@ npm install @scanupload/qr-code-generator-react
 
 Peer dependencies: `react >= 19`, `react-dom >= 19`.
 
-```ts
+```tsx
 import { QrCodeGenerator } from '@scanupload/qr-code-generator-react';
 import '@scanupload/qr-code-generator-react/dist/index.css';
+
+<QrCodeGenerator sessionUrl='/api/session' refreshTokenUrl='/api/token' />;
 ```
+
+**Custom CSS / overrides**
+
+The package ships a `dist/index.css` containing all `.sqg-*` rules and CSS
+custom properties. Import your overrides **after** the package CSS so
+same-specificity rules win via cascade:
+
+```tsx
+import '@scanupload/qr-code-generator-react/dist/index.css'; // base styles
+import './my-overrides.css'; // your overrides
+```
+
+```css
+/* my-overrides.css */
+:root {
+    --sqg-primary: #6366f1; /* spinner, connected logo, retry button */
+    --sqg-border-radius: 1rem; /* root + qr wrapper corners */
+    --sqg-error-color: #e11d48; /* error text and disconnected logo */
+}
+
+/* Or target specific elements directly */
+.sqg-root {
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+}
+```
+
+You can also use the `classNames` or `style` props for per-instance overrides
+(see [classNames Customisation](#classnames-customisation) below).
 
 ### Vanilla JS / TypeScript
 
@@ -67,19 +123,76 @@ import '@scanupload/qr-code-generator-react/dist/index.css';
 npm install @scanupload/qr-code-generator-vanilla
 ```
 
-```ts
-import { QrCodeController } from '@scanupload/qr-code-generator-vanilla';
+```html
+<div id="widget"></div>
+```
 
-const ctrl = new QrCodeController({
+**Zero-config (styles auto-injected)**
+
+```ts
+import { QrCodeGeneratorElement } from '@scanupload/qr-code-generator-vanilla';
+
+new QrCodeGeneratorElement({
+    container: document.getElementById('widget')!,
+    sessionUrl: '/api/session',
+    refreshTokenUrl: '/api/token'
+    // injectStyles defaults to true
+}).start();
+```
+
+Styles are injected automatically into `<head>` — no CSS import required.
+
+**Custom CSS / overrides**
+
+The package ships a `dist/index.css` file containing all `.sqg-*` styles. To
+override them, disable auto-injection and import the stylesheet yourself so your
+overrides cascade correctly:
+
+```ts
+import { QrCodeGeneratorElement } from '@scanupload/qr-code-generator-vanilla';
+import '@scanupload/qr-code-generator-vanilla/dist/index.css'; // base styles
+import './my-overrides.css'; // your overrides
+
+new QrCodeGeneratorElement({
+    container: document.getElementById('widget')!,
     sessionUrl: '/api/session',
     refreshTokenUrl: '/api/token',
-    onChange(state) {
-        console.log('QR URL:', state.deviceLoginUrl);
-        console.log('Files:', state.uploadedFiles);
-    }
-});
+    injectStyles: false // prevents double-injection
+}).start();
+```
 
-ctrl.start();
+`my-overrides.css` example:
+
+```css
+/* Change the QR wrapper border */
+.sqg-root {
+    border-radius: 1rem;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* Accent colour for the spinner */
+.sqg-spinner {
+    border-top-color: #6366f1;
+}
+
+/* Connected logo state */
+.sqg-logo--connected {
+    background: #22c55e;
+}
+
+/* Error text */
+.sqg-error-text {
+    color: #e11d48;
+}
+```
+
+Import order is what matters — your file must come **after** the package CSS so
+same-specificity rules win by cascade. No `!important` needed.
+
+### Core only (custom framework adapters)
+
+```bash
+npm install @scanupload/qr-code-generator-core
 ```
 
 ---
@@ -90,128 +203,129 @@ ctrl.start();
 # Install all workspace dependencies
 npm install
 
-# Build all packages (core → react → vanilla)
+# Build all packages in dependency order (core → react → vanilla)
 npm run build
 
-# Run the React demo with hot-reload
-npm run dev
+# Build individual packages
+npm run build:core
+npm run build:react
+npm run build:vanilla
+
+# Run the dev examples (rebuilding packages first is recommended)
+npm run build ; npm run dev:react
+npm run build ; npm run dev:vanilla
+```
+
+> The examples resolve packages from their local `dist/` folder. Always rebuild
+> after changing any package source.
+
+---
+
+## React Props Reference
+
+| Prop                  | Type                                         | Default   | Required | Description                                                                                            |
+| --------------------- | -------------------------------------------- | --------- | -------- | ------------------------------------------------------------------------------------------------------ |
+| `sessionUrl`          | `string`                                     | —         | ✅       | Endpoint that creates a ScanUpload session (`POST`).                                                   |
+| `refreshTokenUrl`     | `string`                                     | —         | ✅       | Endpoint that returns a fresh Bearer token (`POST`).                                                   |
+| `header`              | `string`                                     | —         |          | Text shown in the header (visible only when `showHeader` is `true`).                                   |
+| `showHeader`          | `boolean`                                    | `false`   |          | Whether to render the header above the QR code.                                                        |
+| `showLogo`            | `boolean`                                    | `true`    |          | Whether to overlay the ScanUpload logo in the centre of the QR code.                                   |
+| `clickQrCodeToReload` | `boolean`                                    | `false`   |          | When `true`, clicking the QR code reloads the session. When `false`, a Reload button is shown instead. |
+| `size`                | `"small" \| "medium" \| "large" \| "xlarge"` | `"large"` |          | Overall size of the QR code container.                                                                 |
+| `filePreviewMode`     | `"list" \| "grid"`                           | `"grid"`  |          | Display uploaded files as a grid of tiles or a compact list.                                           |
+| `classNames`          | `QrCodeClassNames`                           | `{}`      |          | Slot-based Tailwind class overrides. See [classNames Customisation](#classnames-customisation).        |
+| `style`               | `React.CSSProperties`                        | —         |          | Inline styles applied to the root `<section>`.                                                         |
+
+---
+
+## Vanilla JS Options Reference
+
+`QrCodeGeneratorElement` accepts all of the same options as the React component
+(minus `classNames` and `style`), plus:
+
+| Option         | Type          | Default | Required | Description                                                                                             |
+| -------------- | ------------- | ------- | -------- | ------------------------------------------------------------------------------------------------------- |
+| `container`    | `HTMLElement` | —       | ✅       | Host element to render the widget into.                                                                 |
+| `injectStyles` | `boolean`     | `true`  |          | Automatically inject the built-in stylesheet into `<head>`. Set to `false` when importing CSS manually. |
+
+---
+
+## classNames Customisation (React)
+
+Each key appends extra class names to a specific UI region, giving you a
+per-instance escape hatch without touching global CSS.
+
+| Key              | Element     | Description                                                                |
+| ---------------- | ----------- | -------------------------------------------------------------------------- |
+| `root`           | `<section>` | Outermost wrapper of the component.                                        |
+| `loadingOverlay` | `<div>`     | Spinner overlay shown while the session is loading.                        |
+| `errorOverlay`   | `<div>`     | Overlay shown when the session could not be created.                       |
+| `errorButton`    | `<button>`  | Retry button inside the error overlay.                                     |
+| `header`         | `<h1>`      | The header text element.                                                   |
+| `qrWrapper`      | `<div>`     | Bordered box wrapping the QR code.                                         |
+| `reloadButton`   | `<button>`  | Reload button shown when `clickQrCodeToReload` is `false`.                 |
+| `hintText`       | `<p>`       | "Click QR code to reload" hint shown when `clickQrCodeToReload` is `true`. |
+| `fileContainer`  | `<div>`     | Container for the file grid or list.                                       |
+
+```tsx
+<QrCodeGenerator
+    sessionUrl='/api/session'
+    refreshTokenUrl='/api/token'
+    classNames={{
+        qrWrapper: 'my-qr-border',
+        reloadButton: 'my-reload-btn',
+        header: 'my-header'
+    }}
+/>
 ```
 
 ---
 
-## Architecture
+## CSS Custom Properties (React & Vanilla)
 
-```
-QrCodeGeneratorCore (packages/core)
-├── @microsoft/signalr
-├── apiClient (fetch wrapper)
-├── utilities (debounce, token parsing)
-└── StorageAdapter (injected — defaults to browser localStorage)
+Both packages share the same `--sqg-*` token names. Setting them once on `:root`
+themes both widgets simultaneously.
 
-React adapter (packages/react)
-├── useQrCodeCore hook → wraps Core via useSyncExternalStore
-├── QrCodeGenerator component (Tailwind UI)
-└── File preview components
-
-Vanilla adapter (packages/vanilla)
-└── QrCodeController → wraps Core with onChange callback
-```
-
-The core never imports React, Angular, or any framework code. Framework packages
-inject platform-specific dependencies (like storage) through the
-`StorageAdapter` interface.
+| Token                 | Default                  | Affects                                       |
+| --------------------- | ------------------------ | --------------------------------------------- |
+| `--sqg-primary`       | `#1e3a5f`                | Spinner ring, connected logo, retry button bg |
+| `--sqg-error-color`   | `#dc2626`                | Error overlay text, disconnected logo         |
+| `--sqg-border-color`  | `#e5e7eb`                | QR wrapper border, file card border           |
+| `--sqg-border-radius` | `0.75rem`                | Root wrapper and QR code box corners          |
+| `--sqg-bg`            | `#ffffff`                | Component background                          |
+| `--sqg-overlay-bg`    | `rgba(255,255,255,0.85)` | Loading / error overlay background            |
+| `--sqg-text-color`    | `#111827`                | Header, file names, general text              |
+| `--sqg-subtext-color` | `#6b7280`                | Hint text, file sizes                         |
+| `--sqg-spinner-size`  | `2.5rem`                 | Width and height of the loading spinner       |
+| `--sqg-spinner-width` | `3px`                    | Spinner ring stroke width                     |
 
 ---
 
 ## Creating a New Framework Adapter
 
-1. Create `packages/<framework>/`
-2. Depend on `@scanupload/qr-code-generator-core`
-3. Instantiate `QrCodeGeneratorCore` with your framework's storage adapter
-4. Wire `subscribe()` / `getState()` to your framework's reactivity model
-5. Build your UI on top of the state
-   showHeader={true}
-   header="Upload files from mobile device"
-   size="large"
-   showLogo={true}
-   clickQrCodeToReload={true}
-   filePreviewMode="list"
-   classNames={{
-               qrWrapper: "rounded-none border-solid border-blue-500",
-               reloadButton: "bg-red-500 hover:bg-red-700",
-               header: "text-2xl font-bold text-purple-700",
-             }}
-   />
-   </form>
-   </div>
-   );
-   }
-
-````
-
----
-
-## Props Reference
-
-| Prop                  | Type                                         | Default   | Required | Description                                                                                                                                 |
-| --------------------- | -------------------------------------------- | --------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sessionUrl`          | `string`                                     | —         | ✅       | URL of the endpoint that creates a ScanUpload session (`POST`).                                                                             |
-| `refreshTokenUrl`     | `string`                                     | —         | ✅       | URL of the endpoint that returns a fresh Bearer token (`POST`).                                                                             |
-| `header`              | `string`                                     | —         | ✅       | Text rendered in the header element (visible only when `showHeader` is `true`).                                                             |
-| `showHeader`          | `boolean`                                    | `false`   |          | Whether to render the header above the QR code.                                                                                             |
-| `showLogo`            | `boolean`                                    | `true`    |          | Whether to overlay the ScanUpload logo in the centre of the QR code.                                                                        |
-| `clickQrCodeToReload` | `boolean`                                    | `false`   |          | When `true`, clicking the QR code triggers a session reload. When `false`, a separate _Reload_ button is shown beneath the QR code instead. |
-| `size`                | `"small" \| "medium" \| "large" \| "xlarge"` | `"large"` |          | Controls the overall size of the QR code container.                                                                                         |
-| `filePreviewMode`     | `"list" \| "grid"`                           | `"grid"`  |          | How uploaded files are displayed — as a grid of document tiles or a compact list.                                                           |
-| `classNames`          | `QrCodeClassNames`                           | `{}`      |          | Slot-based Tailwind class overrides. See [classNames Customisation](#classnames-customisation).                                             |
-| `style`               | `React.CSSProperties`                        | —         |          | Inline styles applied to the root `<section>`. Useful for injecting CSS custom properties.                                                  |
-
----
-
-## classNames Customisation
-
-Each key targets a specific UI region. Classes are merged with the built-in
-defaults using **tailwind-merge**, so any Tailwind conflicts are always resolved
-in favour of the override you supply.
-
-| Key              | Element     | Description                                                                |
-| ---------------- | ----------- | -------------------------------------------------------------------------- |
-| `root`           | `<section>` | Outermost wrapper of the component.                                        |
-| `loadingOverlay` | `<div>`     | Spinner overlay shown while the session is being created.                  |
-| `errorOverlay`   | `<div>`     | Overlay shown when the session could not be created.                       |
-| `errorButton`    | `<button>`  | Retry button inside the error overlay.                                     |
-| `header`         | `<h1>`      | The header text element.                                                   |
-| `qrWrapper`      | `<div>`     | Bordered box that wraps the QR code.                                       |
-| `reloadButton`   | `<button>`  | Reload button shown when `clickQrCodeToReload` is `false`.                 |
-| `hintText`       | `<p>`       | "Click QR code to reload" hint shown when `clickQrCodeToReload` is `true`. |
-| `fileContainer`  | `<div>`     | Container for the file grid or list.                                       |
-
-### Example
-
-```tsx
-<QrCodeGenerator
-  classNames={{
-    qrWrapper: "rounded-none border-solid border-blue-500",
-    reloadButton: "bg-red-500 hover:bg-red-700",
-    header: "text-2xl font-bold text-purple-700",
-  }}
-  ...
-/>
-````
+1. Create `packages/<framework>/` and add `@scanupload/qr-code-generator-core` as a dependency.
+2. Instantiate `QrCodeGeneratorCore` with a `StorageAdapter` for your platform.
+3. Wire `subscribe()` and `getState()` to your framework's reactivity model.
+4. Build your UI using the `QrCodeGeneratorState` shape.
 
 ### CSS custom properties
 
-Use `style` to inject design tokens:
+Use `style` to inject design tokens per-instance:
 
 ```tsx
 <QrCodeGenerator
-  style={{
-    "--qr-accent": "#1d4ed8",
-    "--qr-border": "#d1d5db",
-  } as React.CSSProperties}
-  ...
+    style={
+        {
+            '--sqg-primary': '#1d4ed8',
+            '--sqg-border-radius': '0'
+        } as React.CSSProperties
+    }
+    sessionUrl='/api/session'
+    refreshTokenUrl='/api/token'
 />
 ```
+
+See the full token list in [CSS Custom Properties](#css-custom-properties-react--vanilla).
 
 ---
 

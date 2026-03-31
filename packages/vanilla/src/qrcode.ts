@@ -5,11 +5,7 @@ import QRCode from 'qrcode';
  * Returns an empty placeholder SVG when `text` is falsy.
  */
 export async function generateQrSvg(text: string, size = 200): Promise<string> {
-    if (!text) {
-        return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}"><rect width="${size}" height="${size}" fill="white"/></svg>`;
-    }
-
-    return QRCode.toString(text, {
+    return QRCode.toString(text || 'http://localhost', {
         type: 'svg',
         width: size,
         margin: 2,

@@ -5,14 +5,16 @@ if (import.meta.env.PROD) {
   console.log = () => {};
 }
 
+// When overriding styles, import the base CSS then your overrides,
+import "@scanupload/qr-code-generator-react/dist/index.css";
 import "./index.css";
+import './override.css';
 import { QrCodeGenerator } from "@scanupload/qr-code-generator-react";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <div className="flex items-center justify-center min-h-screen min-w-screen bg-gray-100">
-      <form className="bg-white shadow-lg rounded-lg p-8  max-w-md">
-        <h2 className="text-2xl font-bold text-center mb-2">Example Form</h2>
+    <div className="demo-card">
+      <h2 className="demo-title">React JS Demo</h2>
         <QrCodeGenerator
           sessionUrl="/scanupload-api/session"
           refreshTokenUrl="/scanupload-api/token"
@@ -28,7 +30,7 @@ createRoot(document.getElementById("root")!).render(
             header: "text-2xl font-bold text-purple-700",
           }}
         />
-      </form>
     </div>
+
   </StrictMode>,
 );

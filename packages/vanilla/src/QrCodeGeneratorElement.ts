@@ -8,6 +8,7 @@ import { generateQrSvg } from './qrcode';
 import { el, escapeHtml } from './domUtils';
 import { REDO_SVG, QR_SCANNER_SVG } from './icons';
 import { renderFileGrid, renderFileList } from './renderers';
+import { injectStyles } from './styles';
 
 // ── Size config ────────────────────────────────────────────────────────────
 
@@ -43,6 +44,8 @@ export interface QrCodeGeneratorElementOptions extends QrCodeGeneratorCoreOption
     filePreviewMode?: FilePreviewMode;
     /** Component size. Default: 'large'. */
     size?: ComponentSize;
+    /** Automatically inject the built-in styles into <head>. Set to false when importing the CSS manually. Default: true. */
+    injectStyles?: boolean;
 }
 
 // ── Element ────────────────────────────────────────────────────────────────
@@ -51,7 +54,7 @@ export class QrCodeGeneratorElement {
     private readonly _core: QrCodeGeneratorCore;
     private readonly _container: HTMLElement;
     private readonly _options: Required<
-        Pick<QrCodeGeneratorElementOptions, 'showHeader' | 'showLogo' | 'clickQrCodeToReload' | 'filePreviewMode' | 'size'>
+        Pick<QrCodeGeneratorElementOptions, 'showHeader' | 'showLogo' | 'clickQrCodeToReload' | 'filePreviewMode' | 'size' | 'injectStyles'>
     > &
         QrCodeGeneratorElementOptions;
 
@@ -78,6 +81,7 @@ export class QrCodeGeneratorElement {
             clickQrCodeToReload: false,
             filePreviewMode: 'grid',
             size: 'large',
+            injectStyles: true,
             ...options
         };
 
@@ -90,6 +94,7 @@ export class QrCodeGeneratorElement {
     // ── Public API ─────────────────────────────────────────────────────────
 
     async start(): Promise<void> {
+        if (this._options.injectStyles) injectStyles();
         this._buildDom();
         this._unsubscribe = this._core.subscribe(() => this._render());
         await this._core.start();
@@ -119,43 +124,40 @@ export class QrCodeGeneratorElement {
         const sizeConf = SIZE_MAP[size];
 
         // Root
-        const root = el('section', 'relative overflow-hidden p-2');
+        const root = el('section', 'sqg-root');
 
         // Loading overlay
-        const loadingOverlay = el('div', 'absolute inset-0 bg-white/90 flex items-center justify-center rounded-md z-10');
+        const loadingOverlay = el('div', 'sqg-overlay');
         loadingOverlay.innerHTML = `
-            <div class="flex flex-col items-center text-center gap-2">
-                <div class="rounded-full h-6 w-6 border-t-2 border-blue-800 border-dashed animate-spin"></div>
-                <p class="text-gray-900 text-sm">Loading...</p>
+            <div class="sqg-loading-content">
+                <div class="sqg-spinner"></div>
+                <p class="sqg-loading-text">Loading...</p>
             </div>`;
         root.appendChild(loadingOverlay);
 
         // Error overlay
-        const errorOverlay = el('div', 'absolute inset-0 bg-white/90 flex items-center justify-center rounded-md z-10');
+        const errorOverlay = el('div', 'sqg-overlay');
         errorOverlay.style.display = 'none';
-        const retryBtn = el('button', 'bg-blue-300 text-white py-1 px-2 rounded-md hover:bg-blue-500 transition-colors');
+        const retryBtn = el('button', 'sqg-retry-btn');
         retryBtn.innerHTML = REDO_SVG;
         retryBtn.addEventListener('click', () => this.retrySession());
-        errorOverlay.innerHTML = `<div class="flex flex-col items-center text-center mt-5 gap-2"><p class="text-gray-900 text-xs">Cannot create session</p></div>`;
+        errorOverlay.innerHTML = `<div class="sqg-error-content"><p class="sqg-error-text">Cannot create session</p></div>`;
         errorOverlay.querySelector('div')!.appendChild(retryBtn);
         root.appendChild(errorOverlay);
 
         // Content
-        const content = el('div', 'flex flex-col items-center text-center');
+        const content = el('div', 'sqg-content');
 
         // Header
-        const headerEl = el('header', 'mb-2');
+        const headerEl = el('header', 'sqg-header');
         if (showHeader && header) {
-            headerEl.innerHTML = `<h1 class="text-xl font-semibold text-gray-600">${escapeHtml(header)}</h1>`;
+            headerEl.innerHTML = `<h1 class="sqg-header-title">${escapeHtml(header)}</h1>`;
         }
         headerEl.style.display = showHeader && header ? '' : 'none';
         content.appendChild(headerEl);
 
         // QR wrapper
-        const qrWrapper = el(
-            'div',
-            'bg-white p-2 rounded-2xl border-2 border-dashed border-gray-300 flex items-center justify-center transition-all duration-300 hover:shadow-lg hover:scale-105 relative'
-        );
+        const qrWrapper = el('div', 'sqg-qr-wrapper');
         qrWrapper.setAttribute('aria-label', 'QR Code for file upload');
         qrWrapper.style.width = sizeConf.containerPx;
         qrWrapper.style.height = sizeConf.containerPx;
@@ -165,36 +167,33 @@ export class QrCodeGeneratorElement {
             qrWrapper.addEventListener('click', () => this.retrySession());
         }
 
-        const qrInner = el('div', 'relative inline-block w-full h-full');
-        const qrCode = el('div', 'w-full h-full flex items-center justify-center');
+        const qrInner = el('div', 'sqg-qr-inner');
+        const qrCode = el('div', 'sqg-qr-code');
         qrInner.appendChild(qrCode);
         qrWrapper.appendChild(qrInner);
 
         // Logo overlay
-        const logoOverlay = el('div', 'absolute inset-0 flex items-center justify-center pointer-events-none');
+        const logoOverlay = el('div', 'sqg-logo-overlay');
         logoOverlay.style.display = showLogo ? '' : 'none';
-        logoOverlay.innerHTML = `<div class="w-6 h-6 text-white bg-gradient-to-r from-red-600 to-red-800 rounded-2xl p-1 flex items-center justify-center">${QR_SCANNER_SVG}</div>`;
+        logoOverlay.innerHTML = `<div class="sqg-logo sqg-logo--disconnected">${QR_SCANNER_SVG}</div>`;
         qrInner.appendChild(logoOverlay);
 
         // sr-only
-        const srOnly = el('p', 'sr-only');
+        const srOnly = el('p', 'sqg-sr-only');
         srOnly.textContent = 'QR Code that allows file uploads';
         qrWrapper.appendChild(srOnly);
 
         content.appendChild(qrWrapper);
 
         // Reload section
-        const reloadSection = el('div', 'flex flex-row mt-3');
+        const reloadSection = el('div', 'sqg-reload-section');
         if (!clickQrCodeToReload) {
-            const reloadBtn = el(
-                'button',
-                'bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-blue-800 transition-colors flex items-center gap-3 text-sm border-none cursor-pointer'
-            );
+            const reloadBtn = el('button', 'sqg-reload-btn');
             reloadBtn.innerHTML = `${REDO_SVG}<span>Reload</span>`;
             reloadBtn.addEventListener('click', () => this.retrySession());
             reloadSection.appendChild(reloadBtn);
         } else {
-            const hint = el('p', 'text-gray-500 text-sm');
+            const hint = el('p', 'sqg-hint-text');
             hint.textContent = 'Click QR code to reload';
             reloadSection.appendChild(hint);
         }
@@ -255,9 +254,7 @@ export class QrCodeGeneratorElement {
         if (this._options.showLogo && (!prev || prev.isConnected !== state.isConnected)) {
             const logo = this._els.logoOverlay.querySelector('div');
             if (logo) {
-                logo.className = state.isConnected
-                    ? 'w-6 h-6 text-white bg-gradient-to-r from-green-200 to-green-500 rounded-2xl p-1 flex items-center justify-center'
-                    : 'w-6 h-6 text-white bg-gradient-to-r from-red-600 to-red-800 rounded-2xl p-1 flex items-center justify-center';
+                logo.className = state.isConnected ? 'sqg-logo sqg-logo--connected' : 'sqg-logo sqg-logo--disconnected';
             }
         }
 

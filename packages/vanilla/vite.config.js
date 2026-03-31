@@ -18,6 +18,9 @@ export default defineConfig({
     },
     rollupOptions: {
       external: ["@scanupload/qr-code-generator-core"],
+      output: {
+        assetFileNames: (info) => info.name?.endsWith('.css') ? 'index.css' : (info.name ?? 'asset'),
+      },
     },
     sourcemap: true,
     emptyOutDir: true,

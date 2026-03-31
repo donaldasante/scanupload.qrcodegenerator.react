@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import {
   FileText,
   FileImage,
@@ -11,21 +11,17 @@ import {
   FileType,
   FileDigit,
   FileJson,
-} from "lucide-react";
-import { CiSquareRemove } from "react-icons/ci";
-
-import {
   FileText as FileWord,
   FileSpreadsheet as FileExcel,
   Presentation as FilePowerpoint,
   File as FilePdf,
 } from "lucide-react";
+import { CiSquareRemove } from "react-icons/ci";
 import ProgressBar from "./ProgressBar";
 import type { UploadedFile } from "@scanupload/qr-code-generator-core";
 
 interface DocumentPreviewerProps {
   file: UploadedFile;
-  size?: "sm" | "md" | "lg" | "xlg";
   className?: string;
   showExtension?: boolean;
   showRemoveButton?: boolean;
@@ -34,7 +30,6 @@ interface DocumentPreviewerProps {
 
 export const DocumentPreviewer: React.FC<DocumentPreviewerProps> = ({
   file,
-  size = "md",
   className = "",
   showExtension = true,
   showRemoveButton = false,
@@ -46,167 +41,71 @@ export const DocumentPreviewer: React.FC<DocumentPreviewerProps> = ({
   };
 
   const getIconByExtension = (extension: string) => {
-    const baseProps = {
-      className: "text-gray-600",
-    };
-
     switch (extension) {
-      case "pdf":
-        return <FilePdf {...baseProps} className="text-red-500" />;
-      case "doc":
-      case "docx":
-        return <FileWord {...baseProps} className="text-blue-500" />;
-      case "xls":
-      case "xlsx":
-        return <FileExcel {...baseProps} className="text-green-600" />;
-      case "csv":
-        return <FileSpreadsheet {...baseProps} className="text-green-500" />;
-      case "ppt":
-      case "pptx":
-        return <FilePowerpoint {...baseProps} className="text-orange-500" />;
-      case "txt":
-      case "rtf":
-        return <FileText {...baseProps} className="text-gray-600" />;
-      case "md":
-        return <FileDigit {...baseProps} />;
-      case "jpg":
-      case "jpeg":
-      case "png":
-      case "gif":
-      case "svg":
-      case "bmp":
-      case "webp":
-      case "ico":
-        return <FileImage {...baseProps} className="text-purple-500" />;
-      case "mp4":
-      case "avi":
-      case "mov":
-      case "wmv":
-      case "flv":
-      case "webm":
-      case "mkv":
-        return <FileVideo {...baseProps} className="text-purple-600" />;
-      case "mp3":
-      case "wav":
-      case "ogg":
-      case "flac":
-      case "m4a":
-      case "aac":
-        return <FileAudio {...baseProps} className="text-pink-500" />;
-      case "zip":
-      case "rar":
-      case "7z":
-      case "tar":
-      case "gz":
-      case "bz2":
-        return <FileArchive {...baseProps} className="text-yellow-600" />;
-      case "js":
-      case "jsx":
-        return <FileCode {...baseProps} className="text-yellow-500" />;
-      case "ts":
-      case "tsx":
-        return <FileType {...baseProps} className="text-blue-600" />;
-      case "html":
-      case "htm":
-        return <FileCode {...baseProps} className="text-orange-600" />;
-      case "css":
-        return <FileCode {...baseProps} className="text-blue-400" />;
-      case "json":
-        return <FileJson {...baseProps} className="text-gray-700" />;
-      case "xml":
-      case "yml":
-      case "yaml":
-        return <FileCode {...baseProps} className="text-gray-600" />;
-      default:
-        return <File {...baseProps} />;
+      case "pdf":                                    return <FilePdf size={40} />;
+      case "doc": case "docx":                       return <FileWord size={40} />;
+      case "xls": case "xlsx":                       return <FileExcel size={40} />;
+      case "csv":                                    return <FileSpreadsheet size={40} />;
+      case "ppt": case "pptx":                       return <FilePowerpoint size={40} />;
+      case "txt": case "rtf":                        return <FileText size={40} />;
+      case "md":                                     return <FileDigit size={40} />;
+      case "jpg": case "jpeg": case "png":
+      case "gif": case "svg":  case "bmp":
+      case "webp": case "ico":                       return <FileImage size={40} />;
+      case "mp4": case "avi":  case "mov":
+      case "wmv": case "flv":  case "webm":
+      case "mkv":                                    return <FileVideo size={40} />;
+      case "mp3": case "wav":  case "ogg":
+      case "flac": case "m4a": case "aac":           return <FileAudio size={40} />;
+      case "zip": case "rar":  case "7z":
+      case "tar": case "gz":   case "bz2":           return <FileArchive size={40} />;
+      case "js": case "jsx":
+      case "html": case "htm":
+      case "css": case "xml":
+      case "yml": case "yaml":                       return <FileCode size={40} />;
+      case "ts": case "tsx":                         return <FileType size={40} />;
+      case "json":                                   return <FileJson size={40} />;
+      default:                                       return <File size={40} />;
     }
   };
 
-  const sizeConfig = {
-    sm: {
-      iconSize: 20,
-      textSize: "text-xs",
-      containerSize: "w-full max-w-40 h-auto",
-      filenameSize: "text-xs",
-      textTruncateSize: "90px",
-      previewSize: "h-12 w-20",
-    },
-    md: {
-      iconSize: 32,
-      textSize: "text-sm",
-      containerSize: "w-full max-w-52 h-auto",
-      filenameSize: "text-xs",
-      textTruncateSize: "100px",
-      previewSize: "h-16 w-20",
-    },
-    lg: {
-      iconSize: 45,
-      textSize: "text-base",
-      containerSize: "w-full max-w-60 h-auto",
-      filenameSize: "text-xs",
-      textTruncateSize: "100px",
-      previewSize: "h-20 w-20",
-    },
-    xlg: {
-      iconSize: 56,
-      textSize: "text-base",
-      containerSize: "w-full max-w-70 h-auto",
-      filenameSize: "text-xs",
-      textTruncateSize: "100px",
-      previewSize: "h-23 w-24",
-    },
-  };
-
-  const { iconSize, textSize, previewSize } = sizeConfig[size];
   const extension = getFileExtension(file.name);
-  const IconComponent = getIconByExtension(extension);
 
   return (
-    <div className={`flex flex-col items-center ${className} mt-2 gap-1`}>
-      <div
-        className={`group flex max-w-[160px] cursor-default flex-col items-center justify-center rounded-lg border border-gray-200 bg-white p-3 shadow-sm transition-colors duration-200 hover:bg-gray-50 hover:shadow-md sm:max-w-[180px] md:max-w-[200px]`}
-      >
+    <div className={`sqg-file-card ${className}`}>
+      <div className="sqg-file-inner">
         {file.thumbnailBase64 ? (
-          <div
-            className={`${previewSize} w-20 transform overflow-hidden rounded transition-transform duration-200 group-hover:scale-110`}
-          >
+          <div className="sqg-thumb-wrap">
             <img
               src={`data:${file.type};base64,${file.thumbnailBase64}`}
-              className="h-full w-full object-cover"
+              className="sqg-thumb-img"
+              alt={file.name}
             />
           </div>
         ) : (
           <>
-            <div className="mb-2 transform transition-transform duration-200 group-hover:scale-110">
-              {React.cloneElement(IconComponent, { size: iconSize })}
+            <div className="sqg-icon-wrap" data-filetype={extension}>
+              {getIconByExtension(extension)}
             </div>
             {showExtension && extension && (
-              <div
-                className={`${textSize} px-1 text-center font-medium break-all`}
-              >
-                <span className="inline-block rounded bg-gray-100 px-2 py-0.5 text-gray-700">
-                  {extension.toUpperCase()}
-                </span>
+              <div className="sqg-ext-badge">
+                <span>{extension.toUpperCase()}</span>
               </div>
             )}
           </>
         )}
-        <div className="flex flex-row items-center justify-between gap-1 p-2">
-          <div className="mt-1">
-            <p className="w-25 truncate text-start text-xs font-medium text-gray-800">
-              {file.name}
-            </p>
-            <p className="text-start text-xs text-gray-500">
-              ({(file.size / 1024).toFixed(1)} KB)
-            </p>
+        <div className="sqg-file-info">
+          <div className="sqg-file-meta">
+            <p className="sqg-file-name">{file.name}</p>
+            <p className="sqg-file-size">({(file.size / 1024).toFixed(1)} KB)</p>
           </div>
           {showRemoveButton && (
             <button
-              className="h-6 w-6 rounded-md p-0 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+              className="sqg-remove-btn"
               aria-label="Remove File"
               onClick={() => removeFileMethod(file.id)}
             >
-              <CiSquareRemove className="h-10 w-10 text-gray-400" />
+              <CiSquareRemove className="sqg-remove-icon" />
             </button>
           )}
         </div>

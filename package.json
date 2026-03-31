@@ -11,7 +11,7 @@
     "build:core": "npm run build --workspace=packages/core",
     "build:react": "npm run build --workspace=packages/react",
     "build:vanilla": "npm run build --workspace=packages/vanilla",
-    "dev": "npm run dev --workspace=examples/react-demo",
+    "dev:react": "npm run dev --workspace=examples/react-demo",
     "dev:vanilla": "npm run dev --workspace=examples/vanilla-js",
     "lint": "eslint packages --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },

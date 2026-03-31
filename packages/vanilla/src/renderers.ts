@@ -4,45 +4,42 @@ import { getFileIconSvg, getGenericDocIconSvg } from './fileIcons';
 
 export function renderFileGrid(container: HTMLElement, files: UploadedFile[]): void {
     container.innerHTML = '';
-    container.className = 'flex flex-row justify-center gap-1 flex-wrap';
+    container.className = 'sqg-file-grid';
 
     for (const file of files) {
-        const card = el('div', 'flex flex-col items-center mt-2 gap-1');
-        const inner = el(
-            'div',
-            'group flex max-w-[160px] cursor-default flex-col items-center justify-center rounded-lg border border-gray-200 bg-white p-3 shadow-sm transition-colors duration-200 hover:bg-gray-50 hover:shadow-md'
-        );
+        const card = el('div', 'sqg-file-card');
+        const inner = el('div', 'sqg-file-inner');
         const ext = getFileExtension(file.name);
 
         if (file.thumbnailBase64) {
-            const imgWrap = el('div', 'h-12 w-20 overflow-hidden rounded transition-transform duration-200 group-hover:scale-110');
+            const imgWrap = el('div', 'sqg-thumb-wrap');
             const img = document.createElement('img');
             img.src = `data:${file.type};base64,${file.thumbnailBase64}`;
-            img.className = 'h-full w-full object-cover';
+            img.className = 'sqg-thumb-img';
             imgWrap.appendChild(img);
             inner.appendChild(imgWrap);
         } else {
-            const iconWrap = el('div', 'mb-2 transition-transform duration-200 group-hover:scale-110');
+            const iconWrap = el('div', 'sqg-icon-wrap');
             iconWrap.innerHTML = getFileIconSvg(ext, 20);
             inner.appendChild(iconWrap);
 
             if (ext) {
-                const badge = el('div', 'text-base px-1 text-center font-medium break-all');
-                badge.innerHTML = `<span class="inline-block rounded bg-gray-100 px-2 py-0.5 text-gray-700">${escapeHtml(ext.toUpperCase())}</span>`;
+                const badge = el('div', 'sqg-ext-badge');
+                badge.innerHTML = `<span>${escapeHtml(ext.toUpperCase())}</span>`;
                 inner.appendChild(badge);
             }
         }
 
         // Info
-        const info = el('div', 'flex flex-row items-center justify-between gap-1 p-2');
-        const meta = el('div', 'mt-1');
+        const info = el('div', 'sqg-file-info');
+        const meta = el('div', 'sqg-file-meta');
 
-        const name = el('p', 'w-25 truncate text-start text-xs font-medium text-gray-800');
+        const name = el('p', 'sqg-file-name');
         name.textContent = file.name;
         name.title = file.name;
         meta.appendChild(name);
 
-        const size = el('p', 'text-start text-xs text-gray-500');
+        const size = el('p', 'sqg-file-size');
         size.textContent = `(${(file.size / 1024).toFixed(1)} KB)`;
         meta.appendChild(size);
 
@@ -59,19 +56,18 @@ export function renderFileGrid(container: HTMLElement, files: UploadedFile[]): v
 
 export function renderFileList(container: HTMLElement, files: UploadedFile[]): void {
     container.innerHTML = '';
-    container.className = 'w-full';
+    container.className = 'sqg-file-list';
 
-    const list = el('div', 'flex flex-col divide-y divide-gray-200 rounded-lg border border-gray-200 bg-white overflow-hidden');
+    const list = el('div', 'sqg-file-list-inner');
 
     for (const file of files) {
-        const row = el('div', 'flex items-center gap-2 p-2');
+        const row = el('div', 'sqg-file-row');
 
         // Thumbnail or icon
-        const thumb = el('div', 'w-12 h-12 shrink-0 overflow-hidden rounded bg-gray-100 flex items-center justify-center text-gray-500');
+        const thumb = el('div', 'sqg-list-thumb');
         if (file.thumbnailBase64) {
             const img = document.createElement('img');
             img.src = `data:${file.type};base64,${file.thumbnailBase64}`;
-            img.className = 'w-full h-full object-cover';
             thumb.appendChild(img);
         } else {
             thumb.innerHTML = getGenericDocIconSvg(24);
@@ -79,13 +75,13 @@ export function renderFileList(container: HTMLElement, files: UploadedFile[]): v
         row.appendChild(thumb);
 
         // Info
-        const info = el('div', 'flex flex-col flex-1 min-w-0');
-        const nameSpan = el('span', 'text-xs font-medium text-gray-800 truncate w-60');
+        const info = el('div', 'sqg-list-info');
+        const nameSpan = el('span', 'sqg-list-name');
         nameSpan.textContent = file.name;
         nameSpan.title = file.name;
         info.appendChild(nameSpan);
 
-        const sizeSpan = el('span', 'text-xs text-gray-500');
+        const sizeSpan = el('span', 'sqg-list-size');
         sizeSpan.textContent = `${(file.size / 1024).toFixed(1)} KB`;
         info.appendChild(sizeSpan);
         row.appendChild(info);
@@ -96,13 +92,13 @@ export function renderFileList(container: HTMLElement, files: UploadedFile[]): v
 }
 
 export function createProgressBar(progress: number): HTMLElement {
-    const wrap = el('div', 'mt-3 w-full');
-    const labels = el('div', 'mb-2 flex justify-between');
-    labels.innerHTML = `<span class="text-sm font-medium text-gray-700">Uploading...</span><span class="text-sm font-medium text-gray-700">${Math.round(progress || 0)}%</span>`;
+    const wrap = el('div', 'sqg-progress-wrap');
+    const labels = el('div', 'sqg-progress-labels');
+    labels.innerHTML = `<span class="sqg-progress-label">Uploading...</span><span class="sqg-progress-label">${Math.round(progress || 0)}%</span>`;
     wrap.appendChild(labels);
 
-    const track = el('div', 'h-2.5 w-full rounded-full bg-gray-200');
-    const fill = el('div', 'h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)] transition-all duration-300 ease-out');
+    const track = el('div', 'sqg-progress-track');
+    const fill = el('div', 'sqg-progress-fill');
     fill.style.width = `${progress || 0}%`;
     track.appendChild(fill);
     wrap.appendChild(track);

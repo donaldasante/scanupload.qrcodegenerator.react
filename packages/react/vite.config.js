@@ -1,5 +1,4 @@
 import { defineConfig } from "vite";
-import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import dts from "vite-plugin-dts";
 import { resolve } from "path";
@@ -7,7 +6,6 @@ import { resolve } from "path";
 export default defineConfig({
   plugins: [
     react(),
-    tailwindcss(),
     dts({
       include: ["src"],
       insertTypesEntry: true,
@@ -32,7 +30,7 @@ export default defineConfig({
           "react-dom": "ReactDOM",
         },
         assetFileNames: (assetInfo) => {
-          if (assetInfo.name === "index.css") return "index.css";
+          if (assetInfo.name?.endsWith('.css')) return "index.css";
           return assetInfo.name;
         },
       },

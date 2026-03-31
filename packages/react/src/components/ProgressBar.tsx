@@ -1,27 +1,22 @@
+import React from "react";
+
 interface ProgressBarProps {
   progress: number;
 }
 
-const ProgressBar: React.FC<ProgressBarProps> = ({ progress = 0 }) => {
-  return (
-    <div className="mt-3 w-full">
-      <div className="mb-2 flex justify-between">
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-500">
-          Uploading...
-        </span>
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-500">
-          {Math.round(progress || 0)}%
-        </span>
-      </div>
-
-      <div className="h-2.5 w-full rounded-full bg-gray-200 dark:bg-gray-200">
-        <div
-          className="h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)] transition-all duration-300 ease-out"
-          style={{ width: `${progress || 0}%` }}
-        ></div>
-      </div>
+const ProgressBar: React.FC<ProgressBarProps> = ({ progress = 0 }) => (
+  <div className="sqg-progress-wrap">
+    <div className="sqg-progress-labels">
+      <span className="sqg-progress-label">Uploading...</span>
+      <span className="sqg-progress-label">{Math.round(progress || 0)}%</span>
     </div>
-  );
-};
+    <div className="sqg-progress-track">
+      <div
+        className="sqg-progress-fill"
+        style={{ width: `${progress || 0}%` }}
+      />
+    </div>
+  </div>
+);
 
 export default ProgressBar;
