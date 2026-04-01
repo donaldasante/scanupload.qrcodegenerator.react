@@ -1,6 +1,6 @@
 {
   "name": "@scanupload/qr-code-generator-react",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "React wrapper for the ScanUpload QR Code Generator — QR code component with real-time file upload previews.",
   "main": "dist/index.cjs.js",
   "module": "dist/index.es.js",
@@ -17,7 +17,7 @@
     "react-dom": ">=19"
   },
   "dependencies": {
-    "@scanupload/qr-code-generator-core": "^0.1.7",
+    "@scanupload/qr-code-generator-core": "^0.1.8",
     "lucide-react": "^0.562.0",
     "react-icons": "^5.5.0",
     "react-qr-code": "^2.0.18"
