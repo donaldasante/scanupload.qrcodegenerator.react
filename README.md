@@ -249,13 +249,6 @@ npm run build ; npm run dev:vanilla
 
 ---
 
-<QrCodeGenerator sessionUrl='/api/session' refreshTokenUrl='/api/token'
-classNames={{
-        qrWrapper: 'my-qr-border',
-        reloadButton: 'my-reload-btn',
-        header: 'my-header'
-    }} />
-
 ````
 
 ---
@@ -293,12 +286,6 @@ Use `style` to inject design tokens per-instance:
 
 ```tsx
 <QrCodeGenerator
-    style={
-        {
-            '--sqg-primary': '#1d4ed8',
-            '--sqg-border-radius': '0'
-        } as React.CSSProperties
-    }
     sessionUrl='/api/session'
     refreshTokenUrl='/api/token'
 />
