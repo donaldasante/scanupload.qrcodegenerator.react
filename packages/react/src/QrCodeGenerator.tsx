@@ -4,29 +4,7 @@ import Logo from "./components/Logo";
 import { FaRedo } from "react-icons/fa";
 import { DocumentPreviewer } from "./components/DocumentPreviewer";
 import { FileList } from "./components/FileList";
-import { cn } from "./utility/cn";
 import { useQrCodeCore } from "./hooks/useQrCodeCore";
-
-export interface QrCodeClassNames {
-  /** Outer <section> wrapper */
-  root?: string;
-  /** Loading spinner overlay */
-  loadingOverlay?: string;
-  /** Error / retry overlay */
-  errorOverlay?: string;
-  /** Button inside the error overlay */
-  errorButton?: string;
-  /** Header <h1> element */
-  header?: string;
-  /** Bordered box that wraps the QR code */
-  qrWrapper?: string;
-  /** Reload button (shown when clickQrCodeToReload is false) */
-  reloadButton?: string;
-  /** "Click QR code to reload" hint text */
-  hintText?: string;
-  /** Container for the file grid / list */
-  fileContainer?: string;
-}
 
 export interface QrCodeGeneratorProps {
   sessionUrl: string;
@@ -37,8 +15,6 @@ export interface QrCodeGeneratorProps {
   clickQrCodeToReload?: boolean;
   filePreviewMode: "list" | "grid";
   size: "small" | "medium" | "large" | "xlarge";
-  classNames?: QrCodeClassNames;
-  style?: React.CSSProperties;
 }
 
 export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
@@ -50,19 +26,16 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
   clickQrCodeToReload = false,
   size = "large",
   filePreviewMode = "grid",
-  classNames = {},
-  style,
 }) => {
-  const { state, retrySession } = useQrCodeCore({ sessionUrl, refreshTokenUrl });
+  const { state, retrySession } = useQrCodeCore({
+    sessionUrl,
+    refreshTokenUrl,
+  });
 
   return (
-    <section
-      className={cn("sqg-root", classNames.root)}
-      data-size={size}
-      style={style}
-    >
+    <section className="sqg-root" data-size={size}>
       {state.loading && (
-        <div className={cn("sqg-overlay", classNames.loadingOverlay)}>
+        <div className="sqg-overlay">
           <div className="sqg-loading-content">
             <div className="sqg-spinner" />
             <p className="sqg-loading-text">Loading...</p>
@@ -70,14 +43,14 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
         </div>
       )}
       {!state.loading && state.retry && (
-        <div className={cn("sqg-overlay", classNames.errorOverlay)}>
+        <div className="sqg-overlay">
           <div className="sqg-error-content">
             <p className="sqg-error-text">Cannot create session</p>
             <button
               onClick={async () => {
                 await retrySession();
               }}
-              className={cn("sqg-retry-btn", classNames.errorButton)}
+              className="sqg-retry-btn"
             >
               <FaRedo />
             </button>
@@ -87,9 +60,7 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
       <div className="sqg-content">
         {showHeader && (
           <header className="sqg-header">
-            <h1 className={cn("sqg-header-title", classNames.header)}>
-              {header}
-            </h1>
+            <h1 className="sqg-header-title">{header}</h1>
           </header>
         )}
         <div
@@ -99,7 +70,7 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
               await retrySession();
             }
           }}
-          className={cn("sqg-qr-wrapper", classNames.qrWrapper)}
+          className="sqg-qr-wrapper"
           style={clickQrCodeToReload ? { cursor: "pointer" } : undefined}
         >
           <div className="sqg-qr-inner">
@@ -124,19 +95,17 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
               onClick={async () => {
                 await retrySession();
               }}
-              className={cn("sqg-reload-btn", classNames.reloadButton)}
+              className="sqg-reload-btn"
             >
               <FaRedo /> <span>Reload</span>
             </button>
           </div>
         ) : (
           <div className="sqg-reload-section">
-            <p className={cn("sqg-hint-text", classNames.hintText)}>
-              Click QR code to reload
-            </p>
+            <p className="sqg-hint-text">Click QR code to reload</p>
           </div>
         )}
-        <div className={cn("sqg-file-container", classNames.fileContainer)}>
+        <div className="sqg-file-container">
           {filePreviewMode === "grid" ? (
             state.uploadedFiles.map((file, index) => (
               <DocumentPreviewer key={index} file={file} />

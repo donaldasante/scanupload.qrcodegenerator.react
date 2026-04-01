@@ -2,63 +2,63 @@
 # Builds core, react, and vanilla packages, then publishes to npm.
 
 trigger:
-    tags:
-        include:
-            - release.*
+  tags:
+    include:
+      - release.*
 
 pool:
-    vmImage: 'ubuntu-latest'
+  vmImage: "ubuntu-latest"
 
 variables:
-    - group: scanupload-qrcodegenerator-react-variables
+  - group: scanupload-qrcodegenerator-react-variables
 
 steps:
-    - checkout: self
-      fetchDepth: 0
+  - checkout: self
+    fetchDepth: 0
 
-    - script: |
-          git config --global user.email "azdo_ci@scanupload.net"
-          git config --global user.name "Azure DevOps CI"
-          git config --global http.postBuffer 524288000
+  - script: |
+      git config --global user.email "azdo_ci@scanupload.net"
+      git config --global user.name "Azure DevOps CI"
+      git config --global http.postBuffer 524288000
 
-          git remote add github https://$(GITHUB_PAT)@github.com/donaldasante/scanupload.qrcodegenerator.react || true
+      git remote add github https://$(GITHUB_PAT)@github.com/donaldasante/scanupload.qrcodegenerator.react || true
 
-          git push github HEAD:refs/heads/main --force
-          git push github --tags --force
-      displayName: Mirror repo to GitHub
+      git push github HEAD:refs/heads/main --force
+      git push github --tags --force
+    displayName: Mirror repo to GitHub
 
-    - task: NodeTool@0
-      inputs:
-          versionSpec: '20.x'
-      displayName: 'Install Node.js'
+  - task: NodeTool@0
+    inputs:
+      versionSpec: "20.x"
+    displayName: "Install Node.js"
 
-    - script: npm ci
-      displayName: 'Install workspace dependencies'
+  - script: npm ci
+    displayName: "Install workspace dependencies"
 
-    - script: npm run build
-      displayName: 'Build all packages (core → react → vanilla)'
+  - script: npm run build
+    displayName: "Build all packages (core → react → vanilla)"
 
-    - script: |
-          echo "//registry.npmjs.org/:_authToken=$(NPM_TOKEN)" > .npmrc
-      displayName: 'Configure npm auth'
+  - script: |
+      echo "//registry.npmjs.org/:_authToken=$(NPM_TOKEN)" > .npmrc
+    displayName: "Configure npm auth"
 
-    - script: |
-          cd packages/core
-          VERSION=$(node -p "require('./package.json').version")
-          echo "Publishing @scanupload/qr-code-generator-core@$VERSION"
-          npm publish --access public
-      displayName: 'Publish core package'
+  - script: |
+      cd packages/core
+      VERSION=$(node -p "require('./package.json').version")
+      echo "Publishing @scanupload/qr-code-generator-core@$VERSION"
+      npm publish --access public
+    displayName: "Publish core package"
 
-    - script: |
-          cd packages/react
-          VERSION=$(node -p "require('./package.json').version")
-          echo "Publishing @scanupload/qr-code-generator-react@$VERSION"
-          npm publish --access public
-      displayName: 'Publish react package'
+  - script: |
+      cd packages/react
+      VERSION=$(node -p "require('./package.json').version")
+      echo "Publishing @scanupload/qr-code-generator-react@$VERSION"
+      npm publish --access public
+    displayName: "Publish react package"
 
-    - script: |
-          cd packages/vanilla
-          VERSION=$(node -p "require('./package.json').version")
-          echo "Publishing @scanupload/qr-code-generator-vanilla@$VERSION"
-          npm publish --access public
-      displayName: 'Publish vanilla package'
+  - script: |
+      cd packages/vanilla
+      VERSION=$(node -p "require('./package.json').version")
+      echo "Publishing @scanupload/qr-code-generator-vanilla@$VERSION"
+      npm publish --access public
+    displayName: "Publish vanilla JS package"

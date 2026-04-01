@@ -1,42 +1,41 @@
 {
-    "name": "@scanupload/qr-code-generator-react",
-    "version": "0.1.7",
-    "description": "React wrapper for the ScanUpload QR Code Generator — QR code component with real-time file upload previews.",
-    "main": "dist/index.cjs.js",
-    "module": "dist/index.es.js",
-    "style": "dist/index.css",
-    "types": "dist/index.d.ts",
-    "files": [
-        "dist"
-    ],
-    "scripts": {
-        "build": "tsc && vite build"
-    },
-    "peerDependencies": {
-        "react": ">=19",
-        "react-dom": ">=19"
-    },
-    "dependencies": {
-        "@scanupload/qr-code-generator-core": "^0.1.7",
-        "clsx": "^2.1.1",
-        "lucide-react": "^0.562.0",
-        "react-icons": "^5.5.0",
-        "react-qr-code": "^2.0.18"
-    },
-    "devDependencies": {
-        "@types/react": "^19.1.8",
-        "@types/react-dom": "^19.1.6",
-        "@vitejs/plugin-react": "^4.6.0",
-        "typescript": "^5.9.3",
-        "vite": "^7.1.11",
-        "vite-plugin-dts": "^4.5.4"
-    },
-    "keywords": [
-        "scanupload",
-        "qr-code",
-        "react",
-        "signalr"
-    ],
-    "author": "Donald Asante",
-    "license": "MIT"
+  "name": "@scanupload/qr-code-generator-react",
+  "version": "0.1.7",
+  "description": "React wrapper for the ScanUpload QR Code Generator — QR code component with real-time file upload previews.",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.es.js",
+  "style": "dist/index.css",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc && vite build"
+  },
+  "peerDependencies": {
+    "react": ">=19",
+    "react-dom": ">=19"
+  },
+  "dependencies": {
+    "@scanupload/qr-code-generator-core": "^0.1.7",
+    "lucide-react": "^0.562.0",
+    "react-icons": "^5.5.0",
+    "react-qr-code": "^2.0.18"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.6.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.11",
+    "vite-plugin-dts": "^4.5.4"
+  },
+  "keywords": [
+    "scanupload",
+    "qr-code",
+    "react",
+    "signalr"
+  ],
+  "author": "Donald Asante",
+  "license": "MIT"
 }

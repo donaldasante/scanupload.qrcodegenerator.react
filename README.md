@@ -61,7 +61,8 @@ interface.
 
 ## Backend Integration
 
-- [ScanUpload.Api.Client](https://github.com/donaldasante/scanupload.api.client) — ScanUpload backend proxy (.NET)
+- [ScanUpload.Api.Client](https://github.com/donaldasante/scanupload.api.client)
+  — ScanUpload backend proxy (.NET)
 
 The component needs two backend endpoints:
 
@@ -83,10 +84,10 @@ npm install @scanupload/qr-code-generator-react
 Peer dependencies: `react >= 19`, `react-dom >= 19`.
 
 ```tsx
-import { QrCodeGenerator } from '@scanupload/qr-code-generator-react';
-import '@scanupload/qr-code-generator-react/dist/index.css';
+import { QrCodeGenerator } from "@scanupload/qr-code-generator-react";
+import "@scanupload/qr-code-generator-react/dist/index.css";
 
-<QrCodeGenerator sessionUrl='/api/session' refreshTokenUrl='/api/token' />;
+<QrCodeGenerator sessionUrl="/api/session" refreshTokenUrl="/api/token" />;
 ```
 
 **Custom CSS / overrides**
@@ -96,21 +97,21 @@ custom properties. Import your overrides **after** the package CSS so
 same-specificity rules win via cascade:
 
 ```tsx
-import '@scanupload/qr-code-generator-react/dist/index.css'; // base styles
-import './my-overrides.css'; // your overrides
+import "@scanupload/qr-code-generator-react/dist/index.css"; // base styles
+import "./my-overrides.css"; // your overrides
 ```
 
 ```css
 /* my-overrides.css */
 :root {
-    --sqg-primary: #6366f1; /* spinner, connected logo, retry button */
-    --sqg-border-radius: 1rem; /* root + qr wrapper corners */
-    --sqg-error-color: #e11d48; /* error text and disconnected logo */
+  --sqg-primary: #6366f1; /* spinner, connected logo, retry button */
+  --sqg-border-radius: 1rem; /* root + qr wrapper corners */
+  --sqg-error-color: #e11d48; /* error text and disconnected logo */
 }
 
 /* Or target specific elements directly */
 .sqg-root {
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
 }
 ```
 
@@ -130,13 +131,13 @@ npm install @scanupload/qr-code-generator-vanilla
 **Zero-config (styles auto-injected)**
 
 ```ts
-import { QrCodeGeneratorElement } from '@scanupload/qr-code-generator-vanilla';
+import { QrCodeGeneratorElement } from "@scanupload/qr-code-generator-vanilla";
 
 new QrCodeGeneratorElement({
-    container: document.getElementById('widget')!,
-    sessionUrl: '/api/session',
-    refreshTokenUrl: '/api/token'
-    // injectStyles defaults to true
+  container: document.getElementById("widget")!,
+  sessionUrl: "/api/session",
+  refreshTokenUrl: "/api/token",
+  // injectStyles defaults to true
 }).start();
 ```
 
@@ -149,15 +150,15 @@ override them, disable auto-injection and import the stylesheet yourself so your
 overrides cascade correctly:
 
 ```ts
-import { QrCodeGeneratorElement } from '@scanupload/qr-code-generator-vanilla';
-import '@scanupload/qr-code-generator-vanilla/dist/index.css'; // base styles
-import './my-overrides.css'; // your overrides
+import { QrCodeGeneratorElement } from "@scanupload/qr-code-generator-vanilla";
+import "@scanupload/qr-code-generator-vanilla/dist/index.css"; // base styles
+import "./my-overrides.css"; // your overrides
 
 new QrCodeGeneratorElement({
-    container: document.getElementById('widget')!,
-    sessionUrl: '/api/session',
-    refreshTokenUrl: '/api/token',
-    injectStyles: false // prevents double-injection
+  container: document.getElementById("widget")!,
+  sessionUrl: "/api/session",
+  refreshTokenUrl: "/api/token",
+  injectStyles: false, // prevents double-injection
 }).start();
 ```
 
@@ -166,23 +167,23 @@ new QrCodeGeneratorElement({
 ```css
 /* Change the QR wrapper border */
 .sqg-root {
-    border-radius: 1rem;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+  border-radius: 1rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
 }
 
 /* Accent colour for the spinner */
 .sqg-spinner {
-    border-top-color: #6366f1;
+  border-top-color: #6366f1;
 }
 
 /* Connected logo state */
 .sqg-logo--connected {
-    background: #22c55e;
+  background: #22c55e;
 }
 
 /* Error text */
 .sqg-error-text {
-    color: #e11d48;
+  color: #e11d48;
 }
 ```
 
@@ -233,8 +234,6 @@ npm run build ; npm run dev:vanilla
 | `clickQrCodeToReload` | `boolean`                                    | `false`   |          | When `true`, clicking the QR code reloads the session. When `false`, a Reload button is shown instead. |
 | `size`                | `"small" \| "medium" \| "large" \| "xlarge"` | `"large"` |          | Overall size of the QR code container.                                                                 |
 | `filePreviewMode`     | `"list" \| "grid"`                           | `"grid"`  |          | Display uploaded files as a grid of tiles or a compact list.                                           |
-| `classNames`          | `QrCodeClassNames`                           | `{}`      |          | Slot-based Tailwind class overrides. See [classNames Customisation](#classnames-customisation).        |
-| `style`               | `React.CSSProperties`                        | —         |          | Inline styles applied to the root `<section>`.                                                         |
 
 ---
 
@@ -250,34 +249,14 @@ npm run build ; npm run dev:vanilla
 
 ---
 
-## classNames Customisation (React)
-
-Each key appends extra class names to a specific UI region, giving you a
-per-instance escape hatch without touching global CSS.
-
-| Key              | Element     | Description                                                                |
-| ---------------- | ----------- | -------------------------------------------------------------------------- |
-| `root`           | `<section>` | Outermost wrapper of the component.                                        |
-| `loadingOverlay` | `<div>`     | Spinner overlay shown while the session is loading.                        |
-| `errorOverlay`   | `<div>`     | Overlay shown when the session could not be created.                       |
-| `errorButton`    | `<button>`  | Retry button inside the error overlay.                                     |
-| `header`         | `<h1>`      | The header text element.                                                   |
-| `qrWrapper`      | `<div>`     | Bordered box wrapping the QR code.                                         |
-| `reloadButton`   | `<button>`  | Reload button shown when `clickQrCodeToReload` is `false`.                 |
-| `hintText`       | `<p>`       | "Click QR code to reload" hint shown when `clickQrCodeToReload` is `true`. |
-| `fileContainer`  | `<div>`     | Container for the file grid or list.                                       |
-
-```tsx
-<QrCodeGenerator
-    sessionUrl='/api/session'
-    refreshTokenUrl='/api/token'
-    classNames={{
+<QrCodeGenerator sessionUrl='/api/session' refreshTokenUrl='/api/token'
+classNames={{
         qrWrapper: 'my-qr-border',
         reloadButton: 'my-reload-btn',
         header: 'my-header'
-    }}
-/>
-```
+    }} />
+
+````
 
 ---
 
@@ -323,9 +302,10 @@ Use `style` to inject design tokens per-instance:
     sessionUrl='/api/session'
     refreshTokenUrl='/api/token'
 />
-```
+````
 
-See the full token list in [CSS Custom Properties](#css-custom-properties-react--vanilla).
+See the full token list in
+[CSS Custom Properties](#css-custom-properties-react--vanilla).
 
 ---
 
