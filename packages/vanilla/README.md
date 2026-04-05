@@ -29,14 +29,18 @@ const widget = new QrCodeGeneratorElement({
 await widget.start();
 ```
 
-## Backend contract
+## Backend Integration
 
-Your backend must expose two endpoints:
+- [ScanUpload.Api.Client](https://github.com/donaldasante/scanupload.api.client)
+  — ScanUpload backend proxy (.NET)
+
+The component needs two backend endpoints:
 
 | Endpoint          | Method | Description                                                                                   |
 | ----------------- | ------ | --------------------------------------------------------------------------------------------- |
 | `sessionUrl`      | `POST` | Creates a ScanUpload session and returns `{ sessionId, accessToken, hubUrl, deviceLoginUrl }` |
 | `refreshTokenUrl` | `POST` | Returns a fresh Bearer token `{ access_token, expires_in }`                                   |
+|  |
 
 ## Options
 

@@ -1,19 +1,19 @@
 {
-    "name": "@scanupload/vanilla-js-demo",
-    "private": true,
-    "version": "0.0.0",
-    "description": "Dev demo app for the ScanUpload QR Code Generator vanilla JS package.",
-    "scripts": {
-        "dev": "vite",
-        "build": "tsc && vite build",
-        "preview": "vite preview"
-    },
-    "dependencies": {
-        "@scanupload/qr-code-generator-vanilla": "^0.1.7"
-    },
-    "devDependencies": {
-        "typescript": "^5.9.3",
-        "vite": "^7.1.11",
-        "vite-plugin-mkcert": "^1.17.8"
-    }
+  "name": "@scanupload/vanilla-js-demo",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Dev demo app for the ScanUpload QR Code Generator vanilla JS package.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@scanupload/qr-code-generator-vanilla": "^0.1.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^7.1.11",
+    "vite-plugin-mkcert": "^1.17.8"
+  }
 }

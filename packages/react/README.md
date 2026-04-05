@@ -33,9 +33,12 @@ export function UploadWidget() {
 }
 ```
 
-## Backend contract
+## Backend Integration
 
-Your backend must expose two endpoints:
+- [ScanUpload.Api.Client](https://github.com/donaldasante/scanupload.api.client)
+  — ScanUpload backend proxy (.NET)
+
+The component needs two backend endpoints:
 
 | Endpoint          | Method | Description                                                                                   |
 | ----------------- | ------ | --------------------------------------------------------------------------------------------- |
