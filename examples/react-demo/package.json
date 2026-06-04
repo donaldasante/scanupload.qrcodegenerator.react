@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@scanupload/qr-code-generator-react": "^0.1.8",
+    "@scanupload/qr-code-generator-react": "^0.1.9",
     "react": ">=19",
     "react-dom": ">=19"
   },

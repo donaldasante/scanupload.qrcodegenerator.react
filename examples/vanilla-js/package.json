@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@scanupload/qr-code-generator-vanilla": "^0.1.8"
+    "@scanupload/qr-code-generator-vanilla": "^0.1.9"
   },
   "devDependencies": {
     "typescript": "^5.9.3",
