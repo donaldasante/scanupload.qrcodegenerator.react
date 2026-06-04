@@ -48,6 +48,12 @@ const unsubscribe = core.subscribe(() => {
 
 await core.start();
 
+// Update API endpoints at runtime (core reconnects automatically)
+await core.setOptions({
+  sessionUrl: "/api/new-session",
+  refreshTokenUrl: "/api/new-token",
+});
+
 // Later
 await core.retrySession();
 

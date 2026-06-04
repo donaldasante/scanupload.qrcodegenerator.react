@@ -1,16 +1,30 @@
 // Core runtime
-export { QrCodeGeneratorCore } from './QrCodeGeneratorCore';
-export type { QrCodeGeneratorCoreOptions } from './QrCodeGeneratorCore';
+export { QrCodeGeneratorCore } from "./QrCodeGeneratorCore";
+export type {
+  QrCodeGeneratorCoreOptions,
+  QrCodeGeneratorCoreSetOptions,
+} from "./QrCodeGeneratorCore";
 
 // Types
-export type { SessionResponse, TokenResponse, UploadedFile, QrCodeGeneratorState } from './types';
+export type {
+  SessionResponse,
+  TokenResponse,
+  UploadedFile,
+  QrCodeGeneratorState,
+} from "./types";
 
 // Storage adapter
-export type { StorageAdapter } from './storage';
-export { browserStorageAdapter } from './storage';
+export type { StorageAdapter } from "./storage";
+export { browserStorageAdapter } from "./storage";
 
 // API client
-export { postData, deleteData, ApiError } from './apiClient';
+export { postData, deleteData, ApiError } from "./apiClient";
 
 // Utilities
-export { isNullOrEmpty, debounce, debounceAsync, isExpired, truncateWithDots } from './utilities';
+export {
+  isNullOrEmpty,
+  debounce,
+  debounceAsync,
+  isExpired,
+  truncateWithDots,
+} from "./utilities";

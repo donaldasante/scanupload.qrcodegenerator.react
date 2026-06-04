@@ -40,7 +40,7 @@ The component needs two backend endpoints:
 | ----------------- | ------ | --------------------------------------------------------------------------------------------- |
 | `sessionUrl`      | `POST` | Creates a ScanUpload session and returns `{ sessionId, accessToken, hubUrl, deviceLoginUrl }` |
 | `refreshTokenUrl` | `POST` | Returns a fresh Bearer token `{ access_token, expires_in }`                                   |
-|  |
+|                   |
 
 ## Options
 
@@ -118,6 +118,10 @@ const widget = new QrCodeGeneratorElement({
 await widget.start();
 
 const state = widget.getState();
+await widget.setOptions({
+  sessionUrl: "/api/new-session",
+  refreshTokenUrl: "/api/new-token",
+});
 await widget.retrySession();
 
 widget.dispose();
