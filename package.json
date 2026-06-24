@@ -1,20 +1,22 @@
 {
   "name": "@scanupload/qr-code-generator-monorepo",
   "private": true,
-  "description": "Monorepo for ScanUpload QR Code Generator — core, React, vanilla, and future framework packages.",
+  "description": "Monorepo for ScanUpload QR Code Generator — core, React, vanilla, Vue, and Angular framework packages.",
   "workspaces": [
     "packages/*",
     "examples/*"
   ],
   "scripts": {
-    "build": "npm run build --workspace=packages/core && npm run build --workspace=packages/react && npm run build --workspace=packages/vanilla && npm run build --workspace=packages/vue",
+    "build": "npm run build --workspace=packages/core && npm run build --workspace=packages/react && npm run build --workspace=packages/vanilla && npm run build --workspace=packages/vue && npm run build --workspace=packages/angular",
     "build:core": "npm run build --workspace=packages/core",
     "build:react": "npm run build --workspace=packages/react",
     "build:vanilla": "npm run build --workspace=packages/vanilla",
     "build:vue": "npm run build --workspace=packages/vue",
+    "build:angular": "npm run build --workspace=packages/angular",
     "dev:react": "npm run dev --workspace=examples/react-demo",
     "dev:vanilla": "npm run dev --workspace=examples/vanilla-js",
     "dev:vue": "npm run dev --workspace=examples/vue-demo",
+    "dev:angular": "npm run dev --workspace=examples/angular-demo",
     "lint": "eslint packages --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "devDependencies": {

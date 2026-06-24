@@ -6,7 +6,7 @@ status updates via a SignalR connection and renders a live preview of every
 uploaded file.
 
 The project is a **monorepo** with a framework-agnostic core and dedicated
-adapter packages for React, Vue, and Vanilla JS/TS.
+adapter packages for React, Vue, Angular, and Vanilla JS/TS.
 
 ---
 
@@ -17,10 +17,12 @@ packages/
   core/       Framework-agnostic runtime — SignalR, session management, state, types
   react/      React component, hooks, and semantic CSS UI
   vue/        Vue 3 component, composables, and semantic CSS UI
+  angular/    Angular standalone components, signal controller, and semantic CSS UI
   vanilla/    QrCodeGeneratorElement for Vanilla JS/TS with built-in DOM rendering
 examples/
   react-demo/   Vite + React dev app
   vue-demo/     Vite + Vue dev app
+  angular-demo/ Vite + Angular dev app
   vanilla-js/   Vite + Vanilla TS dev app
 ```
 
@@ -33,6 +35,7 @@ examples/
 | [`@scanupload/qr-code-generator-core`](packages/core)       | Framework-agnostic runtime — SignalR session management, state, types         |
 | [`@scanupload/qr-code-generator-react`](packages/react)     | React `<QrCodeGenerator>` component with semantic CSS UI and file previews    |
 | [`@scanupload/qr-code-generator-vue`](packages/vue)         | Vue 3 `<QrCodeGenerator>` component with semantic CSS UI and file previews    |
+| [`@scanupload/qr-code-generator-angular`](packages/angular) | Angular `<sqg-qr-code-generator>` standalone component with file previews     |
 | [`@scanupload/qr-code-generator-vanilla`](packages/vanilla) | `QrCodeGeneratorElement` — self-contained DOM renderer, no framework required |
 
 ---
@@ -54,6 +57,11 @@ React adapter (packages/react)
 Vue adapter (packages/vue)
 ├── useQrCodeCore           — reactive ref wrapper around Core
 ├── QrCodeGenerator         — semantic CSS component (props-driven)
+└── DocumentPreviewer, FileList, ProgressBar, Logo
+
+Angular adapter (packages/angular)
+├── useQrCodeCore           — signal-based controller wrapping Core
+├── QrCodeGeneratorComponent — semantic CSS standalone component (input-driven)
 └── DocumentPreviewer, FileList, ProgressBar, Logo
 
 Vanilla adapter (packages/vanilla)
@@ -156,6 +164,37 @@ import '@scanupload/qr-code-generator-vue/dist/index.css'; // base styles
 import './my-overrides.css'; // your overrides
 ```
 
+### Angular
+
+```bash
+npm install @scanupload/qr-code-generator-angular
+```
+
+Peer dependencies: `@angular/core >= 20.2.0`, `@angular/common >= 20.2.0`.
+
+```ts
+import { Component } from '@angular/core';
+import { QrCodeGeneratorComponent } from '@scanupload/qr-code-generator-angular';
+
+@Component({
+    selector: 'app-root',
+    standalone: true,
+    imports: [QrCodeGeneratorComponent],
+    template: ` <sqg-qr-code-generator sessionUrl="/api/session" refreshTokenUrl="/api/token"></sqg-qr-code-generator> `
+})
+export class AppComponent {}
+```
+
+**Custom CSS / overrides**
+
+Import the package stylesheet once (e.g. in `styles.css`), then your overrides
+**after** it so same-specificity rules win via cascade:
+
+```css
+@import '@scanupload/qr-code-generator-angular/dist/index.css'; /* base styles */
+@import './my-overrides.css'; /* your overrides */
+```
+
 ### Vanilla JS / TypeScript
 
 ```bash
@@ -242,7 +281,7 @@ npm install @scanupload/qr-code-generator-core
 # Install all workspace dependencies
 npm install
 
-# Build all packages in dependency order (core → react → vanilla → vue)
+# Build all packages in dependency order (core → react → vanilla → vue → angular)
 npm run build
 
 # Build individual packages
@@ -250,10 +289,12 @@ npm run build:core
 npm run build:react
 npm run build:vanilla
 npm run build:vue
+npm run build:angular
 
 # Run the dev examples (rebuilding packages first is recommended)
 npm run build ; npm run dev:react
 npm run build ; npm run dev:vue
+npm run build ; npm run dev:angular
 npm run build ; npm run dev:vanilla
 ```
 
@@ -262,10 +303,12 @@ npm run build ; npm run dev:vanilla
 
 ---
 
-## React & Vue Props Reference
+## React, Vue & Angular Props Reference
 
-Both the React and Vue `<QrCodeGenerator>` components accept the same props.
-In Vue, use kebab-case attribute names (e.g. `session-url`, `show-header`).
+The React, Vue, and Angular `<QrCodeGenerator>` components accept the same props.
+In Vue, use kebab-case attribute names (e.g. `session-url`, `show-header`). In
+Angular, bind booleans with `[showHeader]="true"` and the selector is
+`<sqg-qr-code-generator>`.
 
 | Prop                  | Type                                         | Default   | Required | Description                                                                                            |
 | --------------------- | -------------------------------------------- | --------- | -------- | ------------------------------------------------------------------------------------------------------ |
@@ -296,7 +339,7 @@ In Vue, use kebab-case attribute names (e.g. `session-url`, `show-header`).
 
 ---
 
-## CSS Custom Properties (React, Vue & Vanilla)
+## CSS Custom Properties (React, Vue, Angular & Vanilla)
 
 All packages share the same `--sqg-*` token names. Setting them once on `:root`
 themes every widget simultaneously.
@@ -335,7 +378,7 @@ Use `style` to inject design tokens per-instance:
 ````
 
 See the full token list in
-[CSS Custom Properties](#css-custom-properties-react-vue--vanilla).
+[CSS Custom Properties](#css-custom-properties-react-vue-angular--vanilla).
 
 ---
 

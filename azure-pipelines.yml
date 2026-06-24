@@ -1,5 +1,5 @@
 # ScanUpload QR Code Generator — Monorepo CI/CD
-# Builds core, react, vanilla, and vue packages, then publishes to npm.
+# Builds core, react, vanilla, vue, and angular packages, then publishes to npm.
 
 trigger:
     tags:
@@ -36,7 +36,7 @@ steps:
       displayName: 'Install workspace dependencies'
 
     - script: npm run build
-      displayName: 'Build all packages (core → react → vanilla → vue)'
+      displayName: 'Build all packages (core → react → vanilla → vue → angular)'
 
     - script: |
           echo "//registry.npmjs.org/:_authToken=$(NPM_TOKEN)" > .npmrc
@@ -85,3 +85,14 @@ steps:
             npm publish --access public
           fi
       displayName: 'Publish vue package'
+
+    - script: |
+          cd packages/angular
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view @scanupload/qr-code-generator-angular@$VERSION version > /dev/null 2>&1; then
+            echo "@scanupload/qr-code-generator-angular@$VERSION already published — skipping"
+          else
+            echo "Publishing @scanupload/qr-code-generator-angular@$VERSION"
+            npm publish --access public
+          fi
+      displayName: 'Publish angular package'
