@@ -6,7 +6,7 @@ status updates via a SignalR connection and renders a live preview of every
 uploaded file.
 
 The project is a **monorepo** with a framework-agnostic core and dedicated
-adapter packages for React and Vanilla JS/TS.
+adapter packages for React, Vue, and Vanilla JS/TS.
 
 ---
 
@@ -15,10 +15,12 @@ adapter packages for React and Vanilla JS/TS.
 ```
 packages/
   core/       Framework-agnostic runtime — SignalR, session management, state, types
-  react/      React component, hooks, and Tailwind-based UI
+  react/      React component, hooks, and semantic CSS UI
+  vue/        Vue 3 component, composables, and semantic CSS UI
   vanilla/    QrCodeGeneratorElement for Vanilla JS/TS with built-in DOM rendering
 examples/
   react-demo/   Vite + React dev app
+  vue-demo/     Vite + Vue dev app
   vanilla-js/   Vite + Vanilla TS dev app
 ```
 
@@ -30,6 +32,7 @@ examples/
 | ----------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | [`@scanupload/qr-code-generator-core`](packages/core)       | Framework-agnostic runtime — SignalR session management, state, types         |
 | [`@scanupload/qr-code-generator-react`](packages/react)     | React `<QrCodeGenerator>` component with semantic CSS UI and file previews    |
+| [`@scanupload/qr-code-generator-vue`](packages/vue)         | Vue 3 `<QrCodeGenerator>` component with semantic CSS UI and file previews    |
 | [`@scanupload/qr-code-generator-vanilla`](packages/vanilla) | `QrCodeGeneratorElement` — self-contained DOM renderer, no framework required |
 
 ---
@@ -45,6 +48,11 @@ QrCodeGeneratorCore (packages/core)
 
 React adapter (packages/react)
 ├── useQrCodeCore           — useSyncExternalStore wrapper around Core
+├── QrCodeGenerator         — semantic CSS component (props-driven)
+└── DocumentPreviewer, FileList, ProgressBar, Logo
+
+Vue adapter (packages/vue)
+├── useQrCodeCore           — reactive ref wrapper around Core
 ├── QrCodeGenerator         — semantic CSS component (props-driven)
 └── DocumentPreviewer, FileList, ProgressBar, Logo
 
@@ -84,10 +92,10 @@ npm install @scanupload/qr-code-generator-react
 Peer dependencies: `react >= 19`, `react-dom >= 19`.
 
 ```tsx
-import { QrCodeGenerator } from "@scanupload/qr-code-generator-react";
-import "@scanupload/qr-code-generator-react/dist/index.css";
+import { QrCodeGenerator } from '@scanupload/qr-code-generator-react';
+import '@scanupload/qr-code-generator-react/dist/index.css';
 
-<QrCodeGenerator sessionUrl="/api/session" refreshTokenUrl="/api/token" />;
+<QrCodeGenerator sessionUrl='/api/session' refreshTokenUrl='/api/token' />;
 ```
 
 **Custom CSS / overrides**
@@ -97,26 +105,56 @@ custom properties. Import your overrides **after** the package CSS so
 same-specificity rules win via cascade:
 
 ```tsx
-import "@scanupload/qr-code-generator-react/dist/index.css"; // base styles
-import "./my-overrides.css"; // your overrides
+import '@scanupload/qr-code-generator-react/dist/index.css'; // base styles
+import './my-overrides.css'; // your overrides
 ```
 
 ```css
 /* my-overrides.css */
 :root {
-  --sqg-primary: #6366f1; /* spinner, connected logo, retry button */
-  --sqg-border-radius: 1rem; /* root + qr wrapper corners */
-  --sqg-error-color: #e11d48; /* error text and disconnected logo */
+    --sqg-primary: #6366f1; /* spinner, connected logo, retry button */
+    --sqg-border-radius: 1rem; /* root + qr wrapper corners */
+    --sqg-error-color: #e11d48; /* error text and disconnected logo */
 }
 
 /* Or target specific elements directly */
 .sqg-root {
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
 }
 ```
 
 You can also use the `classNames` or `style` props for per-instance overrides
 (see [classNames Customisation](#classnames-customisation) below).
+
+### Vue
+
+```bash
+npm install @scanupload/qr-code-generator-vue
+```
+
+Peer dependency: `vue >= 3.4`.
+
+```vue
+<script setup lang="ts">
+import { QrCodeGenerator } from '@scanupload/qr-code-generator-vue';
+import '@scanupload/qr-code-generator-vue/dist/index.css';
+</script>
+
+<template>
+    <QrCodeGenerator session-url="/api/session" refresh-token-url="/api/token" />
+</template>
+```
+
+**Custom CSS / overrides**
+
+The package ships a `dist/index.css` containing all `.sqg-*` rules and CSS
+custom properties. Import your overrides **after** the package CSS so
+same-specificity rules win via cascade:
+
+```ts
+import '@scanupload/qr-code-generator-vue/dist/index.css'; // base styles
+import './my-overrides.css'; // your overrides
+```
 
 ### Vanilla JS / TypeScript
 
@@ -131,13 +169,13 @@ npm install @scanupload/qr-code-generator-vanilla
 **Zero-config (styles auto-injected)**
 
 ```ts
-import { QrCodeGeneratorElement } from "@scanupload/qr-code-generator-vanilla";
+import { QrCodeGeneratorElement } from '@scanupload/qr-code-generator-vanilla';
 
 new QrCodeGeneratorElement({
-  container: document.getElementById("widget")!,
-  sessionUrl: "/api/session",
-  refreshTokenUrl: "/api/token",
-  // injectStyles defaults to true
+    container: document.getElementById('widget')!,
+    sessionUrl: '/api/session',
+    refreshTokenUrl: '/api/token'
+    // injectStyles defaults to true
 }).start();
 ```
 
@@ -150,15 +188,15 @@ override them, disable auto-injection and import the stylesheet yourself so your
 overrides cascade correctly:
 
 ```ts
-import { QrCodeGeneratorElement } from "@scanupload/qr-code-generator-vanilla";
-import "@scanupload/qr-code-generator-vanilla/dist/index.css"; // base styles
-import "./my-overrides.css"; // your overrides
+import { QrCodeGeneratorElement } from '@scanupload/qr-code-generator-vanilla';
+import '@scanupload/qr-code-generator-vanilla/dist/index.css'; // base styles
+import './my-overrides.css'; // your overrides
 
 new QrCodeGeneratorElement({
-  container: document.getElementById("widget")!,
-  sessionUrl: "/api/session",
-  refreshTokenUrl: "/api/token",
-  injectStyles: false, // prevents double-injection
+    container: document.getElementById('widget')!,
+    sessionUrl: '/api/session',
+    refreshTokenUrl: '/api/token',
+    injectStyles: false // prevents double-injection
 }).start();
 ```
 
@@ -167,23 +205,23 @@ new QrCodeGeneratorElement({
 ```css
 /* Change the QR wrapper border */
 .sqg-root {
-  border-radius: 1rem;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+    border-radius: 1rem;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
 }
 
 /* Accent colour for the spinner */
 .sqg-spinner {
-  border-top-color: #6366f1;
+    border-top-color: #6366f1;
 }
 
 /* Connected logo state */
 .sqg-logo--connected {
-  background: #22c55e;
+    background: #22c55e;
 }
 
 /* Error text */
 .sqg-error-text {
-  color: #e11d48;
+    color: #e11d48;
 }
 ```
 
@@ -204,16 +242,18 @@ npm install @scanupload/qr-code-generator-core
 # Install all workspace dependencies
 npm install
 
-# Build all packages in dependency order (core → react → vanilla)
+# Build all packages in dependency order (core → react → vanilla → vue)
 npm run build
 
 # Build individual packages
 npm run build:core
 npm run build:react
 npm run build:vanilla
+npm run build:vue
 
 # Run the dev examples (rebuilding packages first is recommended)
 npm run build ; npm run dev:react
+npm run build ; npm run dev:vue
 npm run build ; npm run dev:vanilla
 ```
 
@@ -222,7 +262,10 @@ npm run build ; npm run dev:vanilla
 
 ---
 
-## React Props Reference
+## React & Vue Props Reference
+
+Both the React and Vue `<QrCodeGenerator>` components accept the same props.
+In Vue, use kebab-case attribute names (e.g. `session-url`, `show-header`).
 
 | Prop                  | Type                                         | Default   | Required | Description                                                                                            |
 | --------------------- | -------------------------------------------- | --------- | -------- | ------------------------------------------------------------------------------------------------------ |
@@ -253,10 +296,10 @@ npm run build ; npm run dev:vanilla
 
 ---
 
-## CSS Custom Properties (React & Vanilla)
+## CSS Custom Properties (React, Vue & Vanilla)
 
-Both packages share the same `--sqg-*` token names. Setting them once on `:root`
-themes both widgets simultaneously.
+All packages share the same `--sqg-*` token names. Setting them once on `:root`
+themes every widget simultaneously.
 
 | Token                 | Default                  | Affects                                       |
 | --------------------- | ------------------------ | --------------------------------------------- |
@@ -292,7 +335,7 @@ Use `style` to inject design tokens per-instance:
 ````
 
 See the full token list in
-[CSS Custom Properties](#css-custom-properties-react--vanilla).
+[CSS Custom Properties](#css-custom-properties-react-vue--vanilla).
 
 ---
 

@@ -7,12 +7,14 @@
     "examples/*"
   ],
   "scripts": {
-    "build": "npm run build --workspace=packages/core && npm run build --workspace=packages/react && npm run build --workspace=packages/vanilla",
+    "build": "npm run build --workspace=packages/core && npm run build --workspace=packages/react && npm run build --workspace=packages/vanilla && npm run build --workspace=packages/vue",
     "build:core": "npm run build --workspace=packages/core",
     "build:react": "npm run build --workspace=packages/react",
     "build:vanilla": "npm run build --workspace=packages/vanilla",
+    "build:vue": "npm run build --workspace=packages/vue",
     "dev:react": "npm run dev --workspace=examples/react-demo",
     "dev:vanilla": "npm run dev --workspace=examples/vanilla-js",
+    "dev:vue": "npm run dev --workspace=examples/vue-demo",
     "lint": "eslint packages --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "devDependencies": {

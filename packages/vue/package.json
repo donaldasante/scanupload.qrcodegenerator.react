@@ -1,0 +1,39 @@
+{
+    "name": "@scanupload/qr-code-generator-vue",
+    "version": "0.1.9",
+    "description": "Vue 3 wrapper for the ScanUpload QR Code Generator — QR code component with real-time file upload previews.",
+    "main": "dist/index.cjs.js",
+    "module": "dist/index.es.js",
+    "style": "dist/index.css",
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "vue-tsc --noEmit && vite build"
+    },
+    "peerDependencies": {
+        "vue": ">=3.4"
+    },
+    "dependencies": {
+        "@scanupload/qr-code-generator-core": "^0.1.9",
+        "lucide-vue-next": "^0.562.0",
+        "qrcode.vue": "^3.6.0"
+    },
+    "devDependencies": {
+        "@vitejs/plugin-vue": "^6.0.0",
+        "typescript": "^5.9.3",
+        "vite": "^7.1.11",
+        "vite-plugin-dts": "^4.5.4",
+        "vue": "^3.5.13",
+        "vue-tsc": "^2.2.10"
+    },
+    "keywords": [
+        "scanupload",
+        "qr-code",
+        "vue",
+        "signalr"
+    ],
+    "author": "Donald Asante",
+    "license": "MIT"
+}
