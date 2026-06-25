@@ -6,7 +6,7 @@ status updates via a SignalR connection and renders a live preview of every
 uploaded file.
 
 The project is a **monorepo** with a framework-agnostic core and dedicated
-adapter packages for React, Vue, Angular, and Vanilla JS/TS.
+adapter packages for React, Vue, Angular, Svelte, and Vanilla JS/TS.
 
 ---
 
@@ -18,11 +18,13 @@ packages/
   react/      React component, hooks, and semantic CSS UI
   vue/        Vue 3 component, composables, and semantic CSS UI
   angular/    Angular standalone components, signal controller, and semantic CSS UI
+  svelte/     Svelte 5 component, store controller, and semantic CSS UI
   vanilla/    QrCodeGeneratorElement for Vanilla JS/TS with built-in DOM rendering
 examples/
   react-demo/   Vite + React dev app
   vue-demo/     Vite + Vue dev app
   angular-demo/ Vite + Angular dev app
+  svelte-demo/  Vite + Svelte dev app
   vanilla-js/   Vite + Vanilla TS dev app
 ```
 
@@ -36,6 +38,7 @@ examples/
 | [`@scanupload/qr-code-generator-react`](packages/react)     | React `<QrCodeGenerator>` component with semantic CSS UI and file previews    |
 | [`@scanupload/qr-code-generator-vue`](packages/vue)         | Vue 3 `<QrCodeGenerator>` component with semantic CSS UI and file previews    |
 | [`@scanupload/qr-code-generator-angular`](packages/angular) | Angular `<sqg-qr-code-generator>` standalone component with file previews     |
+| [`@scanupload/qr-code-generator-svelte`](packages/svelte)   | Svelte 5 `<QrCodeGenerator>` component with semantic CSS UI and file previews |
 | [`@scanupload/qr-code-generator-vanilla`](packages/vanilla) | `QrCodeGeneratorElement` — self-contained DOM renderer, no framework required |
 
 ---
@@ -62,6 +65,11 @@ Vue adapter (packages/vue)
 Angular adapter (packages/angular)
 ├── useQrCodeCore           — signal-based controller wrapping Core
 ├── QrCodeGeneratorComponent — semantic CSS standalone component (input-driven)
+└── DocumentPreviewer, FileList, ProgressBar, Logo
+
+Svelte adapter (packages/svelte)
+├── createQrCodeController   — svelte/store readable wrapper around Core
+├── QrCodeGenerator          — semantic CSS component (props-driven, runes)
 └── DocumentPreviewer, FileList, ProgressBar, Logo
 
 Vanilla adapter (packages/vanilla)
@@ -195,6 +203,33 @@ Import the package stylesheet once (e.g. in `styles.css`), then your overrides
 @import './my-overrides.css'; /* your overrides */
 ```
 
+### Svelte
+
+```bash
+npm install @scanupload/qr-code-generator-svelte
+```
+
+Peer dependency: `svelte >= 5`.
+
+```svelte
+<script lang="ts">
+    import { QrCodeGenerator } from '@scanupload/qr-code-generator-svelte';
+</script>
+
+<QrCodeGenerator sessionUrl="/api/session" refreshTokenUrl="/api/token" />
+```
+
+**Custom CSS / overrides**
+
+Importing the component automatically pulls in `dist/index.css` (it is imported
+from the package entry). Import your overrides **after** the component so
+same-specificity rules win via cascade:
+
+```ts
+import '@scanupload/qr-code-generator-svelte/dist/index.css'; // base styles (optional — already bundled)
+import './my-overrides.css'; // your overrides
+```
+
 ### Vanilla JS / TypeScript
 
 ```bash
@@ -281,7 +316,7 @@ npm install @scanupload/qr-code-generator-core
 # Install all workspace dependencies
 npm install
 
-# Build all packages in dependency order (core → react → vanilla → vue → angular)
+# Build all packages in dependency order (core → react → vanilla → vue → angular → svelte)
 npm run build
 
 # Build individual packages
@@ -290,11 +325,13 @@ npm run build:react
 npm run build:vanilla
 npm run build:vue
 npm run build:angular
+npm run build:svelte
 
 # Run the dev examples (rebuilding packages first is recommended)
 npm run build ; npm run dev:react
 npm run build ; npm run dev:vue
 npm run build ; npm run dev:angular
+npm run build ; npm run dev:svelte
 npm run build ; npm run dev:vanilla
 ```
 
@@ -303,12 +340,12 @@ npm run build ; npm run dev:vanilla
 
 ---
 
-## React, Vue & Angular Props Reference
+## React, Vue, Angular & Svelte Props Reference
 
-The React, Vue, and Angular `<QrCodeGenerator>` components accept the same props.
-In Vue, use kebab-case attribute names (e.g. `session-url`, `show-header`). In
-Angular, bind booleans with `[showHeader]="true"` and the selector is
-`<sqg-qr-code-generator>`.
+The React, Vue, Angular, and Svelte `<QrCodeGenerator>` components accept the same
+props. In Vue, use kebab-case attribute names (e.g. `session-url`, `show-header`).
+In Angular, bind booleans with `[showHeader]="true"` and the selector is
+`<sqg-qr-code-generator>`. In Svelte, pass booleans as `showHeader={true}`.
 
 | Prop                  | Type                                         | Default   | Required | Description                                                                                            |
 | --------------------- | -------------------------------------------- | --------- | -------- | ------------------------------------------------------------------------------------------------------ |
@@ -339,7 +376,7 @@ Angular, bind booleans with `[showHeader]="true"` and the selector is
 
 ---
 
-## CSS Custom Properties (React, Vue, Angular & Vanilla)
+## CSS Custom Properties (React, Vue, Angular, Svelte & Vanilla)
 
 All packages share the same `--sqg-*` token names. Setting them once on `:root`
 themes every widget simultaneously.
@@ -378,7 +415,7 @@ Use `style` to inject design tokens per-instance:
 ````
 
 See the full token list in
-[CSS Custom Properties](#css-custom-properties-react-vue-angular--vanilla).
+[CSS Custom Properties](#css-custom-properties-react-vue-angular-svelte--vanilla).
 
 ---
 

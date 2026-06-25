@@ -1,0 +1,48 @@
+{
+    "name": "@scanupload/qr-code-generator-svelte",
+    "version": "0.1.9",
+    "description": "Svelte wrapper for the ScanUpload QR Code Generator — QR code component with real-time file upload previews.",
+    "type": "module",
+    "svelte": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "style": "./dist/index.css",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "svelte": "./dist/index.js",
+            "default": "./dist/index.js"
+        },
+        "./dist/index.css": "./dist/index.css"
+    },
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "svelte-package -i src -o dist",
+        "check": "svelte-check --tsconfig ./tsconfig.json"
+    },
+    "peerDependencies": {
+        "svelte": ">=5"
+    },
+    "dependencies": {
+        "@scanupload/qr-code-generator-core": "^0.1.9",
+        "lucide": "^0.562.0",
+        "qrcode": "^1.5.4"
+    },
+    "devDependencies": {
+        "@sveltejs/package": "^2.5.4",
+        "@sveltejs/vite-plugin-svelte": "^6.2.1",
+        "@types/qrcode": "^1.5.5",
+        "svelte": "^5.39.0",
+        "svelte-check": "^4.3.2",
+        "typescript": "^5.9.3"
+    },
+    "keywords": [
+        "scanupload",
+        "qr-code",
+        "svelte",
+        "signalr"
+    ],
+    "author": "Donald Asante",
+    "license": "MIT"
+}

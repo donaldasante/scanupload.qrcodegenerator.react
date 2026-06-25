@@ -1,5 +1,5 @@
 # ScanUpload QR Code Generator — Monorepo CI/CD
-# Builds core, react, vanilla, vue, and angular packages, then publishes to npm.
+# Builds core, react, vanilla, vue, angular, and svelte packages, then publishes to npm.
 
 trigger:
     tags:
@@ -36,7 +36,7 @@ steps:
       displayName: 'Install workspace dependencies'
 
     - script: npm run build
-      displayName: 'Build all packages (core → react → vanilla → vue → angular)'
+      displayName: 'Build all packages (core → react → vanilla → vue → angular → svelte)'
 
     - script: |
           echo "//registry.npmjs.org/:_authToken=$(NPM_TOKEN)" > .npmrc
@@ -96,3 +96,14 @@ steps:
             npm publish --access public
           fi
       displayName: 'Publish angular package'
+
+    - script: |
+          cd packages/svelte
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view @scanupload/qr-code-generator-svelte@$VERSION version > /dev/null 2>&1; then
+            echo "@scanupload/qr-code-generator-svelte@$VERSION already published — skipping"
+          else
+            echo "Publishing @scanupload/qr-code-generator-svelte@$VERSION"
+            npm publish --access public
+          fi
+      displayName: 'Publish svelte package'
