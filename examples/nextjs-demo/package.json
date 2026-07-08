@@ -9,7 +9,7 @@
         "start": "next start"
     },
     "dependencies": {
-        "@scanupload/qr-code-generator-nextjs-server": "^0.1.9",
+        "@scanupload/qr-code-generator-nextjs-server": "^0.2.0",
         "@scanupload/qr-code-generator-react": "^0.1.9",
         "next": "16.3.0-canary.80",
         "react": "^19.0.0",
