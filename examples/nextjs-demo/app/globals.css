@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+/*
+ * ScanUpload QR Code Generator overrides.
+ * Must come AFTER the package CSS so the cascade picks up these rules.
+ * The package CSS itself is imported inside GeneralForm.tsx (client component).
+ */
+
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+.sqg-overlay {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.sqg-spinner {
+  border-top-color: #e11d48;
+}
+
+.sqg-loading-text {
+  color: #6b7280;
+  font-size: 0.75rem;
+}
+
+.sqg-error-text {
+  color: #e11d48;
+  font-weight: 600;
+}
+
+.sqg-retry-btn {
+  background: #1e3a5f;
+  border-radius: 0.5rem;
+}
+
+.sqg-retry-btn:hover {
+  background: #1e40af;
+}

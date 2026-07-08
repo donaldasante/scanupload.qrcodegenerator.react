@@ -1,0 +1,26 @@
+{
+    "name": "@scanupload/nextjs-demo",
+    "private": true,
+    "version": "0.0.0",
+    "description": "Next.js demo app for the ScanUpload QR Code Generator React package.",
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start"
+    },
+    "dependencies": {
+        "@scanupload/qr-code-generator-nextjs-server": "^0.1.9",
+        "@scanupload/qr-code-generator-react": "^0.1.9",
+        "next": "16.3.0-canary.80",
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0"
+    },
+    "devDependencies": {
+        "@tailwindcss/postcss": "^4.1.18",
+        "@types/node": "^22.0.0",
+        "@types/react": "^19.0.0",
+        "@types/react-dom": "^19.0.0",
+        "tailwindcss": "^4.1.18",
+        "typescript": "^5.9.3"
+    }
+}

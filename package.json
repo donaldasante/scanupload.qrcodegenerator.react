@@ -1,20 +1,23 @@
 {
   "name": "@scanupload/qr-code-generator-monorepo",
   "private": true,
-  "description": "Monorepo for ScanUpload QR Code Generator — core, React, vanilla, Vue, Angular, and Svelte framework packages.",
+  "description": "Monorepo for ScanUpload QR Code Generator — core, Next.js server, React, vanilla, Vue, Angular, and Svelte framework packages.",
   "workspaces": [
     "packages/*",
+    "packages/next-js/*",
     "examples/*"
   ],
   "scripts": {
-    "build": "npm run build --workspace=packages/core && npm run build --workspace=packages/react && npm run build --workspace=packages/vanilla && npm run build --workspace=packages/vue && npm run build --workspace=packages/angular && npm run build --workspace=packages/svelte",
+    "build": "npm run build --workspace=packages/core && npm run build --workspace=packages/next-js/server && npm run build --workspace=packages/react && npm run build --workspace=packages/vanilla && npm run build --workspace=packages/vue && npm run build --workspace=packages/angular && npm run build --workspace=packages/svelte",
     "build:core": "npm run build --workspace=packages/core",
+    "build:nextjs-server": "npm run build --workspace=packages/next-js/server",
     "build:react": "npm run build --workspace=packages/react",
     "build:vanilla": "npm run build --workspace=packages/vanilla",
     "build:vue": "npm run build --workspace=packages/vue",
     "build:angular": "npm run build --workspace=packages/angular",
     "build:svelte": "npm run build --workspace=packages/svelte",
     "dev:react": "npm run dev --workspace=examples/react-demo",
+    "dev:nextjs": "npm run dev --workspace=examples/nextjs-demo",
     "dev:vanilla": "npm run dev --workspace=examples/vanilla-js",
     "dev:vue": "npm run dev --workspace=examples/vue-demo",
     "dev:angular": "npm run dev --workspace=examples/angular-demo",
@@ -22,7 +25,16 @@
     "lint": "eslint packages --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "devDependencies": {
+    "esbuild": "0.28.1",
     "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "next": {
+      "postcss": "8.5.16"
+    },
+    "vite": {
+      "esbuild": "0.28.1"
+    }
   },
   "author": "Donald Asante",
   "license": "MIT"

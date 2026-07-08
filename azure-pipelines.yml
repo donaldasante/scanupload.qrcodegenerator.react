@@ -1,5 +1,5 @@
 # ScanUpload QR Code Generator — Monorepo CI/CD
-# Builds core, react, vanilla, vue, angular, and svelte packages, then publishes to npm.
+# Builds workspace packages and publishes core, nextjs-server, react, vanilla, vue, angular, and svelte to npm.
 
 trigger:
     tags:
@@ -52,6 +52,17 @@ steps:
             npm publish --access public
           fi
       displayName: 'Publish core package'
+
+    - script: |
+          cd packages/next-js/server
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view @scanupload/qr-code-generator-nextjs-server@$VERSION version > /dev/null 2>&1; then
+            echo "@scanupload/qr-code-generator-nextjs-server@$VERSION already published — skipping"
+          else
+            echo "Publishing @scanupload/qr-code-generator-nextjs-server@$VERSION"
+            npm publish --access public
+          fi
+      displayName: 'Publish nextjs server package'
 
     - script: |
           cd packages/react
