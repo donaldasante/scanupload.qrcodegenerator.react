@@ -1,4 +1,5 @@
 export interface ScanUploadConfig {
+    downloadBaseUrl: string;
     frontendBaseUrl: string;
     keycloakUrl: string;
     keycloakRealm: string;
@@ -17,6 +18,7 @@ let cachedToken: CachedToken | null = null;
 
 export function getScanUploadConfig(): ScanUploadConfig {
     return {
+        downloadBaseUrl: process.env.SCANUPLOAD_DOWNLOAD_BASE_URL ?? 'https://hub.scanupload.net/api/file-management/download-session',
         frontendBaseUrl: process.env.SCANUPLOAD_FRONTEND_BASE_URL ?? 'https://hub.scanupload.net/api/front-end',
         keycloakUrl: process.env.SCANUPLOAD_KEYCLOAK_URL ?? 'https://identity.scanupload.net',
         keycloakRealm: process.env.SCANUPLOAD_KEYCLOAK_REALM ?? 'scanupload-hub',

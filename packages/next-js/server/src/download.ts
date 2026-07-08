@@ -19,7 +19,7 @@ export async function fetchSessionZip(sessionId: string, accessToken: string): P
     }
 
     const config = getScanUploadConfig();
-    const downloadUrl = `${config.frontendBaseUrl}/file-management/download-session/${encodeURIComponent(sessionId)}`;
+    const downloadUrl = `${config.downloadBaseUrl}/${encodeURIComponent(sessionId)}`;
 
     const hubResponse = await fetch(downloadUrl, {
         method: 'GET',
