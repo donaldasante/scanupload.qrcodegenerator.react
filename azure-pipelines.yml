@@ -203,8 +203,8 @@ stages:
               mkdir -p "$outdir"
               {
                   echo "dockerImageTag=qa"
-                  echo "containerName=qa-angular-api.example.scanupload"
-                  echo "subDomain=qa-angular-api.example.scanupload.net"
+                  echo "containerName=angular-example.scanupload"
+                  echo "subDomain=angular-example.scanupload.net"
               } > "$outdir/.env"
             displayName: "Generate .env file scanupload.angular.client.example"
 
@@ -220,8 +220,8 @@ stages:
               mkdir -p "$outdir"
               {
                   echo "dockerImageTag=qa"
-                  echo "containerName=qa-vue-api.example.scanupload"
-                  echo "subDomain=qa-vue-api.example.scanupload.net"
+                  echo "containerName=vue-example.scanupload"
+                  echo "subDomain=vue-example.scanupload.net"
               } > "$outdir/.env"
             displayName: "Generate .env file scanupload.vue.client.example"
 
@@ -237,8 +237,8 @@ stages:
               mkdir -p "$outdir"
               {
                   echo "dockerImageTag=qa"
-                  echo "containerName=qa-svelte-api.example.scanupload"
-                  echo "subDomain=qa-svelte-api.example.scanupload.net"
+                  echo "containerName=svelte-example.scanupload"
+                  echo "subDomain=svelte-example.scanupload.net"
               } > "$outdir/.env"
             displayName: "Generate .env file scanupload.svelte.client.example"
 
