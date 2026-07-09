@@ -176,6 +176,7 @@ steps:
       containerRegistry: $(dockerRegistryServiceConnection)
   - script: |
       outdir=/home/donald/apps/scanupload/scanupload.angular.client.example
+      mkdir -p "$outdir"
       {
           echo "dockerImageTag=qa"
           echo "containerName=qa-angular-api.example.scanupload"
@@ -191,6 +192,7 @@ steps:
 
   - script: |
       outdir=/home/donald/apps/scanupload/scanupload.vue.client.example
+      mkdir -p "$outdir"
       {
           echo "dockerImageTag=qa"
           echo "containerName=qa-vue-api.example.scanupload"
@@ -206,6 +208,7 @@ steps:
 
   - script: |
       outdir=/home/donald/apps/scanupload/scanupload.svelte.client.example
+      mkdir -p "$outdir"
       {
           echo "dockerImageTag=qa"
           echo "containerName=qa-svelte-api.example.scanupload"
