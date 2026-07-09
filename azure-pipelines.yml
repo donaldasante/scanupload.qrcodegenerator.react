@@ -10,7 +10,8 @@ pool:
   vmImage: "ubuntu-latest"
 
 variables:
-  - dockerRegistryServiceConnection: "gitlab-registry"
+  - name: dockerRegistryServiceConnection
+    value: "gitlab-registry"
   - group: scanupload-qrcodegenerator-react-variables
 
 steps:
