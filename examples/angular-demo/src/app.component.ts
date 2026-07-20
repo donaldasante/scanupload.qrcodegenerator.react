@@ -10,7 +10,6 @@ import { QrCodeGeneratorComponent } from '@scanupload/qr-code-generator-angular'
             <h2 class="demo-title">Angular Demo</h2>
             <sqg-qr-code-generator
                 sessionUrl="/scanupload-api/session"
-                refreshTokenUrl="/scanupload-api/token"
                 [showHeader]="true"
                 header="Upload files from mobile device"
                 size="large"

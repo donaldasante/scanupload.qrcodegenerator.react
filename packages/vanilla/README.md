@@ -22,8 +22,7 @@ import { QrCodeGeneratorElement } from "@scanupload/qr-code-generator-vanilla";
 
 const widget = new QrCodeGeneratorElement({
   container: document.getElementById("widget")!,
-  sessionUrl: "/api/session",
-  refreshTokenUrl: "/api/token",
+  sessionUrl: "/api/front-end/session",
 });
 
 await widget.start();
@@ -36,19 +35,17 @@ await widget.start();
 
 The component needs two backend endpoints:
 
-| Endpoint          | Method | Description                                                                                   |
-| ----------------- | ------ | --------------------------------------------------------------------------------------------- |
-| `sessionUrl`      | `POST` | Creates a ScanUpload session and returns `{ sessionId, accessToken, hubUrl, deviceLoginUrl }` |
-| `refreshTokenUrl` | `POST` | Returns a fresh Bearer token `{ access_token, expires_in }`                                   |
-|                   |
+| Endpoint     | Method | Description                                                                                                                                                  |
+| ------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `sessionUrl` | `POST` | Creates a ScanUpload session and returns `{ sessionId, deviceLoginUrl, hubUrl, ttlSeconds }`. Clients connect directly to `hubUrl` (no proxy/token refresh). |
+|              |
 
 ## Options
 
 | Option                | Type          | Default  | Required | Description                                                          |
-| --------------------- | ------------- | -------- | -------- | -------------------------------------------------------------------- | ----------------------------------------- | --- | ------------------------- |
+| --------------------- | ------------- | -------- | -------- | -------------------------------------------------------------------- | --- | ------------------------- |
 | `container`           | `HTMLElement` | —        | Yes      | Host element to render into.                                         |
 | `sessionUrl`          | `string`      | —        | Yes      | Endpoint that creates a ScanUpload session.                          |
-| `refreshTokenUrl`     | `string`      | —        | Yes      | Endpoint that refreshes the access token.                            |
 | `header`              | `string`      | —        | No       | Header text shown when `showHeader` is enabled.                      |
 | `showHeader`          | `boolean`     | `false`  | No       | Whether to render the header.                                        |
 | `showLogo`            | `boolean`     | `true`   | No       | Whether to overlay the logo in the QR code.                          |
@@ -67,8 +64,7 @@ to import a stylesheet.
 ```ts
 new QrCodeGeneratorElement({
   container: document.getElementById("widget")!,
-  sessionUrl: "/api/session",
-  refreshTokenUrl: "/api/token",
+  sessionUrl: "/api/front-end/session",
   injectStyles: true,
 }).start();
 ```
@@ -85,8 +81,7 @@ import "./my-overrides.css";
 
 new QrCodeGeneratorElement({
   container: document.getElementById("widget")!,
-  sessionUrl: "/api/session",
-  refreshTokenUrl: "/api/token",
+  sessionUrl: "/api/front-end/session",
   injectStyles: false,
 }).start();
 ```
@@ -111,17 +106,13 @@ new QrCodeGeneratorElement({
 ```ts
 const widget = new QrCodeGeneratorElement({
   container: document.getElementById("widget")!,
-  sessionUrl: "/api/session",
-  refreshTokenUrl: "/api/token",
+  sessionUrl: "/api/front-end/session",
 });
 
 await widget.start();
 
 const state = widget.getState();
-await widget.setOptions({
-  sessionUrl: "/api/new-session",
-  refreshTokenUrl: "/api/new-token",
-});
+await widget.setOptions({ sessionUrl: "/api/new-front-end/session" });
 await widget.retrySession();
 
 widget.dispose();

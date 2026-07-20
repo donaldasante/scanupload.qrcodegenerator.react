@@ -1,22 +1,27 @@
 import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
-import { postData } from './apiClient';
-import { debounceAsync, isExpired, isNullOrEmpty } from './utilities';
+import { ApiError, postData } from './apiClient';
+import { debounceAsync, isNullOrEmpty } from './utilities';
 import { StorageAdapter, browserStorageAdapter } from './storage';
-import { QrCodeGeneratorState, SessionResponse, TokenResponse, UploadedFile } from './types';
-
-const LAST_SESSION_IDS_KEY = 'qrcode-last-session-ids';
+import { QrCodeGeneratorState, SessionResponse, UploadedFile } from './types';
 
 const INITIAL_STATE: QrCodeGeneratorState = {
     loading: true,
     isConnected: false,
     retry: false,
     deviceLoginUrl: '',
-    uploadedFiles: []
+    uploadedFiles: [],
+    expiresAt: null,
+    secondsRemaining: null,
+    errorCode: null
 };
 
 export interface QrCodeGeneratorCoreOptions {
+    /**
+     * `POST <sessionUrl>` is invoked with no body. The browser's automatic
+     * `Origin` header is what authenticates the request; the response carries
+     * the `hubUrl` the SignalR client connects to directly.
+     */
     sessionUrl: string;
-    refreshTokenUrl: string;
     /**
      * Optional storage adapter. Defaults to browser localStorage.
      * Supply a custom adapter for SSR, testing, or non-browser environments.
@@ -24,7 +29,7 @@ export interface QrCodeGeneratorCoreOptions {
     storage?: StorageAdapter;
 }
 
-export type QrCodeGeneratorCoreSetOptions = Partial<Pick<QrCodeGeneratorCoreOptions, 'sessionUrl' | 'refreshTokenUrl'>>;
+export type QrCodeGeneratorCoreSetOptions = Partial<Pick<QrCodeGeneratorCoreOptions, 'sessionUrl'>>;
 
 export class QrCodeGeneratorCore {
     private _state: QrCodeGeneratorState = { ...INITIAL_STATE };
@@ -33,13 +38,12 @@ export class QrCodeGeneratorCore {
     private _sessionPromise: Promise<void> | null = null;
     private _connection: HubConnection | null = null;
     private _abortController: AbortController | null = null;
-    private _token = '';
     private _retryCount = 0;
-    private _lastSessionIds: string[] = [];
+    /** 1Hz tick that drives `state.secondsRemaining` from `response.ttlSeconds`. */
+    private _countdownTimer: ReturnType<typeof setInterval> | null = null;
 
     private readonly _storage: StorageAdapter;
     private sessionUrl: string;
-    private refreshTokenUrl: string;
     private _hasStarted = false;
 
     // Debounced version of _getData — stable across calls, bound to this instance.
@@ -47,9 +51,7 @@ export class QrCodeGeneratorCore {
 
     constructor(options: QrCodeGeneratorCoreOptions) {
         this.sessionUrl = options.sessionUrl;
-        this.refreshTokenUrl = options.refreshTokenUrl;
         this._storage = options.storage ?? browserStorageAdapter;
-        this._lastSessionIds = this._storage.getItem<string[]>(LAST_SESSION_IDS_KEY) ?? [];
     }
 
     // ─── Public API ────────────────────────────────────────────────────────────
@@ -130,14 +132,11 @@ export class QrCodeGeneratorCore {
 
     async setOptions(options: QrCodeGeneratorCoreSetOptions): Promise<void> {
         const sessionUrl = options.sessionUrl ?? this.sessionUrl;
-        const refreshTokenUrl = options.refreshTokenUrl ?? this.refreshTokenUrl;
 
-        const didChange = sessionUrl !== this.sessionUrl || refreshTokenUrl !== this.refreshTokenUrl;
+        const didChange = sessionUrl !== this.sessionUrl;
         if (!didChange) return;
 
         this.sessionUrl = sessionUrl;
-        this.refreshTokenUrl = refreshTokenUrl;
-        this._token = '';
 
         if (!this._hasStarted) return;
 
@@ -150,21 +149,6 @@ export class QrCodeGeneratorCore {
     private _setState(partial: Partial<QrCodeGeneratorState>): void {
         this._state = { ...this._state, ...partial };
         this._listeners.forEach((l) => l());
-    }
-
-    private async _getAccessToken(): Promise<string> {
-        try {
-            if (!this._token || isExpired(this._token, 60)) {
-                const response = await postData<TokenResponse>(this.refreshTokenUrl, {
-                    timeout: 160000
-                });
-                this._token = response.access_token;
-            }
-            return this._token;
-        } catch (error) {
-            console.error('Error fetching access token:', error);
-            throw error;
-        }
     }
 
     private async _getSessionInformationAsync(): Promise<void> {
@@ -188,21 +172,43 @@ export class QrCodeGeneratorCore {
     }
 
     private async _fetchSessionInformation(): Promise<void> {
-        this._setState({ loading: true });
+        this._setState({ loading: true, errorCode: null });
         try {
+            // The session endpoint derives identity from the browser's
+            // automatic `Origin` header — no auth token is required.
             const response = await postData<SessionResponse>(
                 this.sessionUrl,
-                { lastSessionIds: this._lastSessionIds },
+                undefined,
                 { timeout: 300000 }
             );
             this._session = response;
-            this._setState({ deviceLoginUrl: this._buildDeviceLoginUrl(response) });
-            this._lastSessionIds = [response.sessionId];
-            this._storage.setItem(LAST_SESSION_IDS_KEY, this._lastSessionIds);
+            this._setState({
+                deviceLoginUrl: this._buildDeviceLoginUrl(response),
+                expiresAt: Date.now() + response.ttlSeconds * 1000
+            });
+            this._startCountdown(response.ttlSeconds);
         } catch (error) {
             console.error('Error fetching session information:', error);
-            this._setState({ retry: true, loading: false });
+            this._handleSessionCreateError(error);
         }
+    }
+
+    /**
+     * Translate errors from the session-create endpoint into state updates the
+     * UI can react to:
+     *  - 409 → the tenant reached `MaxActiveSessionsPerTenant`; the UI should
+     *          show a tenant-limit message alongside the existing retry CTA.
+     *  - 429 → the per-origin create-session rate limit was hit (default
+     *          10 req/min/Origin+IP). The UI can prompt the user to wait and
+     *          retry. Refresh cycles through `retrySession()`.
+     *  - any other failure leaves `retry: true` and clears `errorCode`.
+     */
+    private _handleSessionCreateError(error: unknown): void {
+        if (error instanceof ApiError) {
+            this._setState({ retry: true, loading: false, errorCode: error.status });
+            return;
+        }
+        this._setState({ retry: true, loading: false, errorCode: null });
     }
 
     private async _getHubUrlAsync(): Promise<string> {
@@ -216,12 +222,49 @@ export class QrCodeGeneratorCore {
     }
 
     private async _deleteCurrentSession(): Promise<void> {
-        this._setState({ isConnected: false, retry: false, uploadedFiles: [] });
+        this._stopCountdown();
+        this._setState({
+            isConnected: false,
+            retry: false,
+            uploadedFiles: [],
+            expiresAt: null,
+            secondsRemaining: null
+        });
         this._session = null;
         this._sessionPromise = null;
         if (this._connection) {
             await this._connection.stop();
             this._connection = null;
+        }
+    }
+
+    /**
+     * Start (or restart) the 1Hz countdown timer that drives
+     * `state.secondsRemaining`. Callers pass the `ttlSeconds` returned by the
+     * session endpoint. The timer self-stops and parks `secondsRemaining` at
+     * `0` once the session expires; consumers can detect that with a simple
+     * `state.secondsRemaining <= 0` check or call `retrySession()` for a
+     * fresh session.
+     */
+    private _startCountdown(ttlSeconds: number): void {
+        this._stopCountdown();
+        let remaining = Math.max(0, Math.ceil(ttlSeconds));
+        this._setState({ secondsRemaining: remaining });
+        this._countdownTimer = setInterval(() => {
+            remaining -= 1;
+            if (remaining <= 0) {
+                this._stopCountdown();
+                this._setState({ secondsRemaining: 0 });
+                return;
+            }
+            this._setState({ secondsRemaining: remaining });
+        }, 1000);
+    }
+
+    private _stopCountdown(): void {
+        if (this._countdownTimer) {
+            clearInterval(this._countdownTimer);
+            this._countdownTimer = null;
         }
     }
 
@@ -240,8 +283,7 @@ export class QrCodeGeneratorCore {
             connection = new HubConnectionBuilder()
                 .withUrl(hubUrl, {
                     withCredentials: false,
-                    transport: 1, // prefer wss
-                    accessTokenFactory: () => this._getAccessToken()
+                    transport: 1 // prefer wss — connects directly to the hub URL
                 })
                 .configureLogging(LogLevel.Information)
                 .withAutomaticReconnect({

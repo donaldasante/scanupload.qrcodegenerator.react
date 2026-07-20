@@ -1,6 +1,5 @@
 export interface QrCodeGeneratorProps {
     sessionUrl: string;
-    refreshTokenUrl: string;
     showHeader?: boolean;
     header?: string;
     showLogo?: boolean;

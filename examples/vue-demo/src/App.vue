@@ -7,7 +7,6 @@ import { QrCodeGenerator } from '@scanupload/qr-code-generator-vue';
         <h2 class="demo-title">Vue JS Demo</h2>
         <QrCodeGenerator
             session-url="/scanupload-api/session"
-            refresh-token-url="/scanupload-api/token"
             :show-header="true"
             header="Upload files from mobile device"
             size="large"

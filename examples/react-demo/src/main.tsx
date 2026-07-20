@@ -17,7 +17,6 @@ createRoot(document.getElementById("root")!).render(
       <h2 className="demo-title">React JS Demo</h2>
       <QrCodeGenerator
         sessionUrl="/scanupload-api/session"
-        refreshTokenUrl="/scanupload-api/token"
         showHeader={true}
         header="Upload files from mobile device"
         size="large"

@@ -7,7 +7,6 @@ import { QrCodeGeneratorElement } from '@scanupload/qr-code-generator-vanilla';
 new QrCodeGeneratorElement({
     container: document.getElementById('widget-container')!,
     sessionUrl: '/scanupload-api/session',
-    refreshTokenUrl: '/scanupload-api/token',
     header: 'Upload files from mobile device',
     showHeader: true,
     showLogo: true,

@@ -8,7 +8,6 @@ import { useQrCodeCore } from "./hooks/useQrCodeCore";
 
 export interface QrCodeGeneratorProps {
   sessionUrl: string;
-  refreshTokenUrl: string;
   showHeader?: boolean;
   header: string;
   showLogo?: boolean;
@@ -19,7 +18,6 @@ export interface QrCodeGeneratorProps {
 
 export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
   sessionUrl,
-  refreshTokenUrl,
   header,
   showHeader = false,
   showLogo = true,
@@ -29,7 +27,6 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
 }) => {
   const { state, retrySession } = useQrCodeCore({
     sessionUrl,
-    refreshTokenUrl,
   });
 
   return (

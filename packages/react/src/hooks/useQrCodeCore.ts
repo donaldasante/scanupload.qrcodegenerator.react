@@ -18,9 +18,8 @@ export function useQrCodeCore(options: QrCodeGeneratorCoreOptions) {
   useEffect(() => {
     void core.setOptions({
       sessionUrl: options.sessionUrl,
-      refreshTokenUrl: options.refreshTokenUrl,
     });
-  }, [core, options.sessionUrl, options.refreshTokenUrl]);
+  }, [core, options.sessionUrl]);
 
   const state = useSyncExternalStore(
     (listener) => core.subscribe(listener),

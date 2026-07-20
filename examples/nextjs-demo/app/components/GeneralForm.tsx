@@ -214,7 +214,6 @@ export default function GeneralForm() {
           <div className="mb-6">
             <QrCodeGenerator
               sessionUrl="/scanupload-api/session"
-              refreshTokenUrl="/scanupload-api/token"
               showHeader={showHeader}
               header={headerText}
               size={qrCodeSize}

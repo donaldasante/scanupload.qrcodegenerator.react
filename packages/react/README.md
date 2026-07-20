@@ -24,8 +24,7 @@ import "@scanupload/qr-code-generator-react/dist/index.css";
 export function UploadWidget() {
   return (
     <QrCodeGenerator
-      sessionUrl="/api/session"
-      refreshTokenUrl="/api/token"
+      sessionUrl="/api/front-end/session"
       header="Upload documents"
       showHeader
     />
@@ -40,17 +39,15 @@ export function UploadWidget() {
 
 The component needs two backend endpoints:
 
-| Endpoint          | Method | Description                                                                                   |
-| ----------------- | ------ | --------------------------------------------------------------------------------------------- |
-| `sessionUrl`      | `POST` | Creates a ScanUpload session and returns `{ sessionId, accessToken, hubUrl, deviceLoginUrl }` |
-| `refreshTokenUrl` | `POST` | Returns a fresh Bearer token `{ access_token, expires_in }`                                   |
+| Endpoint     | Method | Description                                                                                                                                                  |
+| ------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `sessionUrl` | `POST` | Creates a ScanUpload session and returns `{ sessionId, deviceLoginUrl, hubUrl, ttlSeconds }`. Clients connect directly to `hubUrl` (no proxy/token refresh). |
 
 ## Props
 
 | Prop                  | Type      | Default  | Required | Description                                                           |
-| --------------------- | --------- | -------- | -------- | --------------------------------------------------------------------- | ----------------------------------------- | --- | --------------------------------- |
+| --------------------- | --------- | -------- | -------- | --------------------------------------------------------------------- | --- | --------------------------------- |
 | `sessionUrl`          | `string`  | —        | Yes      | Endpoint that creates a ScanUpload session.                           |
-| `refreshTokenUrl`     | `string`  | —        | Yes      | Endpoint that refreshes the access token.                             |
 | `header`              | `string`  | —        | No       | Text shown in the header when `showHeader` is enabled.                |
 | `showHeader`          | `boolean` | `false`  | No       | Whether to render the header.                                         |
 | `showLogo`            | `boolean` | `true`   | No       | Whether to overlay the ScanUpload logo on the QR code.                |

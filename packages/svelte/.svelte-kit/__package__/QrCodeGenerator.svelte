@@ -1,7 +1,6 @@
 <script module lang="ts">
     export interface QrCodeGeneratorProps {
         sessionUrl: string;
-        refreshTokenUrl: string;
         showHeader?: boolean;
         header?: string;
         showLogo?: boolean;
@@ -21,7 +20,6 @@
 
     let {
         sessionUrl,
-        refreshTokenUrl,
         showHeader = false,
         header = '',
         showLogo = true,
@@ -30,12 +28,12 @@
         size = 'large'
     }: QrCodeGeneratorProps = $props();
 
-    const controller = createQrCodeController({ sessionUrl, refreshTokenUrl });
+    const controller = createQrCodeController({ sessionUrl });
     const coreState = controller.state;
 
     // Push runtime endpoint changes into the core, mirroring the React/Vue adapters.
     $effect(() => {
-        void controller.setOptions({ sessionUrl, refreshTokenUrl });
+        void controller.setOptions({ sessionUrl });
     });
 
     // Regenerate the QR SVG whenever the device login URL changes.

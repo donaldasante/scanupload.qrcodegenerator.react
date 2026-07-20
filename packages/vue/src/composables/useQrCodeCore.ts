@@ -4,14 +4,12 @@ import type { QrCodeGeneratorState, StorageAdapter } from '@scanupload/qr-code-g
 
 export interface UseQrCodeCoreOptions {
     sessionUrl: MaybeRefOrGetter<string>;
-    refreshTokenUrl: MaybeRefOrGetter<string>;
     storage?: StorageAdapter;
 }
 
 export function useQrCodeCore(options: UseQrCodeCoreOptions) {
     const core = new QrCodeGeneratorCore({
         sessionUrl: toValue(options.sessionUrl),
-        refreshTokenUrl: toValue(options.refreshTokenUrl),
         storage: options.storage
     });
 
@@ -28,9 +26,9 @@ export function useQrCodeCore(options: UseQrCodeCoreOptions) {
 
     // React to runtime endpoint changes, mirroring the React hook's setOptions effect.
     watch(
-        () => [toValue(options.sessionUrl), toValue(options.refreshTokenUrl)] as const,
-        ([sessionUrl, refreshTokenUrl]) => {
-            void core.setOptions({ sessionUrl, refreshTokenUrl });
+        () => toValue(options.sessionUrl),
+        (sessionUrl) => {
+            void core.setOptions({ sessionUrl });
         }
     );
 
@@ -43,6 +41,6 @@ export function useQrCodeCore(options: UseQrCodeCoreOptions) {
     return {
         state,
         retrySession: () => core.retrySession(),
-        setOptions: (opts: { sessionUrl?: string; refreshTokenUrl?: string }) => core.setOptions(opts)
+        setOptions: (opts: { sessionUrl?: string }) => core.setOptions(opts)
     };
 }

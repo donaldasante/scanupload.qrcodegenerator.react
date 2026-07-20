@@ -2,7 +2,6 @@ import { type Readable } from 'svelte/store';
 import type { QrCodeGeneratorState, StorageAdapter } from '@scanupload/qr-code-generator-core';
 export interface UseQrCodeCoreOptions {
     sessionUrl: string;
-    refreshTokenUrl: string;
     storage?: StorageAdapter;
 }
 export interface QrCodeController {
@@ -13,7 +12,6 @@ export interface QrCodeController {
     /** Update the API endpoints at runtime (mirrors the core `setOptions`). */
     setOptions: (opts: {
         sessionUrl?: string;
-        refreshTokenUrl?: string;
     }) => Promise<void>;
 }
 /**

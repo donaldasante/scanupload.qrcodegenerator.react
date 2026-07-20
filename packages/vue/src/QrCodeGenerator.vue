@@ -8,7 +8,6 @@ import { useQrCodeCore } from './composables/useQrCodeCore';
 
 export interface QrCodeGeneratorProps {
     sessionUrl: string;
-    refreshTokenUrl: string;
     showHeader?: boolean;
     header?: string;
     showLogo?: boolean;
@@ -27,8 +26,7 @@ const props = withDefaults(defineProps<QrCodeGeneratorProps>(), {
 });
 
 const { state, retrySession } = useQrCodeCore({
-    sessionUrl: () => props.sessionUrl,
-    refreshTokenUrl: () => props.refreshTokenUrl
+    sessionUrl: () => props.sessionUrl
 });
 
 const onQrClick = async () => {

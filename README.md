@@ -99,10 +99,9 @@ interface.
 
 The component needs two backend endpoints:
 
-| Endpoint          | Method | Description                                                                                   |
-| ----------------- | ------ | --------------------------------------------------------------------------------------------- |
-| `sessionUrl`      | `POST` | Creates a ScanUpload session and returns `{ sessionId, accessToken, hubUrl, deviceLoginUrl }` |
-| `refreshTokenUrl` | `POST` | Returns a fresh Bearer token `{ access_token, expires_in }`                                   |
+| Endpoint     | Method | Description                                                                                                       |
+| ------------- | ------ | ----------------------------------------------------------------------------------------------------------------- |
+| `sessionUrl`  | `POST` | Creates a ScanUpload session and returns `{ sessionId, deviceLoginUrl, hubUrl, ttlSeconds }`. Origin is the only auth. |
 
 ---
 
@@ -120,7 +119,7 @@ Peer dependencies: `react >= 19`, `react-dom >= 19`.
 import { QrCodeGenerator } from '@scanupload/qr-code-generator-react';
 import '@scanupload/qr-code-generator-react/dist/index.css';
 
-<QrCodeGenerator sessionUrl='/api/session' refreshTokenUrl='/api/token' />;
+<QrCodeGenerator sessionUrl='/api/session' />;
 ```
 
 **Custom CSS / overrides**
@@ -166,7 +165,7 @@ import '@scanupload/qr-code-generator-vue/dist/index.css';
 </script>
 
 <template>
-    <QrCodeGenerator session-url="/api/session" refresh-token-url="/api/token" />
+    <QrCodeGenerator session-url="/api/session" />
 </template>
 ```
 
@@ -197,7 +196,7 @@ import { QrCodeGeneratorComponent } from '@scanupload/qr-code-generator-angular'
     selector: 'app-root',
     standalone: true,
     imports: [QrCodeGeneratorComponent],
-    template: ` <sqg-qr-code-generator sessionUrl="/api/session" refreshTokenUrl="/api/token"></sqg-qr-code-generator> `
+    template: ` <sqg-qr-code-generator sessionUrl="/api/session"></sqg-qr-code-generator> `
 })
 export class AppComponent {}
 ```
@@ -225,7 +224,7 @@ Peer dependency: `svelte >= 5`.
     import { QrCodeGenerator } from '@scanupload/qr-code-generator-svelte';
 </script>
 
-<QrCodeGenerator sessionUrl="/api/session" refreshTokenUrl="/api/token" />
+<QrCodeGenerator sessionUrl="/api/session" />
 ```
 
 **Custom CSS / overrides**
@@ -256,8 +255,7 @@ import { QrCodeGeneratorElement } from '@scanupload/qr-code-generator-vanilla';
 
 new QrCodeGeneratorElement({
     container: document.getElementById('widget')!,
-    sessionUrl: '/api/session',
-    refreshTokenUrl: '/api/token'
+    sessionUrl: '/api/session'
     // injectStyles defaults to true
 }).start();
 ```
@@ -278,7 +276,6 @@ import './my-overrides.css'; // your overrides
 new QrCodeGeneratorElement({
     container: document.getElementById('widget')!,
     sessionUrl: '/api/session',
-    refreshTokenUrl: '/api/token',
     injectStyles: false // prevents double-injection
 }).start();
 ```
@@ -360,8 +357,7 @@ In Angular, bind booleans with `[showHeader]="true"` and the selector is
 
 | Prop                  | Type                                         | Default   | Required | Description                                                                                            |
 | --------------------- | -------------------------------------------- | --------- | -------- | ------------------------------------------------------------------------------------------------------ |
-| `sessionUrl`          | `string`                                     | —         | ✅       | Endpoint that creates a ScanUpload session (`POST`).                                                   |
-| `refreshTokenUrl`     | `string`                                     | —         | ✅       | Endpoint that returns a fresh Bearer token (`POST`).                                                   |
+| `sessionUrl`          | `string`                                     | —         | ✅       | Endpoint that creates a ScanUpload session (`POST`). Identity is read from the browser's `Origin` header. |
 | `header`              | `string`                                     | —         |          | Text shown in the header (visible only when `showHeader` is `true`).                                   |
 | `showHeader`          | `boolean`                                    | `false`   |          | Whether to render the header above the QR code.                                                        |
 | `showLogo`            | `boolean`                                    | `true`    |          | Whether to overlay the ScanUpload logo in the centre of the QR code.                                   |
@@ -421,7 +417,7 @@ Use `style` to inject design tokens per-instance:
 ```tsx
 <QrCodeGenerator
     sessionUrl='/api/session'
-    refreshTokenUrl='/api/token'
+    sessionUrl='/api/session'
 />
 ````
 

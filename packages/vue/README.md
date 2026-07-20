@@ -23,7 +23,7 @@ import '@scanupload/qr-code-generator-vue/dist/index.css';
 </script>
 
 <template>
-    <QrCodeGenerator session-url="/api/session" refresh-token-url="/api/token" header="Upload documents" :show-header="true" />
+    <QrCodeGenerator session-url="/api/front-end/session" header="Upload documents" :show-header="true" />
 </template>
 ```
 
@@ -34,10 +34,9 @@ import '@scanupload/qr-code-generator-vue/dist/index.css';
 
 The component needs two backend endpoints:
 
-| Endpoint          | Method | Description                                                                                   |
-| ----------------- | ------ | --------------------------------------------------------------------------------------------- |
-| `sessionUrl`      | `POST` | Creates a ScanUpload session and returns `{ sessionId, accessToken, hubUrl, deviceLoginUrl }` |
-| `refreshTokenUrl` | `POST` | Returns a fresh Bearer token `{ access_token, expires_in }`                                   |
+| Endpoint     | Method | Description                                                                                                                                                  |
+| ------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `sessionUrl` | `POST` | Creates a ScanUpload session and returns `{ sessionId, deviceLoginUrl, hubUrl, ttlSeconds }`. Clients connect directly to `hubUrl` (no proxy/token refresh). |
 
 ## Props
 
@@ -47,7 +46,6 @@ Props use kebab-case attribute names in templates (e.g. `session-url`,
 | Prop                  | Type                                         | Default   | Required | Description                                                           |
 | --------------------- | -------------------------------------------- | --------- | -------- | --------------------------------------------------------------------- |
 | `sessionUrl`          | `string`                                     | —         | Yes      | Endpoint that creates a ScanUpload session.                           |
-| `refreshTokenUrl`     | `string`                                     | —         | Yes      | Endpoint that refreshes the access token.                             |
 | `header`              | `string`                                     | —         | No       | Text shown in the header when `showHeader` is enabled.                |
 | `showHeader`          | `boolean`                                    | `false`   | No       | Whether to render the header.                                         |
 | `showLogo`            | `boolean`                                    | `true`    | No       | Whether to overlay the ScanUpload logo on the QR code.                |
@@ -55,8 +53,8 @@ Props use kebab-case attribute names in templates (e.g. `session-url`,
 | `filePreviewMode`     | `"grid" \| "list"`                           | `"grid"`  | No       | Display files as tiles or a compact list.                             |
 | `size`                | `"small" \| "medium" \| "large" \| "xlarge"` | `"large"` | No       | Controls the overall widget size.                                     |
 
-The `sessionUrl` and `refreshTokenUrl` props are reactive — changing them at
-runtime updates the live session via the core `setOptions` API.
+`sessionUrl` is reactive — changing it at runtime updates the live session via
+the core `setOptions` API.
 
 ## Styling
 

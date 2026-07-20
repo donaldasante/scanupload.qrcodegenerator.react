@@ -100,10 +100,9 @@ export class QrCodeGeneratorElement {
 
     this._container = options.container;
 
-    const { sessionUrl, refreshTokenUrl, storage } = options;
+    const { sessionUrl, storage } = options;
     this._core = new QrCodeGeneratorCore({
       sessionUrl,
-      refreshTokenUrl,
       storage,
     });
   }
@@ -139,9 +138,6 @@ export class QrCodeGeneratorElement {
 
     if (typeof options.sessionUrl === "string") {
       coreOptions.sessionUrl = options.sessionUrl;
-    }
-    if (typeof options.refreshTokenUrl === "string") {
-      coreOptions.refreshTokenUrl = options.refreshTokenUrl;
     }
 
     const hasCoreOptionChanges = Object.keys(coreOptions).length > 0;
@@ -262,6 +258,11 @@ export class QrCodeGeneratorElement {
       reloadSection,
       fileContainer,
     };
+
+    // Reset so the subsequent _render() treats every field as changed and
+    // produces a full repaint (e.g. hides the loading overlay if the core
+    // state is already non-loading when _buildDom is called from setOptions).
+    this._prevState = null;
 
     // Initial render
     this._render();

@@ -4,7 +4,6 @@ import type { QrCodeGeneratorState, StorageAdapter } from '@scanupload/qr-code-g
 
 export interface UseQrCodeCoreOptions {
     sessionUrl: string;
-    refreshTokenUrl: string;
     storage?: StorageAdapter;
 }
 
@@ -13,8 +12,8 @@ export interface QrCodeController {
     state: Readable<QrCodeGeneratorState>;
     /** Tear down the current session and create a new one. */
     retrySession: () => Promise<void>;
-    /** Update the API endpoints at runtime (mirrors the core `setOptions`). */
-    setOptions: (opts: { sessionUrl?: string; refreshTokenUrl?: string }) => Promise<void>;
+    /** Update the API endpoint at runtime (mirrors the core `setOptions`). */
+    setOptions: (opts: { sessionUrl?: string }) => Promise<void>;
 }
 
 /**
@@ -27,7 +26,6 @@ export interface QrCodeController {
 export function createQrCodeController(options: UseQrCodeCoreOptions): QrCodeController {
     const core = new QrCodeGeneratorCore({
         sessionUrl: options.sessionUrl,
-        refreshTokenUrl: options.refreshTokenUrl,
         storage: options.storage
     });
 

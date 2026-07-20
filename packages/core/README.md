@@ -20,12 +20,12 @@ npm install @scanupload/qr-code-generator-core
 
 ## Backend contract
 
-Your backend must expose two endpoints:
+Your backend must expose one public endpoint. The browser automatically sends
+`Origin`, which is what authenticates the request — no token is required.
 
-| Endpoint          | Method | Description                                                                                   |
-| ----------------- | ------ | --------------------------------------------------------------------------------------------- |
-| `sessionUrl`      | `POST` | Creates a ScanUpload session and returns `{ sessionId, accessToken, hubUrl, deviceLoginUrl }` |
-| `refreshTokenUrl` | `POST` | Returns a fresh Bearer token `{ access_token, expires_in }`                                   |
+| Endpoint     | Method | Description                                                                                                                                                  |
+| ------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `sessionUrl` | `POST` | Creates a ScanUpload session and returns `{ sessionId, deviceLoginUrl, hubUrl, ttlSeconds }`. Clients connect directly to `hubUrl` (no proxy/token refresh). |
 
 ## Basic usage
 
@@ -36,23 +36,23 @@ import {
 } from "@scanupload/qr-code-generator-core";
 
 const core = new QrCodeGeneratorCore({
-  sessionUrl: "/api/session",
-  refreshTokenUrl: "/api/token",
+  sessionUrl: "/api/front-end/session",
   storage: browserStorageAdapter,
 });
 
 const unsubscribe = core.subscribe(() => {
   const state = core.getState();
-  console.log(state.deviceLoginUrl, state.uploadedFiles);
+  // state.deviceLoginUrl  - QR code target (encoded into the QR)
+  // state.expiresAt        - absolute expiry timestamp (ms)
+  // state.secondsRemaining - live countdown from response.ttlSeconds
+  // state.errorCode        - 409 (tenant limit) / 429 (rate limit) / null
+  console.log(state.deviceLoginUrl, state.secondsRemaining, state.uploadedFiles);
 });
 
 await core.start();
 
-// Update API endpoints at runtime (core reconnects automatically)
-await core.setOptions({
-  sessionUrl: "/api/new-session",
-  refreshTokenUrl: "/api/new-token",
-});
+// Update the endpoint at runtime — the core reconnects automatically
+await core.setOptions({ sessionUrl: "/api/new-front-end/session" });
 
 // Later
 await core.retrySession();
@@ -66,11 +66,10 @@ core.dispose();
 
 ### `QrCodeGeneratorCoreOptions`
 
-| Field             | Type             | Required | Description                                                        |
-| ----------------- | ---------------- | -------- | ------------------------------------------------------------------ |
-| `sessionUrl`      | `string`         | Yes      | Endpoint used to create a ScanUpload session.                      |
-| `refreshTokenUrl` | `string`         | Yes      | Endpoint used to fetch a fresh access token.                       |
-| `storage`         | `StorageAdapter` | No       | Optional storage implementation. Defaults to browser localStorage. |
+| Field        | Type             | Required | Description                                                        |
+| ------------ | ---------------- | -------- | ------------------------------------------------------------------ |
+| `sessionUrl` | `string`         | Yes      | Endpoint used to create a ScanUpload session.                      |
+| `storage`    | `StorageAdapter` | No       | Optional storage implementation. Defaults to browser localStorage. |
 
 ### `QrCodeGeneratorState`
 
@@ -81,6 +80,9 @@ interface QrCodeGeneratorState {
   retry: boolean;
   deviceLoginUrl: string;
   uploadedFiles: UploadedFile[];
+  expiresAt: number | null;        // absolute expiry timestamp (ms since epoch)
+  secondsRemaining: number | null;  // live countdown, ticks down once per second
+  errorCode: number | null;        // 409 (tenant limit) / 429 (rate limit) / null
 }
 ```
 
@@ -128,8 +130,8 @@ This package exports:
 - `QrCodeGeneratorCore`
 - `browserStorageAdapter`
 - `postData`, `deleteData`, `ApiError`
-- `isNullOrEmpty`, `debounce`, `debounceAsync`, `isExpired`, `truncateWithDots`
-- `SessionResponse`, `TokenResponse`, `UploadedFile`, `QrCodeGeneratorState`
+- `isNullOrEmpty`, `debounce`, `debounceAsync`, `truncateWithDots`
+- `SessionResponse`, `UploadedFile`, `QrCodeGeneratorState`
 - `StorageAdapter`, `QrCodeGeneratorCoreOptions`
 
 ## License
