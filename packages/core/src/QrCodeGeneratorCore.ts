@@ -23,13 +23,22 @@ export interface QrCodeGeneratorCoreOptions {
      */
     sessionUrl: string;
     /**
+     * Optional client identifier (a tenant / Keycloak `client_id`). When set,
+     * it is sent in the JSON body of the session-create request as
+     * `{ "clientId": "..." }` so the hub can scope audit, rate-limits, and
+     * per-client rules. Has no effect on the SignalR WebSocket connection.
+     */
+    clientId?: string;
+    /**
      * Optional storage adapter. Defaults to browser localStorage.
      * Supply a custom adapter for SSR, testing, or non-browser environments.
      */
     storage?: StorageAdapter;
 }
 
-export type QrCodeGeneratorCoreSetOptions = Partial<Pick<QrCodeGeneratorCoreOptions, 'sessionUrl'>>;
+export type QrCodeGeneratorCoreSetOptions = Partial<
+    Pick<QrCodeGeneratorCoreOptions, 'sessionUrl' | 'clientId'>
+>;
 
 export class QrCodeGeneratorCore {
     private _state: QrCodeGeneratorState = { ...INITIAL_STATE };
@@ -44,6 +53,7 @@ export class QrCodeGeneratorCore {
 
     private readonly _storage: StorageAdapter;
     private sessionUrl: string;
+    private clientId: string | undefined;
     private _hasStarted = false;
 
     // Debounced version of _getData — stable across calls, bound to this instance.
@@ -51,6 +61,7 @@ export class QrCodeGeneratorCore {
 
     constructor(options: QrCodeGeneratorCoreOptions) {
         this.sessionUrl = options.sessionUrl;
+        this.clientId = options.clientId;
         this._storage = options.storage ?? browserStorageAdapter;
     }
 
@@ -132,11 +143,13 @@ export class QrCodeGeneratorCore {
 
     async setOptions(options: QrCodeGeneratorCoreSetOptions): Promise<void> {
         const sessionUrl = options.sessionUrl ?? this.sessionUrl;
+        const clientId = options.clientId ?? this.clientId;
 
-        const didChange = sessionUrl !== this.sessionUrl;
+        const didChange = sessionUrl !== this.sessionUrl || clientId !== this.clientId;
         if (!didChange) return;
 
         this.sessionUrl = sessionUrl;
+        this.clientId = clientId;
 
         if (!this._hasStarted) return;
 
@@ -175,10 +188,13 @@ export class QrCodeGeneratorCore {
         this._setState({ loading: true, errorCode: null });
         try {
             // The session endpoint derives identity from the browser's
-            // automatic `Origin` header — no auth token is required.
+            // automatic `Origin` header — no auth token is required. When a
+            // `clientId` is configured it is sent in the JSON body so the hub
+            // can scope audit / rate-limits per tenant/Keycloak client.
+            const body = this.clientId ? { clientId: this.clientId } : undefined;
             const response = await postData<SessionResponse>(
                 this.sessionUrl,
-                undefined,
+                body,
                 { timeout: 300000 }
             );
             this._session = response;
@@ -230,11 +246,55 @@ export class QrCodeGeneratorCore {
             expiresAt: null,
             secondsRemaining: null
         });
+
+        // Capture the sessionId before nulling so the disconnect call has
+        // something to send. A second `_deleteCurrentSession()` (e.g. from a
+        // user spam-click racing retrySession() through the debouncer) will
+        // see `this._session === null` here and skip the POST — no
+        // duplicate network call.
+        const sessionId = this._session?.sessionId;
         this._session = null;
         this._sessionPromise = null;
+
+        // Best-effort server-side cancel. The hub releases the session slot
+        // before we tear down the SignalR channel. Failures are swallowed —
+        // we must not let a network blip (or an idempotent 404 from a
+        // server-pushed `sessionDisconnected`) block the local teardown that
+        // retrySession() and on('sessionDisconnected') both depend on.
+        if (sessionId) {
+            await this._notifyServerDisconnect(sessionId);
+        }
+
         if (this._connection) {
             await this._connection.stop();
             this._connection = null;
+        }
+    }
+
+    /**
+     * `POST /api/v2/front-end/session/disconnect?session_id={sessionId}`
+     * — a best-effort cancel that lets the hub release the session slot
+     * before we tear down the SignalR channel. Errors are intentionally
+     * swallowed so this never breaks the caller's teardown flow.
+     */
+    private async _notifyServerDisconnect(sessionId: string): Promise<void> {
+        let url: URL;
+        try {
+            url = new URL(this.sessionUrl);
+        } catch {
+            // sessionUrl is malformed — skip silently rather than throw.
+            return;
+        }
+        // Derive the disconnect endpoint from sessionUrl by trimming any
+        // trailing slash and appending `/disconnect`. The sessionId is
+        // carried only in the query string per the simplified hub spec.
+        url.pathname = `${url.pathname.replace(/\/$/, '')}/disconnect`;
+        url.searchParams.set('session_id', sessionId);
+
+        try {
+            await postData(url.toString(), undefined, { timeout: 30000 });
+        } catch (err) {
+            console.warn('Disconnect notification failed (continuing local teardown):', err);
         }
     }
 

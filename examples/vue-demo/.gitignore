@@ -1,0 +1,20 @@
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Local-only env overrides. `.env` and `.env.example` are committed; only the
+# per-developer overrides stay out of git.
+.env
+.env.*.local

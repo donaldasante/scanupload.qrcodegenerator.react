@@ -213,7 +213,8 @@ export default function GeneralForm() {
 
           <div className="mb-6">
             <QrCodeGenerator
-              sessionUrl="/scanupload-api/session"
+              sessionUrl={process.env.NEXT_PUBLIC_SESSION_URL ?? "/api/front-end/session"}
+              clientId={process.env.NEXT_PUBLIC_CLIENT_ID}
               showHeader={showHeader}
               header={headerText}
               size={qrCodeSize}

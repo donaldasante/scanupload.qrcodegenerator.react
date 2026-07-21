@@ -8,6 +8,12 @@ import { useQrCodeCore } from "./hooks/useQrCodeCore";
 
 export interface QrCodeGeneratorProps {
   sessionUrl: string;
+  /**
+   * Optional client identifier (tenant / app GUID). Forwarded to the
+   * session-create endpoint as `X-Client-Id` so the hub can scope
+   * audit, rate-limits, and per-client rules.
+   */
+  clientId?: string;
   showHeader?: boolean;
   header: string;
   showLogo?: boolean;
@@ -18,6 +24,7 @@ export interface QrCodeGeneratorProps {
 
 export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
   sessionUrl,
+  clientId,
   header,
   showHeader = false,
   showLogo = true,
@@ -27,6 +34,7 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
 }) => {
   const { state, retrySession } = useQrCodeCore({
     sessionUrl,
+    clientId,
   });
 
   return (

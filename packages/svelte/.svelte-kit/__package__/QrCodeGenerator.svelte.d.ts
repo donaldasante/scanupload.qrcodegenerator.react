@@ -1,5 +1,11 @@
 export interface QrCodeGeneratorProps {
     sessionUrl: string;
+    /**
+     * Optional client identifier (tenant / app GUID). Forwarded to the
+     * session-create endpoint as `X-Client-Id` so the hub can scope
+     * audit, rate-limits, and per-client rules.
+     */
+    clientId?: string;
     showHeader?: boolean;
     header?: string;
     showLogo?: boolean;

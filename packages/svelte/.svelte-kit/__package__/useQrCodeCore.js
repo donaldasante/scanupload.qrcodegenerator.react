@@ -10,6 +10,7 @@ import { QrCodeGeneratorCore } from '@scanupload/qr-code-generator-core';
 export function createQrCodeController(options) {
     const core = new QrCodeGeneratorCore({
         sessionUrl: options.sessionUrl,
+        clientId: options.clientId,
         storage: options.storage
     });
     const state = readable(core.getState(), (set) => {

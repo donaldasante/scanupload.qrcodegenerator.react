@@ -100,9 +100,10 @@ export class QrCodeGeneratorElement {
 
     this._container = options.container;
 
-    const { sessionUrl, storage } = options;
+    const { sessionUrl, clientId, storage } = options;
     this._core = new QrCodeGeneratorCore({
       sessionUrl,
+      clientId,
       storage,
     });
   }
@@ -138,6 +139,9 @@ export class QrCodeGeneratorElement {
 
     if (typeof options.sessionUrl === "string") {
       coreOptions.sessionUrl = options.sessionUrl;
+    }
+    if (typeof options.clientId === "string") {
+      coreOptions.clientId = options.clientId;
     }
 
     const hasCoreOptionChanges = Object.keys(coreOptions).length > 0;

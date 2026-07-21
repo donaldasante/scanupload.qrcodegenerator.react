@@ -90,6 +90,7 @@ export type QrCodeSize = 'small' | 'medium' | 'large' | 'xlarge';
 })
 export class QrCodeGeneratorComponent implements OnInit, OnChanges, OnDestroy {
     @Input({ required: true }) sessionUrl!: string;
+    @Input() clientId?: string;
     @Input() showHeader = false;
     @Input() header = '';
     @Input() showLogo = true;
@@ -110,7 +111,8 @@ export class QrCodeGeneratorComponent implements OnInit, OnChanges, OnDestroy {
 
     ngOnInit(): void {
         this.controller = useQrCodeCore({
-            sessionUrl: this.sessionUrl
+            sessionUrl: this.sessionUrl,
+            clientId: this.clientId
         });
         this.controller.start();
 
@@ -127,9 +129,10 @@ export class QrCodeGeneratorComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (this.controller && changes['sessionUrl']) {
+        if (this.controller && (changes['sessionUrl'] || changes['clientId'])) {
             void this.controller.setOptions({
-                sessionUrl: this.sessionUrl
+                sessionUrl: this.sessionUrl,
+                clientId: this.clientId
             });
         }
     }

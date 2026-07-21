@@ -4,9 +4,14 @@ import { QrCodeGeneratorElement } from '@scanupload/qr-code-generator-vanilla';
 //import '@scanupload/qr-code-generator-vanilla/dist/index.css';
 //import './override.css';
 
+// Endpoints + client id live in `.env` / `.env.local`. See `.env.example`.
+const sessionUrl = import.meta.env.VITE_SESSION_URL;
+const clientId = import.meta.env.VITE_CLIENT_ID;
+
 new QrCodeGeneratorElement({
     container: document.getElementById('widget-container')!,
-    sessionUrl: '/scanupload-api/session',
+    sessionUrl,
+    clientId,
     header: 'Upload files from mobile device',
     showHeader: true,
     showLogo: true,

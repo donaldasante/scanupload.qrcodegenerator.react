@@ -9,7 +9,8 @@ import { QrCodeGeneratorComponent } from '@scanupload/qr-code-generator-angular'
         <div class="demo-card">
             <h2 class="demo-title">Angular Demo</h2>
             <sqg-qr-code-generator
-                sessionUrl="/scanupload-api/session"
+                [sessionUrl]="sessionUrl"
+                [clientId]="clientId"
                 [showHeader]="true"
                 header="Upload files from mobile device"
                 size="large"
@@ -20,4 +21,8 @@ import { QrCodeGeneratorComponent } from '@scanupload/qr-code-generator-angular'
         </div>
     `
 })
-export class AppComponent {}
+export class AppComponent {
+    // Endpoints + client id live in `.env` / `.env.local`. See `.env.example`.
+    protected readonly sessionUrl = import.meta.env.VITE_SESSION_URL;
+    protected readonly clientId = import.meta.env.VITE_CLIENT_ID;
+}

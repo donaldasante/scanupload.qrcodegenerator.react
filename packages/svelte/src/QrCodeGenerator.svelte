@@ -1,6 +1,12 @@
 <script module lang="ts">
     export interface QrCodeGeneratorProps {
         sessionUrl: string;
+        /**
+         * Optional client identifier (tenant / app GUID). Forwarded to the
+         * session-create endpoint as `X-Client-Id` so the hub can scope
+         * audit, rate-limits, and per-client rules.
+         */
+        clientId?: string;
         showHeader?: boolean;
         header?: string;
         showLogo?: boolean;
@@ -20,6 +26,7 @@
 
     let {
         sessionUrl,
+        clientId,
         showHeader = false,
         header = '',
         showLogo = true,
@@ -28,12 +35,12 @@
         size = 'large'
     }: QrCodeGeneratorProps = $props();
 
-    const controller = createQrCodeController({ sessionUrl });
+    const controller = createQrCodeController({ sessionUrl, clientId });
     const coreState = controller.state;
 
     // Push runtime endpoint changes into the core, mirroring the React/Vue adapters.
     $effect(() => {
-        void controller.setOptions({ sessionUrl });
+        void controller.setOptions({ sessionUrl, clientId });
     });
 
     // Regenerate the QR SVG whenever the device login URL changes.

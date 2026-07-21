@@ -16,7 +16,8 @@ createRoot(document.getElementById("root")!).render(
     <div className="demo-card">
       <h2 className="demo-title">React JS Demo</h2>
       <QrCodeGenerator
-        sessionUrl="/scanupload-api/session"
+        sessionUrl={import.meta.env.VITE_SESSION_URL}
+        clientId={import.meta.env.VITE_CLIENT_ID}
         showHeader={true}
         header="Upload files from mobile device"
         size="large"
