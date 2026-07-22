@@ -36,9 +36,7 @@ export interface QrCodeGeneratorCoreOptions {
     storage?: StorageAdapter;
 }
 
-export type QrCodeGeneratorCoreSetOptions = Partial<
-    Pick<QrCodeGeneratorCoreOptions, 'sessionUrl' | 'clientId'>
->;
+export type QrCodeGeneratorCoreSetOptions = Partial<Pick<QrCodeGeneratorCoreOptions, 'sessionUrl' | 'clientId'>>;
 
 export class QrCodeGeneratorCore {
     private _state: QrCodeGeneratorState = { ...INITIAL_STATE };
@@ -192,11 +190,7 @@ export class QrCodeGeneratorCore {
             // `clientId` is configured it is sent in the JSON body so the hub
             // can scope audit / rate-limits per tenant/Keycloak client.
             const body = this.clientId ? { clientId: this.clientId } : undefined;
-            const response = await postData<SessionResponse>(
-                this.sessionUrl,
-                body,
-                { timeout: 300000 }
-            );
+            const response = await postData<SessionResponse>(this.sessionUrl, body, { timeout: 300000 });
             this._session = response;
             this._setState({
                 deviceLoginUrl: this._buildDeviceLoginUrl(response),
@@ -238,30 +232,30 @@ export class QrCodeGeneratorCore {
     }
 
     /**
-     * @param options.skipServerDisconnect  Skip the `POST /disconnect` call.
-     *   Set to `true` when the caller knows the server has already cleaned
-     *   the session up — either because the TTL has elapsed client-side
-     *   (`expired`) or because the hub pushed `sessionDisconnected`.
-     *   Defaults to `false` so `retrySession()` and other call paths still
-     *   release the server-side slot.
      * @param options.setRetry  Flip `state.retry = true` as part of the
      *   teardown. Use this from terminal-state paths (TTL expiry,
      *   server-pushed disconnect) so the existing retry overlay surfaces.
      *   Manual `retrySession()` callers leave it `false` because they're
      *   about to start a fresh connection.
+     *
+     * Always `POST /disconnect` whenever there is a captured `sessionId`
+     * (errors — 404 if the session is already gone, network blips, etc. —
+     * are swallowed by `_notifyServerDisconnect` so the local teardown
+     * is guaranteed to finish even when the hub is unreachable).
+     *
+     * We previously skipped the POST on the TTL-expiry and
+     * `sessionDisconnected` paths on the assumption the hub had already
+     * released the slot. In practice the server-side slot only clears when
+     * the POST lands, so leaving it out meant sessions lingered server-
+     * side until either a manual retry or an out-of-band cleanup ran.
      */
-    private async _deleteCurrentSession(
-        options: { skipServerDisconnect?: boolean; setRetry?: boolean } = {}
-    ): Promise<void> {
+    private async _deleteCurrentSession(options: { setRetry?: boolean } = {}): Promise<void> {
         this._stopCountdown();
 
-        // Capture the timer value and sessionId BEFORE we null them below.
-        // If the client-side countdown has already hit 0 the session is past
-        // its server-side TTL, so POSTing to /disconnect would 404 — skip
-        // the call. The capture has to happen before _setState because that
-        // call nulls `secondsRemaining`.
-        const expired =
-            this._state.secondsRemaining !== null && this._state.secondsRemaining <= 0;
+        // Capture `sessionId` BEFORE we null `this._session` below. A second
+        // concurrent `_deleteCurrentSession()` triggered by a user click or
+        // a server-pushed `sessionDisconnected` will see `null` and skip
+        // its own POST — keeping this duplicate-free.
         const sessionId = this._session?.sessionId;
 
         this._setState({
@@ -272,22 +266,10 @@ export class QrCodeGeneratorCore {
             secondsRemaining: null
         });
 
-        // Null `this._session` so a second concurrent `_deleteCurrentSession()`
-        // (e.g. a user spam-click racing `retrySession()` through the
-        // debouncer) sees `null` and skips the POST — no duplicate network
-        // call.
         this._session = null;
         this._sessionPromise = null;
 
-        // Skip the disconnect POST when:
-        //  - the client already knows the session has expired (the server's
-        //    TTL has elapsed server-side too, so the request is guaranteed
-        //    to fail), OR
-        //  - the caller explicitly asked to skip (server-pushed disconnect,
-        //    TTL-expiry auto-cleanup).
-        // All other paths still attempt it; failures there are swallowed
-        // by the helper.
-        if (sessionId && !expired && !options.skipServerDisconnect) {
+        if (sessionId) {
             await this._notifyServerDisconnect(sessionId);
         }
 
@@ -328,10 +310,10 @@ export class QrCodeGeneratorCore {
      * Start (or restart) the 1Hz countdown timer that drives
      * `state.secondsRemaining`. Callers pass the `ttlSeconds` returned by the
      * session endpoint. When the timer hits 0 the session is auto-cleaned:
-     * the SignalR channel is stopped and `state.retry` is flipped on so the
-     * existing retry CTA surfaces (Logo turns red, the dead QR is replaced
-     * by "Cannot create session — Reload"). The server-side disconnect POST
-     * is skipped because the TTL has elapsed server-side too.
+     * the SignalR channel is stopped, the disconnect POST fires so the
+     * server-side slot releases, and `state.retry` is flipped on so the
+     * existing retry CTA surfaces (Logo turns red, the dead QR is
+     * replaced by "Cannot create session — Reload").
      */
     private _startCountdown(ttlSeconds: number): void {
         this._stopCountdown();
@@ -341,16 +323,13 @@ export class QrCodeGeneratorCore {
             remaining -= 1;
             if (remaining <= 0) {
                 // Fire-and-forget: the cleanup is async (awaits
-                // connection.stop()) but the state transitions inside
-                // `_deleteCurrentSession` are synchronous, so the retry
-                // overlay appears immediately. A subsequent
-                // `_deleteCurrentSession()` triggered by a user click or a
-                // server-pushed `sessionDisconnected` will simply observe
-                // `_session === null` and dedupe.
-                void this._deleteCurrentSession({
-                    skipServerDisconnect: true,
-                    setRetry: true
-                });
+                // `connection.stop()` and the disconnect POST) but the
+                // state transitions inside `_deleteCurrentSession` are
+                // synchronous, so the retry overlay appears immediately.
+                // A subsequent `_deleteCurrentSession()` triggered by a
+                // user click or a server-pushed `sessionDisconnected`
+                // will simply observe `_session === null` and dedupe.
+                void this._deleteCurrentSession({ setRetry: true });
                 this._setState({ secondsRemaining: 0 });
                 return;
             }
@@ -419,14 +398,13 @@ export class QrCodeGeneratorCore {
             });
 
             connection.on('sessionDisconnected', (_sessionId: string) => {
-                // The hub has already released this session — there is
-                // nothing to POST. Skip the redundant round-trip and
-                // surface the existing retry overlay (same UX as TTL
-                // expiry): Logo goes red, dead QR is replaced by "Reload".
-                void this._deleteCurrentSession({
-                    skipServerDisconnect: true,
-                    setRetry: true
-                });
+                // The hub has signalled that this session is gone. Tear
+                // down the SignalR connection, POST `session/disconnect`
+                // so the server-side slot releases (the same code path
+                // as a manual retry), and surface the existing retry
+                // overlay (Logo goes red, dead QR is replaced by
+                // "Reload").
+                void this._deleteCurrentSession({ setRetry: true });
             });
 
             connection.on('sessionReset', (_sessionId: string) => {
