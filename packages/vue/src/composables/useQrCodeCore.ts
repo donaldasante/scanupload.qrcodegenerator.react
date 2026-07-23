@@ -5,6 +5,7 @@ import type { QrCodeGeneratorState, StorageAdapter } from '@scanupload/qr-code-g
 export interface UseQrCodeCoreOptions {
     sessionUrl: MaybeRefOrGetter<string>;
     clientId?: MaybeRefOrGetter<string | undefined>;
+    downloadUrl?: MaybeRefOrGetter<string | undefined>;
     storage?: StorageAdapter;
 }
 
@@ -12,6 +13,7 @@ export function useQrCodeCore(options: UseQrCodeCoreOptions) {
     const core = new QrCodeGeneratorCore({
         sessionUrl: toValue(options.sessionUrl),
         clientId: toValue(options.clientId),
+        downloadUrl: toValue(options.downloadUrl),
         storage: options.storage
     });
 
@@ -28,9 +30,13 @@ export function useQrCodeCore(options: UseQrCodeCoreOptions) {
 
     // React to runtime endpoint changes, mirroring the React hook's setOptions effect.
     watch(
-        () => [toValue(options.sessionUrl), toValue(options.clientId)] as const,
-        ([sessionUrl, clientId]) => {
-            void core.setOptions({ sessionUrl, clientId });
+        () => [
+            toValue(options.sessionUrl),
+            toValue(options.clientId),
+            toValue(options.downloadUrl)
+        ] as const,
+        ([sessionUrl, clientId, downloadUrl]) => {
+            void core.setOptions({ sessionUrl, clientId, downloadUrl });
         }
     );
 
@@ -42,7 +48,14 @@ export function useQrCodeCore(options: UseQrCodeCoreOptions) {
 
     return {
         state,
+        /** Underlying core instance — useful for components (e.g. `DownloadButton`) that need access to live methods. */
+        core,
         retrySession: () => core.retrySession(),
-        setOptions: (opts: { sessionUrl?: string; clientId?: string }) => core.setOptions(opts)
+        /** Triggers a fetch of the session ZIP. Returns a structured result; never throws. */
+        downloadZip: () => core.downloadSessionZip(),
+        /** Whether a download can currently be triggered: session is active AND a downloadUrl is configured. */
+        canDownloadZip: () => core.canDownloadZip(),
+        setOptions: (opts: { sessionUrl?: string; clientId?: string; downloadUrl?: string }) =>
+            core.setOptions(opts)
     };
 }

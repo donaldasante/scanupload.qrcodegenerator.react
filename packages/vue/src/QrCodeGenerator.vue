@@ -4,6 +4,7 @@ import { RotateCw } from 'lucide-vue-next';
 import Logo from './components/Logo.vue';
 import DocumentPreviewer from './components/DocumentPreviewer.vue';
 import FileList from './components/FileList.vue';
+import DownloadButton from './DownloadButton.vue';
 import { useQrCodeCore } from './composables/useQrCodeCore';
 
 export interface QrCodeGeneratorProps {
@@ -14,6 +15,12 @@ export interface QrCodeGeneratorProps {
      * audit, rate-limits, and per-client rules.
      */
     clientId?: string;
+    /**
+     * Optional endpoint that streams all uploaded files for a session as a
+     * ZIP archive. UIs use this to render a "Download" CTA that targets
+     * `GET <downloadUrl>?session_id=<id>`. Auth is enforced by the hub.
+     */
+    downloadUrl?: string;
     showHeader?: boolean;
     header?: string;
     showLogo?: boolean;
@@ -31,14 +38,15 @@ const props = withDefaults(defineProps<QrCodeGeneratorProps>(), {
     size: 'large'
 });
 
-const { state, retrySession } = useQrCodeCore({
+const { state, retrySession, core } = useQrCodeCore({
     sessionUrl: () => props.sessionUrl,
-    clientId: () => props.clientId
+    clientId: () => props.clientId,
+    downloadUrl: () => props.downloadUrl
 });
 
-const onQrClick = async () => {
+const onQrClick = () => {
     if (props.clickQrCodeToReload) {
-        await retrySession();
+        void retrySession();
     }
 };
 </script>
@@ -54,7 +62,7 @@ const onQrClick = async () => {
         <div v-if="!state.loading && state.retry" class="sqg-overlay">
             <div class="sqg-error-content">
                 <p class="sqg-error-text">Cannot create session</p>
-                <button class="sqg-retry-btn" @click="retrySession">
+                <button class="sqg-retry-btn" @click="() => void retrySession()">
                     <RotateCw :size="16" />
                 </button>
             </div>
@@ -78,7 +86,7 @@ const onQrClick = async () => {
                 <p class="sqg-sr-only">QR Code that allows uploads from {{ state.deviceLoginUrl }}</p>
             </div>
             <div v-if="!clickQrCodeToReload" class="sqg-reload-section">
-                <button class="sqg-reload-btn" @click="retrySession"><RotateCw :size="16" /> <span>Reload</span></button>
+                <button class="sqg-reload-btn" @click="() => void retrySession()"><RotateCw :size="16" /> <span>Reload</span></button>
             </div>
             <div v-else class="sqg-reload-section">
                 <p class="sqg-hint-text">Click QR code to reload</p>
@@ -89,6 +97,7 @@ const onQrClick = async () => {
                 </template>
                 <FileList v-else :files="state.uploadedFiles" />
             </div>
+            <DownloadButton v-if="downloadUrl" :core="core" />
         </div>
     </section>
 </template>

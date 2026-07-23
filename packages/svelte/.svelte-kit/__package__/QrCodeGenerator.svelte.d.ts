@@ -6,6 +6,12 @@ export interface QrCodeGeneratorProps {
      * audit, rate-limits, and per-client rules.
      */
     clientId?: string;
+    /**
+     * Optional endpoint that streams all uploaded files for a session as a
+     * ZIP archive. UIs use this to render a "Download" CTA targeting
+     * `GET <downloadUrl>?session_id=<id>`. Auth is enforced by the hub.
+     */
+    downloadUrl?: string;
     showHeader?: boolean;
     header?: string;
     showLogo?: boolean;

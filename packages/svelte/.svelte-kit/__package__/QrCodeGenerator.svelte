@@ -7,6 +7,12 @@
          * audit, rate-limits, and per-client rules.
          */
         clientId?: string;
+        /**
+         * Optional endpoint that streams all uploaded files for a session as a
+         * ZIP archive. UIs use this to render a "Download" CTA targeting
+         * `GET <downloadUrl>?session_id=<id>`. Auth is enforced by the hub.
+         */
+        downloadUrl?: string;
         showHeader?: boolean;
         header?: string;
         showLogo?: boolean;
@@ -23,10 +29,12 @@
     import Logo from './components/Logo.svelte';
     import DocumentPreviewer from './components/DocumentPreviewer.svelte';
     import FileList from './components/FileList.svelte';
+    import DownloadButton from './DownloadButton.svelte';
 
     let {
         sessionUrl,
         clientId,
+        downloadUrl,
         showHeader = false,
         header = '',
         showLogo = true,
@@ -35,12 +43,12 @@
         size = 'large'
     }: QrCodeGeneratorProps = $props();
 
-    const controller = createQrCodeController({ sessionUrl, clientId });
+    const controller = createQrCodeController({ sessionUrl, clientId, downloadUrl });
     const coreState = controller.state;
 
     // Push runtime endpoint changes into the core, mirroring the React/Vue adapters.
     $effect(() => {
-        void controller.setOptions({ sessionUrl, clientId });
+        void controller.setOptions({ sessionUrl, clientId, downloadUrl });
     });
 
     // Regenerate the QR SVG whenever the device login URL changes.
@@ -50,9 +58,9 @@
         generateQrSvg(url, 200).then((svg) => (qrSvg = svg));
     });
 
-    const onQrClick = async () => {
+    const onQrClick = () => {
         if (clickQrCodeToReload) {
-            await controller.retrySession();
+            void controller.retrySession();
         }
     };
 </script>

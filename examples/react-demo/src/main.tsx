@@ -1,23 +1,31 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { QrCodeGenerator } from "@scanupload/qr-code-generator-react";
 
 if (import.meta.env.PROD) {
   console.log = () => {};
 }
 
-// When overriding styles, import the base CSS then your overrides,
+// When overriding styles, import the base CSS then your overrides.
 import "@scanupload/qr-code-generator-react/dist/index.css";
 import "./index.css";
 import "./override.css";
-import { QrCodeGenerator } from "@scanupload/qr-code-generator-react";
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
+// Endpoints + client id live in `.env` / `.env.local`. See `.env.example`.
+const sessionUrl = import.meta.env.VITE_SESSION_URL;
+const downloadUrl = import.meta.env.VITE_DOWNLOAD_URL;
+const clientId = import.meta.env.VITE_CLIENT_ID;
+
+function App() {
+  // The download button is now rendered inside <QrCodeGenerator /> when
+  // `downloadUrl` is configured — no need to wire it up here.
+  return (
     <div className="demo-card">
       <h2 className="demo-title">React JS Demo</h2>
       <QrCodeGenerator
-        sessionUrl={import.meta.env.VITE_SESSION_URL}
-        clientId={import.meta.env.VITE_CLIENT_ID}
+        sessionUrl={sessionUrl}
+        downloadUrl={downloadUrl}
+        clientId={clientId}
         showHeader={true}
         header="Upload files from mobile device"
         size="large"
@@ -26,5 +34,11 @@ createRoot(document.getElementById("root")!).render(
         filePreviewMode="grid"
       />
     </div>
+  );
+}
+
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
+    <App />
   </StrictMode>,
 );

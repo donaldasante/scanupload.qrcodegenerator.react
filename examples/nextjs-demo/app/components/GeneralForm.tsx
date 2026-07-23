@@ -214,6 +214,7 @@ export default function GeneralForm() {
           <div className="mb-6">
             <QrCodeGenerator
               sessionUrl={process.env.NEXT_PUBLIC_SESSION_URL ?? "/api/front-end/session"}
+              downloadUrl={process.env.NEXT_PUBLIC_DOWNLOAD_URL}
               clientId={process.env.NEXT_PUBLIC_CLIENT_ID}
               showHeader={showHeader}
               header={headerText}

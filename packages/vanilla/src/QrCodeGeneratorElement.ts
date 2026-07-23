@@ -1,5 +1,6 @@
 import {
   QrCodeGeneratorCore,
+  type DownloadSessionZipResult,
   type QrCodeGeneratorCoreOptions,
   type QrCodeGeneratorCoreSetOptions,
   type QrCodeGeneratorState,
@@ -100,10 +101,11 @@ export class QrCodeGeneratorElement {
 
     this._container = options.container;
 
-    const { sessionUrl, clientId, storage } = options;
+    const { sessionUrl, clientId, downloadUrl, storage } = options;
     this._core = new QrCodeGeneratorCore({
       sessionUrl,
       clientId,
+      downloadUrl,
       storage,
     });
   }
@@ -143,6 +145,9 @@ export class QrCodeGeneratorElement {
     if (typeof options.clientId === "string") {
       coreOptions.clientId = options.clientId;
     }
+    if (typeof options.downloadUrl === "string") {
+      coreOptions.downloadUrl = options.downloadUrl;
+    }
 
     const hasCoreOptionChanges = Object.keys(coreOptions).length > 0;
     if (hasCoreOptionChanges) {
@@ -158,6 +163,21 @@ export class QrCodeGeneratorElement {
     if (this._els) {
       this._buildDom();
     }
+  }
+
+  /** Whether a download can currently be triggered. */
+  canDownloadZip(): boolean {
+    return this._core.canDownloadZip();
+  }
+
+  /** Fetches the session ZIP. Returns a structured result; never throws. */
+  downloadSessionZip(): Promise<DownloadSessionZipResult> {
+    return this._core.downloadSessionZip();
+  }
+
+  /** Underlying core instance — exposed so consumers can `subscribe` etc. */
+  getCore(): QrCodeGeneratorCore {
+    return this._core;
   }
 
   // ── Initial DOM scaffold ───────────────────────────────────────────────

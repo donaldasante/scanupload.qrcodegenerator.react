@@ -11,7 +11,11 @@ export type {
   TokenResponse,
   UploadedFile,
   QrCodeGeneratorState,
+  DownloadSessionZipResult,
 } from "./types";
+
+// Browser-only download helper (relies on DOM APIs).
+export { triggerBrowserDownload } from "./download";
 
 // Storage adapter
 export type { StorageAdapter } from "./storage";

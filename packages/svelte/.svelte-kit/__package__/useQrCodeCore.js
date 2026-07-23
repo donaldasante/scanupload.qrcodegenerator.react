@@ -11,6 +11,7 @@ export function createQrCodeController(options) {
     const core = new QrCodeGeneratorCore({
         sessionUrl: options.sessionUrl,
         clientId: options.clientId,
+        downloadUrl: options.downloadUrl,
         storage: options.storage
     });
     const state = readable(core.getState(), (set) => {
@@ -24,7 +25,10 @@ export function createQrCodeController(options) {
     });
     return {
         state,
+        core,
         retrySession: () => core.retrySession(),
+        downloadZip: () => core.downloadSessionZip(),
+        canDownloadZip: () => core.canDownloadZip(),
         setOptions: (opts) => core.setOptions(opts)
     };
 }

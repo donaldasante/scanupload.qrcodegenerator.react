@@ -338,6 +338,36 @@
     color: #9ca3af;
 }
 .sqg-remove-btn:hover { background: #f3f4f6; color: #374151; }
+
+/* ── Download section ── */
+.sqg-download {
+    margin-top: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.375rem;
+}
+.sqg-download-btn {
+    background: var(--sqg-primary);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    border: none;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: background 0.15s;
+}
+.sqg-download-btn:hover:not(:disabled) { background: var(--sqg-primary-hover); }
+.sqg-download-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.sqg-download-error {
+    color: var(--sqg-error);
+    font-size: 0.75rem;
+    margin: 0;
+}
 .sqg-remove-icon { height: 1.5rem; width: 1.5rem; }
 
 /* ── File list ── */

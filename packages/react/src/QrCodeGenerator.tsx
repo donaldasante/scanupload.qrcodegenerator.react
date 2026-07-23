@@ -5,6 +5,7 @@ import { FaRedo } from "react-icons/fa";
 import { DocumentPreviewer } from "./components/DocumentPreviewer";
 import { FileList } from "./components/FileList";
 import { useQrCodeCore } from "./hooks/useQrCodeCore";
+import { DownloadButton } from "./DownloadButton";
 
 export interface QrCodeGeneratorProps {
   sessionUrl: string;
@@ -14,6 +15,15 @@ export interface QrCodeGeneratorProps {
    * audit, rate-limits, and per-client rules.
    */
   clientId?: string;
+  /**
+   * Optional endpoint that streams all uploaded files for a session as a
+   * ZIP archive (e.g. `https://hub/api/v2/front-end/session/download`).
+   * The component does **not** call this URL itself; UIs (e.g. the demos)
+   * use it to render a "Download" CTA alongside the QR code that targets
+   * `GET <downloadUrl>?session_id=<state.sessionId>`. Auth is enforced by
+   * the hub's `FrontEndSessionPolicy`.
+   */
+  downloadUrl?: string;
   showHeader?: boolean;
   header: string;
   showLogo?: boolean;
@@ -25,6 +35,7 @@ export interface QrCodeGeneratorProps {
 export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
   sessionUrl,
   clientId,
+  downloadUrl,
   header,
   showHeader = false,
   showLogo = true,
@@ -32,9 +43,10 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
   size = "large",
   filePreviewMode = "grid",
 }) => {
-  const { state, retrySession } = useQrCodeCore({
+  const { state, retrySession, core } = useQrCodeCore({
     sessionUrl,
     clientId,
+    downloadUrl,
   });
 
   return (
@@ -52,8 +64,8 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
           <div className="sqg-error-content">
             <p className="sqg-error-text">Cannot create session</p>
             <button
-              onClick={async () => {
-                await retrySession();
+              onClick={() => {
+                void retrySession();
               }}
               className="sqg-retry-btn"
             >
@@ -70,9 +82,9 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
         )}
         <div
           aria-label="QR Code for file upload"
-          onClick={async () => {
+          onClick={() => {
             if (clickQrCodeToReload) {
-              await retrySession();
+              void retrySession();
             }
           }}
           className="sqg-qr-wrapper"
@@ -97,8 +109,8 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
         {!clickQrCodeToReload ? (
           <div className="sqg-reload-section">
             <button
-              onClick={async () => {
-                await retrySession();
+              onClick={() => {
+                void retrySession();
               }}
               className="sqg-reload-btn"
             >
@@ -119,6 +131,7 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
             <FileList files={state.uploadedFiles} />
           )}
         </div>
+        {downloadUrl ? <DownloadButton core={core} /> : null}
       </div>
     </section>
   );

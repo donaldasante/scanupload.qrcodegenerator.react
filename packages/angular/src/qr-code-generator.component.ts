@@ -14,6 +14,7 @@ import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
 import { LogoComponent } from './components/logo.component';
 import { DocumentPreviewerComponent } from './components/document-previewer.component';
 import { FileListComponent } from './components/file-list.component';
+import { DownloadButtonComponent } from './components/download-button.component';
 import { useQrCodeCore, type QrCodeCoreController } from './use-qr-code-core';
 import { generateQrSvg } from './qrcode';
 import { REDO_SVG } from './icons';
@@ -24,7 +25,7 @@ export type QrCodeSize = 'small' | 'medium' | 'large' | 'xlarge';
 @Component({
     selector: 'sqg-qr-code-generator',
     standalone: true,
-    imports: [LogoComponent, DocumentPreviewerComponent, FileListComponent],
+    imports: [LogoComponent, DocumentPreviewerComponent, FileListComponent, DownloadButtonComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
         <section class="sqg-root" [attr.data-size]="size">
@@ -84,6 +85,9 @@ export type QrCodeSize = 'small' | 'medium' | 'large' | 'xlarge';
                         <sqg-file-list [files]="controller?.state()?.uploadedFiles ?? []"></sqg-file-list>
                     }
                 </div>
+                @if (downloadUrl) {
+                    <sqg-download-button [core]="controller?.core"></sqg-download-button>
+                }
             </div>
         </section>
     `
@@ -91,6 +95,7 @@ export type QrCodeSize = 'small' | 'medium' | 'large' | 'xlarge';
 export class QrCodeGeneratorComponent implements OnInit, OnChanges, OnDestroy {
     @Input({ required: true }) sessionUrl!: string;
     @Input() clientId?: string;
+    @Input() downloadUrl?: string;
     @Input() showHeader = false;
     @Input() header = '';
     @Input() showLogo = true;
@@ -112,7 +117,8 @@ export class QrCodeGeneratorComponent implements OnInit, OnChanges, OnDestroy {
     ngOnInit(): void {
         this.controller = useQrCodeCore({
             sessionUrl: this.sessionUrl,
-            clientId: this.clientId
+            clientId: this.clientId,
+            downloadUrl: this.downloadUrl
         });
         this.controller.start();
 
@@ -129,10 +135,14 @@ export class QrCodeGeneratorComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (this.controller && (changes['sessionUrl'] || changes['clientId'])) {
+        if (
+            this.controller &&
+            (changes['sessionUrl'] || changes['clientId'] || changes['downloadUrl'])
+        ) {
             void this.controller.setOptions({
                 sessionUrl: this.sessionUrl,
-                clientId: this.clientId
+                clientId: this.clientId,
+                downloadUrl: this.downloadUrl
             });
         }
     }
@@ -141,13 +151,13 @@ export class QrCodeGeneratorComponent implements OnInit, OnChanges, OnDestroy {
         this.controller?.dispose();
     }
 
-    protected async retry(): Promise<void> {
-        await this.controller?.retrySession();
+    protected retry(): void {
+        void this.controller?.retrySession();
     }
 
-    protected async onQrClick(): Promise<void> {
+    protected onQrClick(): void {
         if (this.clickQrCodeToReload) {
-            await this.controller?.retrySession();
+              void this.controller?.retrySession();
         }
     }
 }

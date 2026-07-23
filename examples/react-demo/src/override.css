@@ -100,6 +100,21 @@
 
 
 
+/* ── Download button ──────────────────────────────────────────────────────── */
+
+.sqg-download-btn {
+    background: #1e3a5f;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.sqg-download-btn:hover:not(:disabled) {
+    background: #1e40af;
+}
+
+
+
 /* ── File grid (filePreviewMode: 'grid') ──────────────────────────────────── */
 
 .sqg-file-grid {
