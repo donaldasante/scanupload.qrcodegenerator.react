@@ -7,6 +7,7 @@ export { LogoComponent } from './components/logo.component';
 export { ProgressBarComponent } from './components/progress-bar.component';
 export { FileListComponent } from './components/file-list.component';
 export { DocumentPreviewerComponent } from './components/document-previewer.component';
+export { DownloadButtonComponent } from './components/download-button.component';
 
 // Controller (signal-based core wrapper)
 export { useQrCodeCore } from './use-qr-code-core';

@@ -3,6 +3,8 @@ import "./index.css";
 // Component
 export { QrCodeGenerator } from "./QrCodeGenerator";
 export type { QrCodeGeneratorProps } from "./QrCodeGenerator";
+export { DownloadButton } from "./DownloadButton";
+export type { DownloadButtonProps } from "./DownloadButton";
 
 // Hooks
 export { useQrCodeCore } from "./hooks/useQrCodeCore";

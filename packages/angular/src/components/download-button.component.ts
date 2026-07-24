@@ -1,116 +1,150 @@
-import { CommonModule } from '@angular/common';
 import {
     ChangeDetectionStrategy,
+    ChangeDetectorRef,
     Component,
-    EventEmitter,
     Input,
     OnChanges,
     OnDestroy,
-    Output,
+    OnInit,
     SimpleChanges
 } from '@angular/core';
 import { triggerBrowserDownload } from '@scanupload/qr-code-generator-core';
-import type { QrCodeGeneratorCore } from '@scanupload/qr-code-generator-core';
+import type { QrCodeGeneratorCore, UploadedFile } from '@scanupload/qr-code-generator-core';
 
 @Component({
     selector: 'sqg-download-button',
     standalone: true,
-    imports: [CommonModule],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
         <div class="sqg-download">
             <button
                 type="button"
                 class="sqg-download-btn"
-                [disabled]="!canDownload || downloading"
-                [attr.aria-busy]="downloading ? true : null"
-                (click)="onClick()"
+                [disabled]="downloading || fileCount === 0"
+                [attr.aria-busy]="downloading || null"
+                (click)="handleClick()"
             >
-                {{ downloading ? 'Downloading…' : label }}
+                {{ downloading
+                    ? 'Downloading…'
+                    : fileCount > 0
+                        ? label + ' (' + fileCount + ')'
+                        : label }}
             </button>
-            <p *ngIf="error" class="sqg-download-error" role="alert">{{ error }}</p>
+            @if (error) {
+                <p class="sqg-download-error" role="alert">{{ error }}</p>
+            }
         </div>
     `
 })
-export class DownloadButtonComponent implements OnChanges, OnDestroy {
-    /** Core instance returned by {@link useQrCodeCore}. */
+export class DownloadButtonComponent implements OnInit, OnChanges, OnDestroy {
     @Input({ required: true }) core!: QrCodeGeneratorCore;
-    /** Label for the button. Default: "Download". */
-    @Input() label = 'Download';
+    @Input() label: string = 'Download all files';
 
-    @Output() readonly downloadStart = new EventEmitter<void>();
-    @Output() readonly downloadComplete = new EventEmitter<void>();
-    @Output() readonly downloadError = new EventEmitter<string>();
+    protected downloading = false;
+    protected error: string | null = null;
+    protected fileCount = 0;
 
-    downloading = false;
-    error: string | null = null;
-    canDownload = false;
+    private unsubscribe: (() => void) | null = null;
+    private errorTimer: ReturnType<typeof setTimeout> | null = null;
 
-    private _unsubscribe: (() => void) | null = null;
-    private _tickScheduled = false;
-    private _errorTimer: ReturnType<typeof setTimeout> | null = null;
+    constructor(private readonly cdr: ChangeDetectorRef) {}
 
-    private _setError(msg: string | null): void {
-        this.error = msg;
-        if (this._errorTimer) { clearTimeout(this._errorTimer); this._errorTimer = null; }
-        if (msg) {
-            this._errorTimer = setTimeout(() => { this.error = null; this._errorTimer = null; }, 5000);
-        }
+    ngOnInit(): void {
+        this.refresh();
+        this.unsubscribe = this.core.subscribe(() => {
+            this.refresh();
+            this.cdr.markForCheck();
+        });
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes['core']) {
-            // Re-subscribe to the new core instance.
-            this._unsubscribe?.();
-            this._unsubscribe = null;
-            if (this.core) {
-                this._refreshCanDownload();
-                this._unsubscribe = this.core.subscribe(() => this._scheduleRefresh());
-            }
+        if (changes['core'] && this.unsubscribe) {
+            // Re-attach subscription if `core` is swapped at runtime.
+            this.unsubscribe();
+            this.unsubscribe = this.core.subscribe(() => {
+                this.refresh();
+                this.cdr.markForCheck();
+            });
+            this.refresh();
         }
     }
 
     ngOnDestroy(): void {
-        this._unsubscribe?.();
-        this._unsubscribe = null;
-        if (this._errorTimer) { clearTimeout(this._errorTimer); this._errorTimer = null; }
+        this.unsubscribe?.();
+        this.unsubscribe = null;
+        if (this.errorTimer) clearTimeout(this.errorTimer);
     }
 
-    async onClick(): Promise<void> {
-        this._setError(null);
+    private setError(msg: string | null): void {
+        this.error = msg;
+        if (this.errorTimer) { clearTimeout(this.errorTimer); this.errorTimer = null; }
+        if (msg) {
+            this.errorTimer = setTimeout(() => {
+                this.error = null;
+                this.errorTimer = null;
+                this.cdr.markForCheck();
+            }, 5000);
+        }
+    }
+
+    private refresh(): void {
+        this.fileCount = countDownloadable(this.core.getState().uploadedFiles);
+    }
+
+    protected async handleClick(): Promise<void> {
+        this.setError(null);
+        const files = this.core.getState().uploadedFiles.filter((f) => Boolean(f.url));
+        if (files.length === 0) return;
+
         this.downloading = true;
-        this.downloadStart.emit();
         try {
-            const result = await this.core.downloadSessionZip();
-            if (result.ok) {
-                triggerBrowserDownload(result.blob, result.filename);
-                this.downloadComplete.emit();
-            } else {
-                this._setError(result.error);
-                this.downloadError.emit(result.error);
+            const results = await Promise.allSettled(files.map((file) => this.downloadFile(file)));
+            const failed = results.filter((r) => r.status === 'rejected') as PromiseRejectedResult[];
+            if (failed.length > 0) {
+                const firstReason = failed[0].reason;
+                const message = firstReason instanceof Error
+                    ? firstReason.message
+                    : 'Some files failed to download.';
+                this.setError(failed.length === files.length
+                    ? `All downloads failed. ${message}`
+                    : `${failed.length} of ${files.length} files failed. ${message}`);
             }
-        } catch (err) {
-            console.warn('DownloadButton error:', err);
-            this._setError('Unexpected error — please try again.');
-            this.downloadError.emit(this.error!);
         } finally {
             this.downloading = false;
         }
     }
 
-    private _scheduleRefresh(): void {
-        if (this._tickScheduled) return;
-        this._tickScheduled = true;
-        queueMicrotask(() => {
-            this._tickScheduled = false;
-            this._refreshCanDownload();
-        });
-    }
+    private async downloadFile(file: UploadedFile): Promise<void> {
+        if (!file.url) {
+            throw new Error(`No download URL for "${file.name}".`);
+        }
 
-    private _refreshCanDownload(): void {
-        const next = this.core.canDownloadZip();
-        // Clear stale errors when a new session becomes available.
-        if (next && !this.canDownload) this.error = null;
-        if (next !== this.canDownload) this.canDownload = next;
+        let response: Response;
+        try {
+            response = await fetch(file.url, { credentials: 'include' });
+        } catch {
+            throw new Error(`Network error downloading "${file.name}".`);
+        }
+
+        if (!response.ok) {
+            throw new Error(`"${file.name}" download failed (HTTP ${response.status}).`);
+        }
+
+        const blob = await response.blob();
+        triggerBrowserDownload(blob, file.name || deriveFilename(file.url));
+    }
+}
+
+function countDownloadable(files: readonly UploadedFile[]): number {
+    return files.reduce((n, f) => (f.url ? n + 1 : n), 0);
+}
+
+function deriveFilename(url: string): string {
+    try {
+        const pathname = new URL(url, window.location.href).pathname;
+        const last = pathname.split('/').filter(Boolean).pop();
+        return last ?? 'download';
+    } catch {
+        return 'download';
     }
 }

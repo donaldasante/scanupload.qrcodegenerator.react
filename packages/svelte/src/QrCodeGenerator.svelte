@@ -7,18 +7,18 @@
          * audit, rate-limits, and per-client rules.
          */
         clientId?: string;
-        /**
-         * Optional endpoint that streams all uploaded files for a session as a
-         * ZIP archive. UIs use this to render a "Download" CTA targeting
-         * `GET <downloadUrl>?session_id=<id>`. Auth is enforced by the hub.
-         */
-        downloadUrl?: string;
         showHeader?: boolean;
         header?: string;
         showLogo?: boolean;
         clickQrCodeToReload?: boolean;
         filePreviewMode?: 'list' | 'grid';
         size?: 'small' | 'medium' | 'large' | 'xlarge';
+        /**
+         * Show a "Download all files" button beneath the file previews. When
+         * clicked, it fetches every `UploadedFile.url` the SignalR hub has
+         * surfaced and triggers a browser save for each. Default: false.
+         */
+        showDownloadButton?: boolean;
     }
 </script>
 
@@ -34,21 +34,21 @@
     let {
         sessionUrl,
         clientId,
-        downloadUrl,
         showHeader = false,
         header = '',
         showLogo = true,
         clickQrCodeToReload = false,
         filePreviewMode = 'grid',
-        size = 'large'
+        size = 'large',
+        showDownloadButton = false
     }: QrCodeGeneratorProps = $props();
 
-    const controller = createQrCodeController({ sessionUrl, clientId, downloadUrl });
+    const controller = createQrCodeController({ sessionUrl, clientId });
     const coreState = controller.state;
 
     // Push runtime endpoint changes into the core, mirroring the React/Vue adapters.
     $effect(() => {
-        void controller.setOptions({ sessionUrl, clientId, downloadUrl });
+        void controller.setOptions({ sessionUrl, clientId });
     });
 
     // Regenerate the QR SVG whenever the device login URL changes.
@@ -132,5 +132,8 @@
                 <FileList files={$coreState.uploadedFiles} />
             {/if}
         </div>
+        {#if showDownloadButton}
+            <DownloadButton core={controller.core} />
+        {/if}
     </div>
 </section>

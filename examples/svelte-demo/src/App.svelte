@@ -3,7 +3,6 @@
 
     // Endpoints + client id live in `.env` / `.env.local`. See `.env.example`.
     const sessionUrl = import.meta.env.VITE_SESSION_URL;
-    const downloadUrl = import.meta.env.VITE_DOWNLOAD_URL;
     const clientId = import.meta.env.VITE_CLIENT_ID;
 </script>
 
@@ -11,7 +10,6 @@
     <h2 class="demo-title">Svelte Demo</h2>
     <QrCodeGenerator
         sessionUrl={sessionUrl}
-        downloadUrl={downloadUrl}
         clientId={clientId}
         showHeader={true}
         header="Upload files from mobile device"
@@ -19,5 +17,6 @@
         showLogo={true}
         clickQrCodeToReload={true}
         filePreviewMode="grid"
+        showDownloadButton={true}
     />
 </div>

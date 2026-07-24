@@ -13,18 +13,14 @@ import "./override.css";
 
 // Endpoints + client id live in `.env` / `.env.local`. See `.env.example`.
 const sessionUrl = import.meta.env.VITE_SESSION_URL;
-const downloadUrl = import.meta.env.VITE_DOWNLOAD_URL;
 const clientId = import.meta.env.VITE_CLIENT_ID;
 
 function App() {
-  // The download button is now rendered inside <QrCodeGenerator /> when
-  // `downloadUrl` is configured — no need to wire it up here.
   return (
     <div className="demo-card">
       <h2 className="demo-title">React JS Demo</h2>
       <QrCodeGenerator
         sessionUrl={sessionUrl}
-        downloadUrl={downloadUrl}
         clientId={clientId}
         showHeader={true}
         header="Upload files from mobile device"
@@ -32,6 +28,7 @@ function App() {
         showLogo={true}
         clickQrCodeToReload={true}
         filePreviewMode="grid"
+        showDownloadButton={true}
       />
     </div>
   );

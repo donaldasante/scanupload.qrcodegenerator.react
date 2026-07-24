@@ -15,18 +15,18 @@ export interface QrCodeGeneratorProps {
      * audit, rate-limits, and per-client rules.
      */
     clientId?: string;
-    /**
-     * Optional endpoint that streams all uploaded files for a session as a
-     * ZIP archive. UIs use this to render a "Download" CTA that targets
-     * `GET <downloadUrl>?session_id=<id>`. Auth is enforced by the hub.
-     */
-    downloadUrl?: string;
     showHeader?: boolean;
     header?: string;
     showLogo?: boolean;
     clickQrCodeToReload?: boolean;
     filePreviewMode?: 'list' | 'grid';
     size?: 'small' | 'medium' | 'large' | 'xlarge';
+    /**
+     * Show a "Download all files" button beneath the file previews. When
+     * clicked, it fetches every `UploadedFile.url` the SignalR hub has
+     * surfaced and triggers a browser save for each. Default: false.
+     */
+    showDownloadButton?: boolean;
 }
 
 const props = withDefaults(defineProps<QrCodeGeneratorProps>(), {
@@ -35,13 +35,13 @@ const props = withDefaults(defineProps<QrCodeGeneratorProps>(), {
     showLogo: true,
     clickQrCodeToReload: false,
     filePreviewMode: 'grid',
-    size: 'large'
+    size: 'large',
+    showDownloadButton: false
 });
 
 const { state, retrySession, core } = useQrCodeCore({
     sessionUrl: () => props.sessionUrl,
-    clientId: () => props.clientId,
-    downloadUrl: () => props.downloadUrl
+    clientId: () => props.clientId
 });
 
 const onQrClick = () => {
@@ -97,7 +97,7 @@ const onQrClick = () => {
                 </template>
                 <FileList v-else :files="state.uploadedFiles" />
             </div>
-            <DownloadButton v-if="downloadUrl" :core="core" />
+            <DownloadButton v-if="showDownloadButton" :core="core" />
         </div>
     </section>
 </template>

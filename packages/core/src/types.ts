@@ -34,18 +34,6 @@ export interface UploadedFile {
     thumbnailBase64?: string;
 }
 
-/**
- * Returned by {@link QrCodeGeneratorCore.downloadSessionZip}. On success the
- * caller receives the binary blob plus a server-supplied filename (or a
- * caller-supplied default) and is expected to feed both to
- * {@link triggerBrowserDownload}. On failure the caller receives an error
- * message and an optional HTTP status — it should surface the message in its
- * own UI (the core never throws).
- */
-export type DownloadSessionZipResult =
-    | { ok: true; filename: string; blob: Blob }
-    | { ok: false; error: string; status?: number };
-
 export interface QrCodeGeneratorState {
     loading: boolean;
     isConnected: boolean;
@@ -74,14 +62,7 @@ export interface QrCodeGeneratorState {
     /**
      * The active session id. `null` until the first session is fetched, or
      * after the session ends. Useful for clients that need to address
-     * downstream endpoints (e.g. the file-download ZIP stream) by session.
+     * downstream endpoints by session.
      */
     sessionId: string | null;
-    /**
-     * Mirror of the `downloadUrl` option passed to {@link QrCodeGeneratorCore}.
-     * Surfaced on state so reactive UIs (React/Vue/Svelte/Angular) can read
-     * whether a download endpoint is configured without having to thread
-     * the option through. `null` when no download URL was configured.
-     */
-    downloadUrl: string | null;
 }

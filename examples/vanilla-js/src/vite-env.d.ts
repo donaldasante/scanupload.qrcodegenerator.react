@@ -12,12 +12,6 @@ interface ImportMetaEnv {
      * and per-client rules.
      */
     readonly VITE_CLIENT_ID: string;
-    /**
-     * Endpoint that streams all uploaded files for a session as a ZIP
-     * archive. Hit via `GET <url>?session_id=<id>`; auth is enforced by
-     * the hub's `FrontEndSessionPolicy`.
-     */
-    readonly VITE_DOWNLOAD_URL: string;
 }
 
 interface ImportMeta {

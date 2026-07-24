@@ -1,7 +1,8 @@
 /**
  * Browser-only helper that turns a {@link Blob} into a file save without
- * navigating the page. Used by every framework's `<DownloadButton>` so all
- * adapters share a single implementation of the same DOM dance.
+ * navigating the page. Used by framework adapters (e.g. the React
+ * `<DownloadButton>`) so every framework can share a single implementation
+ * of the same DOM dance.
  *
  * Safari in particular needs a non-zero delay between `click()` and
  * `URL.revokeObjectURL()` — we defer the revocation onto the next tick.

@@ -85,7 +85,7 @@ export type QrCodeSize = 'small' | 'medium' | 'large' | 'xlarge';
                         <sqg-file-list [files]="controller?.state()?.uploadedFiles ?? []"></sqg-file-list>
                     }
                 </div>
-                @if (downloadUrl) {
+                @if (showDownloadButton) {
                     <sqg-download-button [core]="controller?.core"></sqg-download-button>
                 }
             </div>
@@ -95,13 +95,13 @@ export type QrCodeSize = 'small' | 'medium' | 'large' | 'xlarge';
 export class QrCodeGeneratorComponent implements OnInit, OnChanges, OnDestroy {
     @Input({ required: true }) sessionUrl!: string;
     @Input() clientId?: string;
-    @Input() downloadUrl?: string;
     @Input() showHeader = false;
     @Input() header = '';
     @Input() showLogo = true;
     @Input() clickQrCodeToReload = false;
     @Input() filePreviewMode: FilePreviewMode = 'grid';
     @Input() size: QrCodeSize = 'large';
+    @Input() showDownloadButton = false;
 
     protected controller?: QrCodeCoreController;
     protected readonly qrSvg = signal<SafeHtml>('');
@@ -117,8 +117,7 @@ export class QrCodeGeneratorComponent implements OnInit, OnChanges, OnDestroy {
     ngOnInit(): void {
         this.controller = useQrCodeCore({
             sessionUrl: this.sessionUrl,
-            clientId: this.clientId,
-            downloadUrl: this.downloadUrl
+            clientId: this.clientId
         });
         this.controller.start();
 
@@ -137,12 +136,11 @@ export class QrCodeGeneratorComponent implements OnInit, OnChanges, OnDestroy {
     ngOnChanges(changes: SimpleChanges): void {
         if (
             this.controller &&
-            (changes['sessionUrl'] || changes['clientId'] || changes['downloadUrl'])
+            (changes['sessionUrl'] || changes['clientId'])
         ) {
             void this.controller.setOptions({
                 sessionUrl: this.sessionUrl,
-                clientId: this.clientId,
-                downloadUrl: this.downloadUrl
+                clientId: this.clientId
             });
         }
     }

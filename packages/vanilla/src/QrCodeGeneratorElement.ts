@@ -1,6 +1,6 @@
 import {
   QrCodeGeneratorCore,
-  type DownloadSessionZipResult,
+  triggerBrowserDownload,
   type QrCodeGeneratorCoreOptions,
   type QrCodeGeneratorCoreSetOptions,
   type QrCodeGeneratorState,
@@ -48,6 +48,12 @@ export interface QrCodeGeneratorElementOptions extends QrCodeGeneratorCoreOption
   size?: ComponentSize;
   /** Automatically inject the built-in styles into <head>. Set to false when importing the CSS manually. Default: true. */
   injectStyles?: boolean;
+  /**
+   * Show a "Download all files" button beneath the file previews. When
+   * clicked, it fetches every `UploadedFile.url` the SignalR hub has
+   * surfaced and triggers a browser save for each. Default: false.
+   */
+  showDownloadButton?: boolean;
 }
 
 export type QrCodeGeneratorElementSetOptions = Partial<
@@ -68,12 +74,15 @@ export class QrCodeGeneratorElement {
       | "filePreviewMode"
       | "size"
       | "injectStyles"
+      | "showDownloadButton"
     >
   > &
     QrCodeGeneratorElementOptions;
 
   private _unsubscribe: (() => void) | null = null;
   private _prevState: QrCodeGeneratorState | null = null;
+  private _downloadInFlight = false;
+  private _downloadErrorTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Cached DOM references for efficient updates
   private _els: {
@@ -86,6 +95,9 @@ export class QrCodeGeneratorElement {
     logoOverlay: HTMLElement;
     reloadSection: HTMLElement;
     fileContainer: HTMLElement;
+    downloadSection: HTMLElement | null;
+    downloadBtn: HTMLButtonElement | null;
+    downloadError: HTMLElement | null;
   } | null = null;
 
   constructor(options: QrCodeGeneratorElementOptions) {
@@ -96,16 +108,16 @@ export class QrCodeGeneratorElement {
       filePreviewMode: "grid",
       size: "large",
       injectStyles: true,
+      showDownloadButton: false,
       ...options,
     };
 
     this._container = options.container;
 
-    const { sessionUrl, clientId, downloadUrl, storage } = options;
+    const { sessionUrl, clientId, storage } = options;
     this._core = new QrCodeGeneratorCore({
       sessionUrl,
       clientId,
-      downloadUrl,
       storage,
     });
   }
@@ -122,6 +134,10 @@ export class QrCodeGeneratorElement {
   dispose(): void {
     this._unsubscribe?.();
     this._unsubscribe = null;
+    if (this._downloadErrorTimer) {
+      clearTimeout(this._downloadErrorTimer);
+      this._downloadErrorTimer = null;
+    }
     this._core.dispose();
     this._container.innerHTML = "";
     this._els = null;
@@ -145,9 +161,6 @@ export class QrCodeGeneratorElement {
     if (typeof options.clientId === "string") {
       coreOptions.clientId = options.clientId;
     }
-    if (typeof options.downloadUrl === "string") {
-      coreOptions.downloadUrl = options.downloadUrl;
-    }
 
     const hasCoreOptionChanges = Object.keys(coreOptions).length > 0;
     if (hasCoreOptionChanges) {
@@ -163,16 +176,6 @@ export class QrCodeGeneratorElement {
     if (this._els) {
       this._buildDom();
     }
-  }
-
-  /** Whether a download can currently be triggered. */
-  canDownloadZip(): boolean {
-    return this._core.canDownloadZip();
-  }
-
-  /** Fetches the session ZIP. Returns a structured result; never throws. */
-  downloadSessionZip(): Promise<DownloadSessionZipResult> {
-    return this._core.downloadSessionZip();
   }
 
   /** Underlying core instance — exposed so consumers can `subscribe` etc. */
@@ -267,6 +270,26 @@ export class QrCodeGeneratorElement {
     const fileContainer = el("div");
     content.appendChild(fileContainer);
 
+    // Optional download section (rendered only when showDownloadButton is true)
+    let downloadSection: HTMLElement | null = null;
+    let downloadBtn: HTMLButtonElement | null = null;
+    let downloadError: HTMLElement | null = null;
+    if (this._options.showDownloadButton) {
+      downloadSection = el("div", "sqg-download");
+      downloadBtn = document.createElement("button");
+      downloadBtn.type = "button";
+      downloadBtn.className = "sqg-download-btn";
+      downloadBtn.addEventListener("click", () => {
+        void this._handleDownloadClick();
+      });
+      downloadSection.appendChild(downloadBtn);
+      downloadError = el("p", "sqg-download-error");
+      downloadError.setAttribute("role", "alert");
+      downloadError.style.display = "none";
+      downloadSection.appendChild(downloadError);
+      content.appendChild(downloadSection);
+    }
+
     root.appendChild(content);
     this._container.innerHTML = "";
     this._container.appendChild(root);
@@ -281,6 +304,9 @@ export class QrCodeGeneratorElement {
       logoOverlay,
       reloadSection,
       fileContainer,
+      downloadSection,
+      downloadBtn,
+      downloadError,
     };
 
     // Reset so the subsequent _render() treats every field as changed and
@@ -289,7 +315,7 @@ export class QrCodeGeneratorElement {
     this._prevState = null;
 
     // Initial render
-    this._render();
+    void this._render();
   }
 
   // ── Reactive render ────────────────────────────────────────────────────
@@ -341,7 +367,66 @@ export class QrCodeGeneratorElement {
       this._renderFiles(state.uploadedFiles);
     }
 
+    // Download button label/count
+    if (this._els.downloadBtn && (!prev || prev.uploadedFiles !== state.uploadedFiles)) {
+      const count = countDownloadable(state.uploadedFiles);
+      this._els.downloadBtn.disabled = this._downloadInFlight || count === 0;
+      this._els.downloadBtn.textContent = this._downloadInFlight
+        ? "Downloading…"
+        : count > 0
+          ? `Download all files (${count})`
+          : "Download all files";
+    }
+
     this._prevState = state;
+  }
+
+  // ── Download handler ──────────────────────────────────────────────────
+
+  private async _handleDownloadClick(): Promise<void> {
+    if (!this._els) return;
+    this._clearDownloadError();
+    const files = this._core.getState().uploadedFiles.filter((f) => Boolean(f.url));
+    if (files.length === 0) return;
+
+    this._downloadInFlight = true;
+    void this._render();
+    try {
+      const results = await Promise.allSettled(files.map((file) => downloadFile(file)));
+      const failed = results.filter((r) => r.status === "rejected") as PromiseRejectedResult[];
+      if (failed.length > 0) {
+        const firstReason = failed[0].reason;
+        const message = firstReason instanceof Error
+          ? firstReason.message
+          : "Some files failed to download.";
+        this._showDownloadError(
+          failed.length === files.length
+            ? `All downloads failed. ${message}`
+            : `${failed.length} of ${files.length} files failed. ${message}`,
+        );
+      }
+    } finally {
+      this._downloadInFlight = false;
+      void this._render();
+    }
+  }
+
+  private _showDownloadError(message: string): void {
+    if (!this._els?.downloadError) return;
+    this._els.downloadError.textContent = message;
+    this._els.downloadError.style.display = "";
+    if (this._downloadErrorTimer) clearTimeout(this._downloadErrorTimer);
+    this._downloadErrorTimer = setTimeout(() => this._clearDownloadError(), 5000);
+  }
+
+  private _clearDownloadError(): void {
+    if (!this._els?.downloadError) return;
+    this._els.downloadError.textContent = "";
+    this._els.downloadError.style.display = "none";
+    if (this._downloadErrorTimer) {
+      clearTimeout(this._downloadErrorTimer);
+      this._downloadErrorTimer = null;
+    }
   }
 
   // ── File rendering ─────────────────────────────────────────────────────
@@ -360,5 +445,41 @@ export class QrCodeGeneratorElement {
     } else {
       renderFileGrid(container, files);
     }
+  }
+}
+
+// ── Module-level helpers ──────────────────────────────────────────────────
+
+function countDownloadable(files: readonly UploadedFile[]): number {
+  return files.reduce((n, f) => (f.url ? n + 1 : n), 0);
+}
+
+async function downloadFile(file: UploadedFile): Promise<void> {
+  if (!file.url) {
+    throw new Error(`No download URL for "${file.name}".`);
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(file.url, { credentials: "include" });
+  } catch {
+    throw new Error(`Network error downloading "${file.name}".`);
+  }
+
+  if (!response.ok) {
+    throw new Error(`"${file.name}" download failed (HTTP ${response.status}).`);
+  }
+
+  const blob = await response.blob();
+  triggerBrowserDownload(blob, file.name || deriveFilename(file.url));
+}
+
+function deriveFilename(url: string): string {
+  try {
+    const pathname = new URL(url, window.location.href).pathname;
+    const last = pathname.split("/").filter(Boolean).pop();
+    return last ?? "download";
+  } catch {
+    return "download";
   }
 }

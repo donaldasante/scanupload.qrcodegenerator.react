@@ -6,18 +6,18 @@ export interface QrCodeGeneratorProps {
      * audit, rate-limits, and per-client rules.
      */
     clientId?: string;
-    /**
-     * Optional endpoint that streams all uploaded files for a session as a
-     * ZIP archive. UIs use this to render a "Download" CTA targeting
-     * `GET <downloadUrl>?session_id=<id>`. Auth is enforced by the hub.
-     */
-    downloadUrl?: string;
     showHeader?: boolean;
     header?: string;
     showLogo?: boolean;
     clickQrCodeToReload?: boolean;
     filePreviewMode?: 'list' | 'grid';
     size?: 'small' | 'medium' | 'large' | 'xlarge';
+    /**
+     * Show a "Download all files" button beneath the file previews. When
+     * clicked, it fetches every `UploadedFile.url` the SignalR hub has
+     * surfaced and triggers a browser save for each. Default: false.
+     */
+    showDownloadButton?: boolean;
 }
 declare const QrCodeGenerator: import("svelte").Component<QrCodeGeneratorProps, {}, "">;
 type QrCodeGenerator = ReturnType<typeof QrCodeGenerator>;

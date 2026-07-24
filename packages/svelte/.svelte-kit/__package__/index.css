@@ -1,5 +1,25 @@
 /* ── ScanUpload QR Generator Svelte — styles ── */
 
+:root {
+    --sqg-primary: #1e3a5f;
+    --sqg-primary-hover: #1e40af;
+    --sqg-overlay-bg: rgba(255, 255, 255, 0.9);
+    --sqg-border: #d1d5db;
+    --sqg-bg: #ffffff;
+    --sqg-text: #111827;
+    --sqg-text-muted: #6b7280;
+    --sqg-spinner-color: var(--sqg-primary);
+    --sqg-retry-bg: #93c5fd;
+    --sqg-retry-bg-hover: #3b82f6;
+    --sqg-reload-bg: #6b7280;
+    --sqg-reload-bg-hover: var(--sqg-primary-hover);
+    --sqg-success: #22c55e;
+    --sqg-success-light: #bbf7d0;
+    --sqg-error: #dc2626;
+    --sqg-error-dark: #991b1b;
+    --sqg-radius: 0.5rem;
+}
+
 @keyframes sqg-spin {
     to { transform: rotate(360deg); }
 }

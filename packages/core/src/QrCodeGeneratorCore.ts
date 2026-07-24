@@ -2,8 +2,7 @@ import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signal
 import { ApiError, postData } from './apiClient';
 import { debounceAsync, isNullOrEmpty } from './utilities';
 import { StorageAdapter, browserStorageAdapter } from './storage';
-import { DownloadSessionZipResult, QrCodeGeneratorState, SessionResponse, UploadedFile } from './types';
-import { triggerBrowserDownload } from './download';
+import { QrCodeGeneratorState, SessionResponse, UploadedFile } from './types';
 
 const INITIAL_STATE: QrCodeGeneratorState = {
     loading: true,
@@ -14,8 +13,7 @@ const INITIAL_STATE: QrCodeGeneratorState = {
     expiresAt: null,
     secondsRemaining: null,
     errorCode: null,
-    sessionId: null,
-    downloadUrl: null
+    sessionId: null
 };
 
 export interface QrCodeGeneratorCoreOptions {
@@ -33,14 +31,6 @@ export interface QrCodeGeneratorCoreOptions {
      */
     clientId?: string;
     /**
-     * Optional endpoint that streams all uploaded files for a session as a
-     * ZIP archive. The core does **not** call this URL itself — it is
-     * exposed via `QrCodeGeneratorCoreOptions` purely so UIs can render a
-     * "Download" CTA that requests `GET <downloadUrl>?session_id=<id>`.
-     * Auth is enforced by the hub's `FrontEndSessionPolicy` (cookie + Origin).
-     */
-    downloadUrl?: string;
-    /**
      * Optional storage adapter. Defaults to browser localStorage.
      * Supply a custom adapter for SSR, testing, or non-browser environments.
      */
@@ -48,7 +38,7 @@ export interface QrCodeGeneratorCoreOptions {
 }
 
 export type QrCodeGeneratorCoreSetOptions = Partial<
-    Pick<QrCodeGeneratorCoreOptions, 'sessionUrl' | 'clientId' | 'downloadUrl'>
+    Pick<QrCodeGeneratorCoreOptions, 'sessionUrl' | 'clientId'>
 >;
 
 export class QrCodeGeneratorCore {
@@ -65,7 +55,6 @@ export class QrCodeGeneratorCore {
     private readonly _storage: StorageAdapter;
     private sessionUrl: string;
     private clientId: string | undefined;
-    private downloadUrl: string | undefined;
     private _hasStarted = false;
 
     // Debounced version of _getData — stable across calls, bound to this instance.
@@ -74,84 +63,7 @@ export class QrCodeGeneratorCore {
     constructor(options: QrCodeGeneratorCoreOptions) {
         this.sessionUrl = options.sessionUrl;
         this.clientId = options.clientId;
-        this.downloadUrl = options.downloadUrl;
         this._storage = options.storage ?? browserStorageAdapter;
-        // Mirror the configured downloadUrl onto state so reactive UIs can
-        // observe whether the endpoint was wired up without having to thread
-        // the option through.
-        this._state.downloadUrl = options.downloadUrl ?? null;
-    }
-
-    /**
-     * Whether a download is currently possible: a session is active AND
-     * a `downloadUrl` was configured. Reactive adapters can use this in
-     * combination with `setState` to drive a button's `disabled` state.
-     */
-    canDownloadZip(): boolean {
-        return this._state.sessionId !== null && this._state.downloadUrl !== null;
-    }
-
-    /**
-     * Fetches the session's uploaded-file ZIP from the configured
-     * `downloadUrl`. The hub authenticates via the
-     * `FrontEndSessionPolicy` cookie + `Origin`; `client_id` is read from
-     * claims server-side, so the URL only needs the `session_id` query
-     * param.
-     *
-     * The returned {@link DownloadSessionZipResult} carries either the
-     * binary blob + filename (which should be passed to
-     * {@link triggerBrowserDownload}) or a structured error.
-     *
-     * This method never throws and never calls `setState` — keeping the
-     * download lifecycle entirely UI-side.
-     */
-    async downloadSessionZip(): Promise<DownloadSessionZipResult> {
-        const sessionId = this._state.sessionId;
-        const downloadUrl = this._state.downloadUrl;
-        if (!sessionId || !downloadUrl) {
-            return {
-                ok: false,
-                error: 'Download is not configured or no session is active.'
-            };
-        }
-
-        const url = `${downloadUrl}?session_id=${encodeURIComponent(sessionId)}`;
-
-        let response: Response;
-        try {
-            response = await fetch(url, { credentials: 'include' });
-        } catch (err) {
-            console.warn('Download network error:', err);
-            return {
-                ok: false,
-                error: 'Network error \u2014 please try again.'
-            };
-        }
-
-        if (!response.ok) {
-            let msg = `Download failed (HTTP ${response.status}).`;
-            try {
-                const json = (await response.json()) as { error?: unknown };
-                if (json && typeof json.error === 'string') msg = json.error;
-            } catch {
-                /* non-JSON body — keep the default message */
-            }
-            return { ok: false, error: msg, status: response.status };
-        }
-
-        // Resolve filename from Content-Disposition, falling back to a
-        // deterministic default based on the session id.
-        let filename = `${sessionId}.zip`;
-        const disposition = response.headers.get('Content-Disposition');
-        if (disposition) {
-            const ext = /filename\*=UTF-8''([^;]+)/i.exec(disposition);
-            const plain = /filename="?([^";]+)"?/i.exec(disposition);
-            const match = ext ?? plain;
-            if (match) filename = decodeURIComponent(match[1]);
-        }
-
-        const blob = await response.blob();
-        return { ok: true, filename, blob };
     }
 
     // ─── Public API ────────────────────────────────────────────────────────────
@@ -240,23 +152,14 @@ export class QrCodeGeneratorCore {
     async setOptions(options: QrCodeGeneratorCoreSetOptions): Promise<void> {
         const sessionUrl = options.sessionUrl ?? this.sessionUrl;
         const clientId = options.clientId ?? this.clientId;
-        const downloadUrl = options.downloadUrl ?? this.downloadUrl;
 
         const didChange =
             sessionUrl !== this.sessionUrl ||
-            clientId !== this.clientId ||
-            downloadUrl !== this.downloadUrl;
+            clientId !== this.clientId;
         if (!didChange) return;
 
         this.sessionUrl = sessionUrl;
         this.clientId = clientId;
-        this.downloadUrl = downloadUrl;
-
-        // Mirror the new downloadUrl onto state so subscribers see the
-        // change without having to setState the field manually.
-        if (this._state.downloadUrl !== (downloadUrl ?? null)) {
-            this._setState({ downloadUrl: downloadUrl ?? null });
-        }
 
         if (!this._hasStarted) return;
 

@@ -15,38 +15,34 @@ export interface QrCodeGeneratorProps {
    * audit, rate-limits, and per-client rules.
    */
   clientId?: string;
-  /**
-   * Optional endpoint that streams all uploaded files for a session as a
-   * ZIP archive (e.g. `https://hub/api/v2/front-end/session/download`).
-   * The component does **not** call this URL itself; UIs (e.g. the demos)
-   * use it to render a "Download" CTA alongside the QR code that targets
-   * `GET <downloadUrl>?session_id=<state.sessionId>`. Auth is enforced by
-   * the hub's `FrontEndSessionPolicy`.
-   */
-  downloadUrl?: string;
   showHeader?: boolean;
   header: string;
   showLogo?: boolean;
   clickQrCodeToReload?: boolean;
   filePreviewMode: "list" | "grid";
   size: "small" | "medium" | "large" | "xlarge";
+  /**
+   * Show a "Download all files" button beneath the file previews. When
+   * clicked, it fetches every `UploadedFile.url` the SignalR hub has
+   * surfaced and triggers a browser save for each. Default: false.
+   */
+  showDownloadButton?: boolean;
 }
 
 export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
   sessionUrl,
   clientId,
-  downloadUrl,
   header,
   showHeader = false,
   showLogo = true,
   clickQrCodeToReload = false,
   size = "large",
   filePreviewMode = "grid",
+  showDownloadButton = false,
 }) => {
   const { state, retrySession, core } = useQrCodeCore({
     sessionUrl,
     clientId,
-    downloadUrl,
   });
 
   return (
@@ -131,7 +127,7 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
             <FileList files={state.uploadedFiles} />
           )}
         </div>
-        {downloadUrl ? <DownloadButton core={core} /> : null}
+        {showDownloadButton ? <DownloadButton core={core} /> : null}
       </div>
     </section>
   );

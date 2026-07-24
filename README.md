@@ -15,15 +15,13 @@ adapter packages for React, Vue, Angular, Svelte, and Vanilla JS/TS.
 ```
 packages/
   core/       Framework-agnostic runtime — SignalR, session management, state, types
-    next-js/
-        server/   Next.js server helpers for ScanUpload proxying and session zip downloads
   react/      React component, hooks, and semantic CSS UI
   vue/        Vue 3 component, composables, and semantic CSS UI
   angular/    Angular standalone components, signal controller, and semantic CSS UI
   svelte/     Svelte 5 component, store controller, and semantic CSS UI
   vanilla/    QrCodeGeneratorElement for Vanilla JS/TS with built-in DOM rendering
 examples/
-    nextjs-demo/  Next.js App Router demo using the React package + Next.js server helpers
+    nextjs-demo/  Next.js App Router demo using the React package (calls the hub directly)
   react-demo/   Vite + React dev app
   vue-demo/     Vite + Vue dev app
   angular-demo/ Vite + Angular dev app
@@ -38,7 +36,7 @@ examples/
 | Package                                                                  | Description                                                                     |
 | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
 | [`@scanupload/qr-code-generator-core`](packages/core)                    | Framework-agnostic runtime — SignalR session management, state, types           |
-| [`@scanupload/qr-code-generator-nextjs-server`](packages/next-js/server) | Next.js server helpers for auth token exchange, API proxying, and zip downloads |
+| [`@scanupload/qr-code-generator-nextjs-server`](packages/next-js/server) | *(removed — the Next.js demo now calls the hub directly)* |
 | [`@scanupload/qr-code-generator-react`](packages/react)                  | React `<QrCodeGenerator>` component with semantic CSS UI and file previews      |
 | [`@scanupload/qr-code-generator-vue`](packages/vue)                      | Vue 3 `<QrCodeGenerator>` component with semantic CSS UI and file previews      |
 | [`@scanupload/qr-code-generator-angular`](packages/angular)              | Angular `<sqg-qr-code-generator>` standalone component with file previews       |
@@ -56,10 +54,8 @@ QrCodeGeneratorCore (packages/core)
 ├── utilities               — debounce, token parsing
 └── StorageAdapter          — injected; defaults to localStorage
 
-Next.js server package (packages/next-js/server)
-├── getAccessToken          — Keycloak client-credentials token exchange + caching
-├── forwardToScanUpload     — authenticated proxy forwarding to ScanUpload Hub API
-└── fetchSessionZip         — session download handler (zip or multipart)
+Next.js server package — removed
+└── *(the Next.js demo now calls the ScanUpload hub directly, no client-side proxy)*
 
 React adapter (packages/react)
 ├── useQrCodeCore           — useSyncExternalStore wrapper around Core
@@ -322,12 +318,11 @@ npm install @scanupload/qr-code-generator-core
 # Install all workspace dependencies
 npm install
 
-# Build all packages in dependency order (core → nextjs-server → react → vanilla → vue → angular → svelte)
+# Build all packages in dependency order (core → react → vanilla → vue → angular → svelte)
 npm run build
 
 # Build individual packages
 npm run build:core
-npm run build:nextjs-server
 npm run build:react
 npm run build:vanilla
 npm run build:vue

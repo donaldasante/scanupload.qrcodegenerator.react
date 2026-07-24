@@ -11,7 +11,6 @@ export type {
   TokenResponse,
   UploadedFile,
   QrCodeGeneratorState,
-  DownloadSessionZipResult,
 } from "./types";
 
 // Browser-only download helper (relies on DOM APIs).

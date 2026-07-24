@@ -69,6 +69,7 @@ core.dispose();
 | Field        | Type             | Required | Description                                                        |
 | ------------ | ---------------- | -------- | ------------------------------------------------------------------ |
 | `sessionUrl` | `string`         | Yes      | Endpoint used to create a ScanUpload session.                      |
+| `clientId`   | `string`         | No       | Optional client identifier sent in the session-create body.         |
 | `storage`    | `StorageAdapter` | No       | Optional storage implementation. Defaults to browser localStorage. |
 
 ### `QrCodeGeneratorState`
@@ -83,6 +84,7 @@ interface QrCodeGeneratorState {
   expiresAt: number | null;        // absolute expiry timestamp (ms since epoch)
   secondsRemaining: number | null;  // live countdown, ticks down once per second
   errorCode: number | null;        // 409 (tenant limit) / 429 (rate limit) / null
+  sessionId: string | null;        // active session id, null until the first session
 }
 ```
 
@@ -130,9 +132,9 @@ This package exports:
 - `QrCodeGeneratorCore`
 - `browserStorageAdapter`
 - `postData`, `deleteData`, `ApiError`
-- `isNullOrEmpty`, `debounce`, `debounceAsync`, `truncateWithDots`
+- `isNullOrEmpty`, `debounce`, `debounceAsync`, `isExpired`, `truncateWithDots`
 - `SessionResponse`, `UploadedFile`, `QrCodeGeneratorState`
-- `StorageAdapter`, `QrCodeGeneratorCoreOptions`
+- `StorageAdapter`, `QrCodeGeneratorCoreOptions`, `QrCodeGeneratorCoreSetOptions`
 
 ## License
 

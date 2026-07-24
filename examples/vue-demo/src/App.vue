@@ -3,7 +3,6 @@ import { QrCodeGenerator } from '@scanupload/qr-code-generator-vue';
 
 // Endpoints + client id live in `.env` / `.env.local`. See `.env.example`.
 const sessionUrl = import.meta.env.VITE_SESSION_URL;
-const downloadUrl = import.meta.env.VITE_DOWNLOAD_URL;
 const clientId = import.meta.env.VITE_CLIENT_ID;
 </script>
 
@@ -19,6 +18,7 @@ const clientId = import.meta.env.VITE_CLIENT_ID;
             :show-logo="true"
             :click-qr-code-to-reload="true"
             file-preview-mode="grid"
+            :show-download-button="true"
         />
     </div>
 </template>

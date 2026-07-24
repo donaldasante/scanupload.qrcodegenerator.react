@@ -3,6 +3,7 @@ import './index.css';
 // Component
 export { default as QrCodeGenerator } from './QrCodeGenerator.vue';
 export type { QrCodeGeneratorProps } from './QrCodeGenerator.vue';
+export { default as DownloadButton } from './DownloadButton.vue';
 
 // Composables
 export { useQrCodeCore } from './composables/useQrCodeCore';
