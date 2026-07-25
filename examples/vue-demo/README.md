@@ -32,12 +32,18 @@ The client secret is only used by server-side integrations — leave it out of a
 
 ## What it shows
 
+- An "Example Form" settings panel above the widget with:
+  - Checkboxes for **Show Logo**, **Click QR code to reload**, and **Show header**
+  - A text field for the header text
+  - Radio groups for **File preview mode** (list/grid) and **Qr Code size** (small/medium/large/X-Large — mapped to the `"xlarge"` prop value)
 - The QR code, loading overlay, and error overlay
-- A settings panel that toggles `showHeader`, `showLogo`, `clickQrCodeToReload`, `filePreviewMode`, and `size`
 - The "Download all files" button (via `:show-download-button="true"`)
+
+Every change in the panel is wired directly to the widget — toggling a checkbox or picking a different size updates the QR code live.
 
 ## Files
 
-- `src/App.vue` — root component
+- `src/App.vue` — root component, including the settings form
 - `src/main.ts` — mounts the Vue app
+- `src/index.css` — base layout + utility classes for the form controls
 - `.env` / `.env.example` — environment configuration

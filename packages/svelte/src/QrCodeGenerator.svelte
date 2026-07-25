@@ -43,6 +43,11 @@
         showDownloadButton = false
     }: QrCodeGeneratorProps = $props();
 
+    // The controller is intentionally constructed once with the initial
+    // `sessionUrl` / `clientId`. The `$effect` below pushes runtime prop
+    // changes into the controller via `setOptions`, so subsequent changes
+    // to these props take effect — see `QrCodeCoreController.setOptions`.
+    // svelte-ignore state_referenced_locally
     const controller = createQrCodeController({ sessionUrl, clientId });
     const coreState = controller.state;
 

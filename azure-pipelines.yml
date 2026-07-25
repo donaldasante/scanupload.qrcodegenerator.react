@@ -65,7 +65,7 @@ stages:
                 echo "Publishing @scanupload/qr-code-generator-core@$VERSION"
                 npm publish --access public
               fi
-            displayName: "Publish core package"
+            displayName: "Publish core package"       
 
           - script: |
               cd packages/react
@@ -131,7 +131,7 @@ stages:
                 echo "##vso[task.setvariable variable=dockerImageTag]$(Build.SourceBranchName).$(Build.BuildId)"
                 echo "##vso[task.setvariable variable=qaTag]qa"
                 # Example using short commit hash
-                # echo "##vso[task.setvariable variable=dockerImageTag]$(git rev-parse --short HEAD)"
+                # echo "##vso[task.setvariable variable=dockerImageTag]$(git rev-parse --short HEAD)"     
 
           - task: Docker@2
             displayName: Build Angular demo example image
@@ -169,6 +169,30 @@ stages:
                 $(dockerImageTag)
                 $(qaTag)
 
+          - task: Docker@2
+            displayName: Build React demo example image
+            inputs:
+              command: buildAndPush
+              containerRegistry: $(dockerRegistryServiceConnection)
+              repository: "asanteit/scanupload/scanupload-react-client-example"
+              dockerfile: "$(Build.SourcesDirectory)/examples/react-demo/Dockerfile_Prod"
+              buildContext: "$(Build.SourcesDirectory)/examples/react-demo"
+              tags: |
+                $(dockerImageTag)
+                $(qaTag)
+
+          - task: Docker@2
+            displayName: Build Vanilla JS demo example image
+            inputs:
+              command: buildAndPush
+              containerRegistry: $(dockerRegistryServiceConnection)
+              repository: "asanteit/scanupload/scanupload-vanilla-client-example"
+              dockerfile: "$(Build.SourcesDirectory)/examples/vanilla-js/Dockerfile_Prod"
+              buildContext: "$(Build.SourcesDirectory)/examples/vanilla-js"
+              tags: |
+                $(dockerImageTag)
+                $(qaTag)
+
   # ────────────────────────────────────────────────────────────────────
   # Stage 2 — Deploy (self-hosted "ScanUpload QA New" agent pool)
   # ────────────────────────────────────────────────────────────────────
@@ -179,7 +203,7 @@ stages:
       name: "ScanUpload QA New"
     jobs:
       - job: DeployExamples
-        displayName: "Deploy Angular, Vue, and Svelte demos"
+        displayName: "Deploy React, Vanilla JS, Angular, Vue, and Svelte demos"
         steps:
           - task: Docker@2
             displayName: Login to private registry
@@ -237,3 +261,37 @@ stages:
               docker compose pull           # ensure latest image
               docker compose up -d --remove-orphans
             displayName: Pull and run scanupload.svelte.client.example
+
+          - script: |
+              outdir=/home/donald/apps/scanupload/scanupload.react.client.example
+              mkdir -p "$outdir"
+              {
+                  echo "dockerImageTag=qa"
+                  echo "containerName=react-example.scanupload"
+                  echo "subDomain=react-example.scanupload.net"
+              } > "$outdir/.env"
+            displayName: "Generate .env file scanupload.react.client.example"
+
+          - script: |
+              cd /home/donald/apps/scanupload/scanupload.react.client.example
+              docker compose down || true   # don't fail if nothing is running
+              docker compose pull           # ensure latest image
+              docker compose up -d --remove-orphans
+            displayName: Pull and run scanupload.react.client.example
+
+          - script: |
+              outdir=/home/donald/apps/scanupload/scanupload.vanilla.client.example
+              mkdir -p "$outdir"
+              {
+                  echo "dockerImageTag=qa"
+                  echo "containerName=vanilla-example.scanupload"
+                  echo "subDomain=vanilla-example.scanupload.net"
+              } > "$outdir/.env"
+            displayName: "Generate .env file scanupload.vanilla.client.example"
+
+          - script: |
+              cd /home/donald/apps/scanupload/scanupload.vanilla.client.example
+              docker compose down || true   # don't fail if nothing is running
+              docker compose pull           # ensure latest image
+              docker compose up -d --remove-orphans
+            displayName: Pull and run scanupload.vanilla.client.example

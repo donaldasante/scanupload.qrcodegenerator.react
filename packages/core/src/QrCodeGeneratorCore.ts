@@ -76,6 +76,14 @@ export class QrCodeGeneratorCore {
     private _disposed = false;
     private readonly _autoResession: boolean;
     private _autoResessionInFlight = false;
+    /**
+     * Latch so the "hub returned http:// but page is https://" warning
+     * fires at most once per core instance. The hub will keep returning
+     * `http://` on every session create (until its `PublicBaseUrl` is
+     * reconfigured), so without this latch the warning would repeat on
+     * every retry / auto-resession — pure noise after the first alert.
+     */
+    private _hasWarnedHttpsUpgrade = false;
 
     constructor(options: QrCodeGeneratorCoreOptions) {
         this.sessionUrl = options.sessionUrl;
@@ -289,19 +297,25 @@ export class QrCodeGeneratorCore {
             const parsed = new URL(url);
             if (parsed.protocol === 'http:') {
                 parsed.protocol = 'https:';
-                console.warn(
-                    '[QrCodeGeneratorCore] Hub URL was returned as http:// but the page is https://. ' +
-                    'Auto-upgrading to https:// to avoid a mixed-content block. ' +
-                    'For a permanent fix, set the hub\'s PublicBaseUrl (or ScanUploadAppSettings.PublicBaseUrl) to https://...'
-                );
+                if (!this._hasWarnedHttpsUpgrade) {
+                    this._hasWarnedHttpsUpgrade = true;
+                    console.warn(
+                        '[QrCodeGeneratorCore] Hub URL was returned as http:// but the page is https://. ' +
+                        'Auto-upgrading to https:// to avoid a mixed-content block. ' +
+                        'For a permanent fix, set the hub\'s PublicBaseUrl (or ScanUploadAppSettings.PublicBaseUrl) to https://...'
+                    );
+                }
                 return parsed.toString();
             }
             if (parsed.protocol === 'ws:') {
                 parsed.protocol = 'wss:';
-                console.warn(
-                    '[QrCodeGeneratorCore] Hub URL was returned as ws:// but the page is https://. ' +
-                    'Auto-upgrading to wss:// to avoid a mixed-content block.'
-                );
+                if (!this._hasWarnedHttpsUpgrade) {
+                    this._hasWarnedHttpsUpgrade = true;
+                    console.warn(
+                        '[QrCodeGeneratorCore] Hub URL was returned as ws:// but the page is https://. ' +
+                        'Auto-upgrading to wss:// to avoid a mixed-content block.'
+                    );
+                }
                 return parsed.toString();
             }
             return url;

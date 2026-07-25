@@ -101,9 +101,24 @@ Runnable examples live in `examples/`. Each demo calls the hub directly using `V
 | [Vanilla JS + Vite](examples/vanilla-js) | `npm run dev:vanilla` |
 | [Next.js App Router](examples/nextjs-demo) | `npm run dev:nextjs` |
 
+All demos share the same layout pattern: a fixed-height card containing a settings panel and the widget. The widget's file list is the **only** element that scrolls; the page itself never scrolls, even with many uploaded files. See each demo's CSS for the `:has()`-based pattern that drives this.
+
 ## Architecture
 
 See [README_FULL_ARCHITECTURE.md](README_FULL_ARCHITECTURE.md) for the full architecture overview.
+
+### Layout & sizing
+
+Every package emits the same DOM around the component for predictable styling:
+
+| Element | Class | Notes |
+| --- | --- | --- |
+| Root | `.sqg-root` | `data-size="small\|medium\|large\|xlarge"` is set on the root, and `[data-size="..."]` rules in each package's CSS drive the QR container width/height (80, 120, 160, 192 px). The QR `<svg>` from `qrcode` always bakes `width="200"` so the inner SVG needs explicit `width: 100%; height: 100%` to scale. |
+| Content | `.sqg-content` | A flex column. When the file container has actual file elements (`.sqg-file-card` or `.sqg-file-row`), `.sqg-content` grows to fill the widget via `:has()`. |
+| File container (grid) | `.sqg-file-grid` | Direct child of `.sqg-content`. Flex row, wraps, scrolls vertically on overflow. |
+| File container (list) | `.sqg-file-list` + `.sqg-file-list-inner` | The scrolling context is the **inner** element — putting `overflow: hidden` on the inner element while `overflow-y: auto` lives on the outer list causes the browser to measure scrollHeight as the outer height (clipped), so no scrollbar appears. The inner element must carry `overflow-y: auto` for the list to scroll. |
+
+Across Angular, Svelte, and Vanilla, the demo CSS uses descendant combinators (`.mb-6:last-of-type .sqg-root`) rather than child combinators to survive framework-specific wrapper elements like Angular's `<sqg-qr-code-generator>` host element. Angular additionally needs `min-height: 0` on that host element so the flex chain can shrink the widget to fit the card. Vanilla additionally needs the intermediate `<div id="widget-container">` to be flexed into the chain so the widget doesn't size to its content and overflow the card.
 
 ## Development
 

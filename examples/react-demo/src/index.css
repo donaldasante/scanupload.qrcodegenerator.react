@@ -6,27 +6,211 @@
 
 body {
     margin: 0;
-    min-height: 100vh;
+    height: 100vh;
+    /* Lock the page so the only scrollbar the user sees is the one
+       inside the widget's file container. The browser viewport itself
+       never scrolls — even when many files have been uploaded. */
+    overflow: hidden;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
     background: #f3f4f6;
     font-family: system-ui, sans-serif;
 }
 
-.demo-card {
-    background: white;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    border-radius: 0.5rem;
-    padding: 2rem;
-    max-width: 28rem;
+/* The React root is what holds the app tree. It must fill the body
+   vertically (and grow if necessary) so the card below can claim the
+   full viewport height between the page title and the back-link. */
+#root {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1 1 auto;
+    min-height: 0;
     width: 100%;
+    max-width: 36rem;
 }
 
 .demo-title {
     font-size: 1.5rem;
     font-weight: 700;
     text-align: center;
-    margin: 0 0 1rem;
+    margin: 1.25rem 0 0.75rem;
     color: #111827;
+    flex: 0 0 auto;
+    /* Sits outside the card so the card can dedicate every row of
+       vertical space to either the form panel or the widget. */
 }
+
+.demo-card {
+    background: white;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    border-radius: 0.5rem;
+    /* Generous breathing room top and bottom per the user's request.
+       Horizontal stays at 2rem so the QR + form feel roomy.
+       Reduced bottom padding to 1rem so the download button sits
+       closer to the card edge when no files have been uploaded. */
+    padding: 1.5rem 2rem 1rem;
+    max-width: 32rem;
+    width: 100%;
+    /* Card is content-sized by default — it does NOT stretch to
+       fill the viewport. Combined with the `:has()` rules below
+       and `.sqg-file-container:empty { display: none }` in the
+       package CSS, this means there is no empty band anywhere
+       inside the card when no files have been uploaded. When
+       files arrive the wrapper, widget and content all switch
+       to `flex: 1 1 auto` so the file container has room to
+       show its rows. */
+    flex: 0 1 auto;
+    min-height: 0;
+    box-sizing: border-box;
+    /* Card itself never scrolls. The form panel below is rendered
+       without overflow so it never grows its own scrollbar; the
+       widget's file container handles file-list overflow. */
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* When files are uploaded, grow the card to fill the available
+   viewport height between the page title and the back-link. */
+.demo-card:has(.sqg-file-container:not(:empty)) {
+    flex: 1 1 auto;
+}
+
+.demo-card > .mb-6:first-of-type {
+    /* Form panel: takes its full natural height and never shrinks or
+       scrolls internally. Card has `overflow: hidden`, so any tiny
+       overflow is silently clipped — but more importantly the form
+       NEVER grows its own scrollbar. The only scrollbar in this UI
+       is the one inside the widget's file container. */
+    flex: 0 0 auto;
+    margin-bottom: 0 !important;
+}
+
+.demo-card > .mb-6:last-of-type {
+    /* Widget wrapper: content-sized when the widget has no files
+       (so the card stays compact and there's no empty band below
+       the download button), and flex-grown when files are present
+       (so the file container has room to display its rows).
+       The `:has()` selector swaps between the two states. */
+    flex: 0 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0 !important;
+}
+
+/* When the widget has uploaded files, grow the wrapper to fill
+   the remaining card space. This propagates the height down to
+   the file container so it can show its rows without scrolling. */
+.demo-card:has(.sqg-file-container:not(:empty)) > .mb-6:last-of-type {
+    flex: 1 1 auto;
+}
+
+.demo-card > .mb-6:last-of-type > .sqg-root {
+    /* Same dual-mode sizing for the widget itself. When no files
+       are present the widget is content-sized and the card stays
+       compact; when files arrive the widget fills the wrapper so
+       the file container has vertical room. */
+    flex: 0 1 auto;
+    min-height: 0;
+}
+
+.demo-card:has(.sqg-file-container:not(:empty)) > .mb-6:last-of-type > .sqg-root {
+    flex: 1 1 auto;
+}
+
+.demo-back-link {
+    margin: 0.75rem 0 1.25rem;
+    text-align: center;
+    font-size: 0.875rem;
+    /* Sits outside the card so the card itself can dedicate every row
+       of vertical space to either the form panel or the widget. */
+}
+
+/* ── Settings panel (form controls) ────────────────────────────────────── */
+.mb-6 { margin-bottom: 1.5rem; }
+.mt-3 { margin-top: 0.75rem; }
+.mt-4 { margin-top: 1rem; }
+.mr-2 { margin-right: 0.5rem; }
+.ml-3 { margin-left: 0.75rem; }
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.flex-row { flex-direction: row; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.justify-center { justify-content: center; }
+.gap-0 { gap: 0; }
+.space-x-1 > * + * { margin-left: 0.25rem; }
+.space-x-4 > * + * { margin-left: 1rem; }
+
+.block { display: block; }
+.w-20 { width: 5rem; }
+.w-25 { width: 6rem; }
+.w-40 { width: 10rem; }
+.w-60 { width: 15rem; }
+.h-4 { height: 1rem; }
+.w-4 { width: 1rem; }
+
+.text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+.text-2xl { font-size: 1.5rem; line-height: 2rem; }
+.font-medium { font-weight: 500; }
+.font-bold { font-weight: 700; }
+.text-left { text-align: left; }
+.text-center { text-align: center; }
+.text-gray-700 { color: #374151; }
+.text-blue-600 { color: #2563eb; }
+.hover\:text-blue-800:hover { color: #1e40af; }
+.hover\:text-indigo-600:hover { color: #4f46e5; }
+
+.bg-white { background-color: #ffffff; }
+.bg-gray-100 { background-color: #f3f4f6; }
+
+.p-8 { padding: 2rem; }
+.px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+.py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+
+.rounded { border-radius: 0.25rem; }
+.rounded-md { border-radius: 0.375rem; }
+.rounded-lg { border-radius: 0.5rem; }
+.shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+
+.border { border-width: 1px; border-style: solid; }
+.border-gray-300 { border-color: #d1d5db; }
+
+.focus\:outline-none:focus { outline: none; }
+.focus\:ring:focus { box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.5); }
+.focus\:ring-indigo-600:focus { box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.5); }
+
+.text-indigo-600 { color: #4f46e5; }
+.cursor-pointer { cursor: pointer; }
+.select-none { user-select: none; }
+.transition-colors { transition-property: color, background-color, border-color, text-decoration-color, fill, stroke; transition-duration: 150ms; }
+
+input[type="checkbox"],
+input[type="radio"] {
+    accent-color: #4f46e5;
+    /* Pin the visual centre of the input to the line baseline so rows
+       with different-length labels still line up visually. */
+    vertical-align: middle;
+    align-self: center;
+    /* Browsers render the native checkbox ~2px above the text baseline
+       even inside a flex row with `align-items: center`. A small top
+       margin nudges it down so it visually aligns with the label text. */
+    margin-top: 1px;
+}
+
+/* Fixed row height for the settings-panel checkboxes/radios so that
+   short labels (e.g. "Show Logo") don't cause the first row to
+   collapse shorter than the rest. Without this, the input's baseline
+   ends up at a different visual position than its siblings. */
+.demo-card .checkbox-row,
+.demo-card .radio-row {
+    min-height: 1.75rem;
+    display: flex;
+    align-items: center;
+}
+
+.underline { text-decoration: underline; }

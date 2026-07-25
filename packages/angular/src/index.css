@@ -26,8 +26,18 @@
 
 .sqg-root {
     position: relative;
+    /* Constrain the widget so the file container is the only region
+       that scrolls on long upload lists. The QR + reload + download
+       controls stay visible while `.sqg-file-container` (below) gets
+       `overflow-y: auto` and scrolls internally. */
+    max-height: 100%;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    /* Symmetric padding so the widget doesn't have an empty band below
+       the download button when the file list is empty. */
     padding: 0.5rem;
+    padding-bottom: 0.25rem;
 }
 
 /* Overlays (loading / error) */
@@ -93,11 +103,34 @@
     flex-direction: column;
     align-items: center;
     text-align: center;
+    /* Default to content-sized so the widget stays compact when no
+       files have been uploaded. The `:has()` rule below overrides
+       this to fill the widget when the file container actually has
+       files — that's when the file container needs the vertical
+       room to show its rows without scrolling. */
+    flex: 0 1 auto;
+    min-height: 0;
+    width: 100%;
+    overflow: visible;
+}
+
+/* When the widget actually has files, grow the content to fill
+   the widget so the file container has vertical room for its
+   rows. We look for actual file elements (`.sqg-file-card` or
+   `.sqg-file-row`) rather than relying on the file container's
+   emptiness, because Angular's `@if / @else` always renders one
+   branch component so the container is never truly empty in the
+   DOM even when the user has not uploaded any files. `:has()` is
+   supported in all current evergreen browsers (Chrome 105+,
+   Safari 15.4+, Firefox 121+). */
+.sqg-root:has(.sqg-file-card, .sqg-file-row) .sqg-content {
+    flex: 1 1 auto;
+    overflow: hidden;
 }
 
 /* Header */
 .sqg-header {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
 }
 .sqg-header-title {
     font-size: 1.25rem;
@@ -116,27 +149,46 @@
     justify-content: center;
     transition: box-shadow 0.3s, transform 0.3s;
     position: relative;
+    /* Default to the `large` size when no `data-size` is set on
+       the root section (matches the React/Vue packages). */
+    width: 160px;
+    height: 160px;
 }
 .sqg-qr-wrapper:hover {
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     transform: scale(1.05);
 }
+
+/* Size variants via data-size on the root section */
+[data-size="small"]  .sqg-qr-wrapper { width: 80px;  height: 80px; }
+[data-size="medium"] .sqg-qr-wrapper { width: 120px; height: 120px; }
+[data-size="large"]  .sqg-qr-wrapper { width: 160px; height: 160px; }
+[data-size="xlarge"] .sqg-qr-wrapper { width: 192px; height: 192px; }
 .sqg-qr-inner {
     position: relative;
     display: inline-block;
     width: 100%;
     height: 100%;
 }
-.sqg-qr-code {
+.sqg-qr-code,
+.sqg-qr-svg {
     width: 100%;
     height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
 }
-.sqg-qr-code svg {
+.sqg-qr-code svg,
+.sqg-qr-svg svg {
+    /* The `qrcode` library bakes `width="200"` into the SVG. We
+       override it here so the code itself scales to fit whatever
+       size the wrapper says it should be (controlled by the
+       `[data-size]` rules on `.sqg-qr-wrapper`). Without this rule
+       the QR would always render at its native 200 px even when
+       the wrapper says it should be 80 px or 120 px. */
     width: 100%;
     height: 100%;
+    display: block;
 }
 
 /* Logo overlay */
@@ -169,7 +221,7 @@
 .sqg-reload-section {
     display: flex;
     flex-direction: row;
-    margin-top: 0.75rem;
+    margin-top: 0.5rem;
 }
 .sqg-reload-btn {
     background: #6b7280;
@@ -210,12 +262,40 @@
     display: flex;
     flex-direction: row;
     justify-content: center;
-    gap: 0.25rem;
+    gap: 0.5rem;
     flex-wrap: wrap;
     min-width: 16rem;
+    /* Take the remaining vertical space inside `.sqg-content` and
+       scroll internally when the file list exceeds it. `flex: 1 1 auto`
+       keeps the container expanding when files are uploaded. The
+       `:empty` rule below collapses the container to 0 when there
+       are no files, so the surrounding controls pack at the top with
+       no visible gap. `min-height: 0` lets the container shrink to 0
+       when empty. */
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    /* Reserve at least ~one row of compact card height so the user
+       can see their first uploaded file immediately. */
+    min-height: 6rem;
+    padding: 0 0.25rem;
+}
+
+/* Hide the file container entirely when no files have been uploaded.
+   `:empty` doesn't work here because the Angular template always
+   renders *one* of `<sqg-file-list>` or `<sqg-document-previewer>`,
+   so the container is never strictly empty. Instead we hide the
+   container when it has neither a `.sqg-file-card` (grid view) nor
+   a `.sqg-file-row` (list view). `:has()` is supported in all
+   current evergreen browsers (Chrome 105+, Safari 15.4+,
+   Firefox 121+). */
+.sqg-file-container:not(:has(.sqg-file-card, .sqg-file-row)) {
+    display: none;
 }
 .sqg-file-card {
     display: flex;
+    /* Each card claims 50% of the file-container row width, minus
+       half the gap so two cards + one gap fill exactly one row. */
     flex: 0 1 calc(50% - 0.25rem);
     flex-direction: column;
     align-items: center;
@@ -224,15 +304,23 @@
 }
 .sqg-file-inner {
     display: flex;
-    max-width: 160px;
+    /* Fill the card horizontally but cap the maximum width so the
+       card stays slim and proportional. ~150px gives the cards a
+       nice compact footprint while still showing the full file
+       name (up to ~20 chars before ellipsis kicks in). */
+    width: 100%;
+    max-width: 150px;
     cursor: default;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    /* Pack content at the top instead of centering it — centering
+       left a visible gap between the thumbnail and the file-info
+       row, making each card taller than it needed to be. */
+    justify-content: flex-start;
     border-radius: 0.5rem;
     border: 1px solid #e5e7eb;
     background: white;
-    padding: 0.75rem;
+    padding: 0.5rem;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     transition: background 0.2s, box-shadow 0.2s;
 }
@@ -241,8 +329,12 @@
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
 }
 .sqg-thumb-wrap {
-    height: 3rem;
-    width: 5rem;
+    /* Thumbnail fills the top half of the card. With a 150px card
+       width and ~80px card height for the thumbnail section, the
+       image sits at roughly half the card's vertical space. */
+    height: 4.5rem;
+    width: 100%;
+    max-width: 7rem;
     overflow: hidden;
     border-radius: 0.25rem;
     transition: transform 0.2s;
@@ -282,30 +374,51 @@
     align-items: center;
     justify-content: space-between;
     gap: 0.25rem;
-    padding: 0.5rem;
+    /* Tighter padding so the info row sits closer to the thumbnail —
+       previously the 0.5rem padding added 16px of vertical space
+       per card, pushing the first row out of view. */
+    padding: 0.25rem 0.25rem 0;
 }
 .sqg-file-meta {
-    margin-top: 0.25rem;
+    margin-top: 0;
 }
 .sqg-file-name {
-    width: 6.25rem;
+    /* Constrains the filename to a single line within the card.
+       Long filenames truncate to ~20 characters followed by an
+       ellipsis thanks to `text-overflow: ellipsis` and
+       `white-space: nowrap`. The card's max-width (150px) sets
+       the practical truncation point. */
+    width: 100%;
+    max-width: 8rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    text-align: start;
+    text-align: center;
     font-size: 0.75rem;
     font-weight: 500;
     color: #1f2937;
 }
 .sqg-file-size {
-    text-align: start;
+    text-align: center;
     font-size: 0.75rem;
     color: #6b7280;
 }
 
 /* ── File list ── */
 .sqg-file-list {
+    /* Match `.sqg-file-container`'s scrolling setup so the list
+       view also shrinks to the parent's available space and gets
+       an internal scrollbar when rows overflow. */
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    /* Reserve at least ~one row of compact list height so the user
+       can see their first uploaded file immediately. */
+    min-height: 6rem;
     width: 100%;
+    padding: 0 0.25rem;
 }
 .sqg-file-list-inner {
     display: flex;
@@ -393,7 +506,7 @@
 
 /* ── Download section ── */
 .sqg-download {
-    margin-top: 0.75rem;
+    margin-top: 0.5rem;
     display: flex;
     flex-direction: column;
     align-items: center;

@@ -2,15 +2,21 @@
 import { FileText } from 'lucide-vue-next';
 import type { UploadedFile } from '@scanupload/qr-code-generator-core';
 
-defineProps<{
+const props = defineProps<{
     files: UploadedFile[];
 }>();
 </script>
 
 <template>
-    <div class="sqg-file-list">
+    <!--
+      Render nothing when the list is empty. The container's
+      `border: 1px solid #e5e7eb` would otherwise collapse to a
+      1px-tall empty bordered strip, showing up as a stray horizontal
+      line between the reload section and the download button.
+    -->
+    <div v-if="props.files.length > 0" class="sqg-file-list">
         <div class="sqg-file-list-inner">
-            <div v-for="file in files" :key="file.id" class="sqg-file-row">
+            <div v-for="file in props.files" :key="file.id" class="sqg-file-row">
                 <div class="sqg-list-thumb">
                     <img v-if="file.thumbnailBase64" :src="`data:${file.type};base64,${file.thumbnailBase64}`" :alt="file.name" />
                     <FileText v-else :size="24" />

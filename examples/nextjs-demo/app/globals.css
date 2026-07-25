@@ -15,7 +15,113 @@
 body {
   margin: 0;
   min-width: 320px;
-  min-height: 100vh;
+  height: 100vh;
+  /* Lock the page so the only scrollbar the user sees is the one
+     inside the widget's file container. The browser viewport itself
+     never scrolls — even when many files have been uploaded. */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #f3f4f6;
+}
+
+.demo-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  margin: 1.25rem 0 0.75rem;
+  color: #111827;
+  flex: 0 0 auto;
+  /* Sits outside the card so the card can dedicate every row of
+     vertical space to either the form panel or the widget. */
+}
+
+.demo-card {
+  background: white;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border-radius: 0.5rem;
+  /* Generous breathing room top and bottom per the user's request.
+     Horizontal stays at 2rem so the QR + form feel roomy.
+     Reduced bottom padding to 1rem so the download button sits
+     closer to the card edge when no files have been uploaded. */
+  padding: 1.5rem 2rem 1rem;
+  max-width: 32rem;
+  width: 100%;
+  /* Card is content-sized by default — it does NOT stretch to
+     fill the viewport. Combined with the `:has()` rules below
+     and `.sqg-file-container:empty { display: none }` in the
+     package CSS, this means there is no empty band anywhere
+     inside the card when no files have been uploaded. */
+  flex: 0 1 auto;
+  min-height: 0;
+  box-sizing: border-box;
+  /* Card itself never scrolls. The form panel below is rendered
+     without overflow so it never grows its own scrollbar; the
+     widget's file container handles file-list overflow. */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* When files are uploaded, grow the card to fill the available
+   viewport height between the page title and the back-link. */
+.demo-card:has(.sqg-file-container:not(:empty)) {
+  flex: 1 1 auto;
+}
+
+.demo-card > .mb-6:first-of-type {
+  /* Form panel: takes its full natural height and never shrinks or
+     scrolls internally. Card has `overflow: hidden`, so any tiny
+     overflow is silently clipped — but more importantly the form
+     NEVER grows its own scrollbar. The only scrollbar in this UI
+     is the one inside the widget's file container. */
+  flex: 0 0 auto;
+  margin-bottom: 0 !important;
+}
+
+.demo-card > .mb-6:last-of-type {
+  /* Widget wrapper: claim the remaining vertical space inside the
+     card. Even when the widget itself is content-sized (so the
+     card stays compact when no files have been uploaded — the
+     file container collapses via `:empty { display: none }` and
+     the surrounding controls pack at the top), the wrapper
+     still expands so the layout doesn't collapse. */
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0 !important;
+}
+
+/* When the widget has uploaded files, grow the wrapper to fill
+   the remaining card space. We match actual file elements
+   (`.sqg-file-card` / `.sqg-file-row`) instead of the file
+   container's emptiness — robust regardless of how the file
+   container's internals are rendered. */
+.demo-card:has(.sqg-file-card, .sqg-file-row) > .mb-6:last-of-type {
+  flex: 1 1 auto;
+}
+
+.demo-card > .mb-6:last-of-type .sqg-root {
+  /* Use a descendant combinator (space) instead of `>` so the
+     selector matches even when frameworks wrap `.sqg-root` in
+     another element. */
+  flex: 0 1 auto;
+  min-height: 0;
+}
+
+.demo-card:has(.sqg-file-card, .sqg-file-row) > .mb-6:last-of-type .sqg-root {
+  flex: 1 1 auto;
+}
+
+.demo-back-link {
+  margin: 0.75rem 0 1.25rem;
+  text-align: center;
+  font-size: 0.875rem;
+  /* Sits outside the card so the card itself can dedicate every row
+     of vertical space to either the form panel or the widget. */
 }
 
 .sqg-overlay {

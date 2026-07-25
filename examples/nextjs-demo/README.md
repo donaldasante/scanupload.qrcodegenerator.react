@@ -9,7 +9,18 @@ npm install
 npm run dev
 ```
 
-The app starts on http://localhost:3000.
+The app starts on **https**://localhost:3000 (HTTPS is required — see below).
+
+### Why HTTPS?
+
+The dev server runs with `next dev --experimental-https` so the browser treats the page as a secure origin. Without HTTPS:
+
+- The browser blocks the SignalR WebSocket upgrade (an HTTP page can't open a `wss://` connection without mixed-content errors).
+- The browser omits the `Origin` header on same-origin requests, and the hub's `FrontEndSessionAuthorizationHandler` can't authenticate the session.
+
+On the first visit the browser shows a "Your connection is not private" warning because Next.js auto-generates a self-signed certificate. Click **Advanced → Proceed to localhost** to accept it for this dev session.
+
+> To avoid the self-signed warning entirely, install [`mkcert`](https://github.com/FiloSottile/mkcert), then set `NEXT_DEV_HTTPS_KEY_PATH` and `NEXT_DEV_HTTPS_CERT_PATH` env vars before running `npm run dev`. Next.js will pick those up automatically.
 
 ## Configure
 
