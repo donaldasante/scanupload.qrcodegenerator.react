@@ -26,6 +26,7 @@ export default function GeneralForm() {
   const [showQrCodeLogo, setShowQrCodeLogo] = useState(true);
   const [clickQrcodeReload, setClickQrcodeReload] = useState(true);
   const [showHeader, setShowHeader] = useState(true);
+  const [showDownloadButton, setShowDownloadButton] = useState(true);
   const [filePreviewMode, setFilePreviewMode] = useState<"list" | "grid">(
     "list",
   );
@@ -85,6 +86,22 @@ export default function GeneralForm() {
                 className="text-sm font-medium text-gray-700 select-none cursor-pointer w-40 text-left"
               >
                 Show header
+              </label>
+            </div>
+
+            <div className="flex items-center">
+              <input
+                id="checkDownloadButton"
+                type="checkbox"
+                checked={showDownloadButton}
+                onChange={() => setShowDownloadButton(!showDownloadButton)}
+                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 mr-2"
+              />
+              <label
+                htmlFor="checkDownloadButton"
+                className="text-sm font-medium text-gray-700 select-none cursor-pointer w-40 text-left"
+              >
+                Show download button
               </label>
             </div>
 
@@ -186,7 +203,7 @@ export default function GeneralForm() {
             showLogo={showQrCodeLogo}
             clickQrCodeToReload={clickQrcodeReload}
             filePreviewMode={filePreviewMode}
-            showDownloadButton={true}
+            showDownloadButton={showDownloadButton}
           />
         </div>
       </div>

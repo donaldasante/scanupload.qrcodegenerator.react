@@ -8,6 +8,7 @@
     let showQrCodeLogo = $state(true);
     let clickQrcodeReload = $state(true);
     let showHeader = $state(true);
+    let showDownloadButton = $state(true);
     let filePreviewMode = $state<'list' | 'grid'>('list');
     let headerText = $state('Scan to upload');
     let qrCodeSize = $state<'small' | 'medium' | 'large' | 'xlarge'>('large');
@@ -57,6 +58,18 @@
                 />
                 <label for="checkHeader" class="text-sm font-medium text-gray-700 select-none cursor-pointer w-40 text-left">
                     Show header
+                </label>
+            </div>
+
+            <div class="checkbox-row">
+                <input
+                    id="checkDownloadButton"
+                    type="checkbox"
+                    bind:checked={showDownloadButton}
+                    class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 mr-2"
+                />
+                <label for="checkDownloadButton" class="text-sm font-medium text-gray-700 select-none cursor-pointer w-40 text-left">
+                    Show download button
                 </label>
             </div>
 
@@ -148,7 +161,7 @@
             showLogo={showQrCodeLogo}
             clickQrCodeToReload={clickQrcodeReload}
             {filePreviewMode}
-            showDownloadButton={true}
+            showDownloadButton={showDownloadButton}
         />
     </div>
 </div>

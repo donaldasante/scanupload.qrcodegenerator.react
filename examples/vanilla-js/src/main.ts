@@ -47,6 +47,12 @@ $<HTMLInputElement>('checkHeader')?.addEventListener('change', (e) => {
     void widget.setOptions({ showHeader: (e.target as HTMLInputElement).checked });
 });
 
+$<HTMLInputElement>('checkDownloadButton')?.addEventListener('change', (e) => {
+    void widget.setOptions({
+        showDownloadButton: (e.target as HTMLInputElement).checked,
+    });
+});
+
 document
     .querySelectorAll<HTMLInputElement>('input[name="file-preview-mode"]')
     .forEach((el) =>

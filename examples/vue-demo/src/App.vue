@@ -9,6 +9,7 @@ const clientId = import.meta.env.VITE_CLIENT_ID;
 const showQrCodeLogo = ref(true);
 const clickQrcodeReload = ref(true);
 const showHeader = ref(true);
+const showDownloadButton = ref(true);
 const filePreviewMode = ref<'list' | 'grid'>('list');
 const headerText = ref('Scan to upload');
 const qrCodeSize = ref<'small' | 'medium' | 'large' | 'xlarge'>('large');
@@ -59,6 +60,18 @@ const sizeOptions = [
                     />
                     <label for="checkHeader" class="text-sm font-medium text-gray-700 select-none cursor-pointer w-40 text-left">
                         Show header
+                    </label>
+                </div>
+
+                <div class="checkbox-row">
+                    <input
+                        id="checkDownloadButton"
+                        v-model="showDownloadButton"
+                        type="checkbox"
+                        class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 mr-2"
+                    />
+                    <label for="checkDownloadButton" class="text-sm font-medium text-gray-700 select-none cursor-pointer w-40 text-left">
+                        Show download button
                     </label>
                 </div>
 
@@ -147,7 +160,7 @@ const sizeOptions = [
                 :show-logo="showQrCodeLogo"
                 :click-qr-code-to-reload="clickQrcodeReload"
                 :file-preview-mode="filePreviewMode"
-                :show-download-button="true"
+                :show-download-button="showDownloadButton"
             />
         </div>
     </div>

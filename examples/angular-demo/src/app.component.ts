@@ -56,6 +56,18 @@ interface SizeOption {
                         </label>
                     </div>
 
+                    <div class="checkbox-row">
+                        <input
+                            id="checkDownloadButton"
+                            type="checkbox"
+                            [(ngModel)]="showDownloadButton"
+                            class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 mr-2"
+                        />
+                        <label for="checkDownloadButton" class="text-sm font-medium text-gray-700 select-none cursor-pointer w-40 text-left">
+                            Show download button
+                        </label>
+                    </div>
+
                     <div class="flex items-center mt-2">
                         <label for="headerText" class="text-sm font-medium text-gray-700 select-none cursor-pointer w-25 text-left">
                             Header text
@@ -137,7 +149,7 @@ interface SizeOption {
                     [showLogo]="showQrCodeLogo"
                     [clickQrCodeToReload]="clickQrcodeReload"
                     [filePreviewMode]="filePreviewMode"
-                    [showDownloadButton]="true"
+                    [showDownloadButton]="showDownloadButton"
                 ></sqg-qr-code-generator>
             </div>
         </div>
@@ -156,6 +168,7 @@ export class AppComponent {
     protected showQrCodeLogo = true;
     protected clickQrcodeReload = true;
     protected showHeader = true;
+    protected showDownloadButton = true;
     protected filePreviewMode: FilePreviewMode = 'list';
     protected headerText = 'Scan to upload';
     protected qrCodeSize: QrCodeSize = 'large';
