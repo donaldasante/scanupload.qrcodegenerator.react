@@ -1,10 +1,25 @@
 import type { NextConfig } from 'next';
 
+const hubApiTarget = process.env.NEXT_PUBLIC_HUB_API_TARGET ?? 'https://hub.scanupload.net';
+
 const nextConfig: NextConfig = {
     transpilePackages: [
         '@scanupload/qr-code-generator-react',
         '@scanupload/qr-code-generator-core'
     ],
+    // Proxy same-origin /hub-api/* requests to the ScanUpload hub. The app's
+    // `NEXT_PUBLIC_SESSION_URL` points at /hub-api/..., so the browser sees
+    // a same-origin POST/WS (no CORS, simple CSP) and Next.js forwards the
+    // request server-side. The target is read from NEXT_PUBLIC_HUB_API_TARGET
+    // at startup so the URL can change per environment without a code change.
+    async rewrites() {
+        return [
+            {
+                source: '/hub-api/:path*',
+                destination: `${hubApiTarget}/:path*`
+            }
+        ];
+    },
     // The dev server runs on HTTPS via `next dev --experimental-https` so the
     // browser sets `Origin` and the SignalR WebSocket upgrade is allowed.
     // Without this, the browser refuses to upgrade a WS connection from an

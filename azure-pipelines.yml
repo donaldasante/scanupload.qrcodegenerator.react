@@ -146,7 +146,6 @@ stages:
                 $(dockerImageTag)
                 $(qaTag)
               arguments: |
-                --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
                 --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID)
 
           - task: Docker@2
@@ -161,7 +160,6 @@ stages:
                 $(dockerImageTag)
                 $(qaTag)
               arguments: |
-                --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
                 --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID)
 
           - task: Docker@2
@@ -176,7 +174,6 @@ stages:
                 $(dockerImageTag)
                 $(qaTag)
               arguments: |
-                --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
                 --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID)
 
           - task: Docker@2
@@ -191,7 +188,6 @@ stages:
                 $(dockerImageTag)
                 $(qaTag)
               arguments: |
-                --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
                 --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID)
 
           - task: Docker@2
@@ -206,7 +202,6 @@ stages:
                 $(dockerImageTag)
                 $(qaTag)
               arguments: |
-                --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
                 --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID)
 
   # ────────────────────────────────────────────────────────────────────
@@ -234,7 +229,7 @@ stages:
                   echo "dockerImageTag=qa"
                   echo "containerName=angular-example.scanupload"
                   echo "subDomain=angular-example.scanupload.net"
-                  echo "VITE_SESSION_URL=$(VITE_SESSION_URL)"
+                  echo "HUB_API_URL=$(HUB_API_URL)"
                   echo "VITE_CLIENT_ID=$(VITE_CLIENT_ID)"
               } > "$outdir/.env"
             displayName: "Generate .env file scanupload.angular.client.example"
@@ -253,6 +248,8 @@ stages:
                   echo "dockerImageTag=qa"
                   echo "containerName=vue-example.scanupload"
                   echo "subDomain=vue-example.scanupload.net"
+                  echo "HUB_API_URL=$(HUB_API_URL)"
+                  echo "VITE_CLIENT_ID=$(VITE_CLIENT_ID)"
               } > "$outdir/.env"
             displayName: "Generate .env file scanupload.vue.client.example"
 
@@ -270,7 +267,7 @@ stages:
                   echo "dockerImageTag=qa"
                   echo "containerName=svelte-example.scanupload"
                   echo "subDomain=svelte-example.scanupload.net"
-                  echo "VITE_SESSION_URL=$(VITE_SESSION_URL)"
+                  echo "HUB_API_URL=$(HUB_API_URL)"
                   echo "VITE_CLIENT_ID=$(VITE_CLIENT_ID)"
               } > "$outdir/.env"
             displayName: "Generate .env file scanupload.svelte.client.example"
@@ -289,7 +286,7 @@ stages:
                   echo "dockerImageTag=qa"
                   echo "containerName=react-example.scanupload"
                   echo "subDomain=react-example.scanupload.net"
-                  echo "VITE_SESSION_URL=$(VITE_SESSION_URL)"
+                  echo "HUB_API_URL=$(HUB_API_URL)"
                   echo "VITE_CLIENT_ID=$(VITE_CLIENT_ID)"
               } > "$outdir/.env"
             displayName: "Generate .env file scanupload.react.client.example"
@@ -308,7 +305,7 @@ stages:
                   echo "dockerImageTag=qa"
                   echo "containerName=vanilla-example.scanupload"
                   echo "subDomain=vanilla-example.scanupload.net"
-                  echo "VITE_SESSION_URL=$(VITE_SESSION_URL)"
+                  echo "HUB_API_URL=$(HUB_API_URL)"
                   echo "VITE_CLIENT_ID=$(VITE_CLIENT_ID)"
               } > "$outdir/.env"
             displayName: "Generate .env file scanupload.vanilla.client.example"

@@ -1,0 +1,46 @@
+server {
+    listen 80;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    location / {
+        try_files $uri /index.html;
+        # Same-origin everywhere: the SPA talks to /hub-api/* which Nginx
+        # reverse-proxies to the hub below, so connect-src only needs 'self'
+        # (plus the Cloudflare analytics beacon).
+        add_header Content-Security-Policy "default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; connect-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:;" always;
+    }
+
+    location ~* \.(?:ico|css|js|gif|jpe?g|png|woff2?|eot|ttf|svg)$ {
+        expires 6M;
+        access_log off;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # Reverse-proxy /hub-api/* to the ScanUpload hub. ${HUB_API_URL} is
+    # substituted at container start by the nginx image's
+    # 20-envsubst-on-templates.sh from the HUB_API_URL environment variable
+    # injected by docker-compose. This keeps the SPA same-origin with the
+    # hub (no CORS, simpler CSP) and lets the hub URL change per environment
+    # without rebuilding the image.
+    location /hub-api/ {
+        proxy_pass ${HUB_API_URL};
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        # Long-lived WebSocket connection for SignalR.
+        proxy_read_timeout 86400;
+    }
+
+    gzip on;
+    gzip_types text/plain text/css application/javascript application/json application/xml+rss;
+    gzip_min_length 256;
+
+    client_max_body_size 20M;
+}
