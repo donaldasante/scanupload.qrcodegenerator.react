@@ -1,7 +1,7 @@
 {
   "name": "@scanupload/react-demo",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Dev demo app for the ScanUpload QR Code Generator React package.",
   "scripts": {
     "dev": "vite",
@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@scanupload/qr-code-generator-react": "^0.1.9",
+    "@scanupload/qr-code-generator-react": "^0.2.0",
     "react": ">=19",
     "react-dom": ">=19"
   },

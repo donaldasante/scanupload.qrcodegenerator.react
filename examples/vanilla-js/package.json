@@ -1,7 +1,7 @@
 {
   "name": "@scanupload/vanilla-js-demo",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Dev demo app for the ScanUpload QR Code Generator vanilla JS package.",
   "scripts": {
     "dev": "vite",
@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@scanupload/qr-code-generator-vanilla": "^0.1.9"
+    "@scanupload/qr-code-generator-vanilla": "^0.2.0"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

@@ -1,48 +1,48 @@
 {
-    "name": "@scanupload/qr-code-generator-angular",
-    "version": "0.1.9",
-    "description": "Angular wrapper for the ScanUpload QR Code Generator — QR code component with real-time file upload previews.",
-    "main": "dist/index.es.js",
-    "module": "dist/index.es.js",
-    "style": "dist/index.css",
-    "types": "dist/index.d.ts",
-    "files": [
-        "dist"
-    ],
-    "scripts": {
-        "build": "vite build"
-    },
-    "peerDependencies": {
-        "@angular/common": ">=20.2.0",
-        "@angular/core": ">=20.2.0"
-    },
-    "dependencies": {
-        "@scanupload/qr-code-generator-core": "^0.1.9",
-        "lucide": "^0.562.0",
-        "qrcode": "^1.5.4",
-        "tslib": "^2.8.1"
-    },
-    "devDependencies": {
-        "@analogjs/vite-plugin-angular": "^2.6.1",
-        "@angular/build": "^20.3.0",
-        "@angular/common": "^20.3.0",
-        "@angular/compiler": "^20.3.0",
-        "@angular/compiler-cli": "^20.3.0",
-        "@angular/core": "^20.3.0",
-        "@angular/platform-browser": "^20.3.0",
-        "@types/qrcode": "^1.5.5",
-        "rxjs": "^7.8.1",
-        "typescript": "^5.9.3",
-        "vite": "^7.1.11",
-        "vite-plugin-dts": "^4.5.4",
-        "zone.js": "^0.15.0"
-    },
-    "keywords": [
-        "scanupload",
-        "qr-code",
-        "angular",
-        "signalr"
-    ],
-    "author": "Donald Asante",
-    "license": "MIT"
+  "name": "@scanupload/qr-code-generator-angular",
+  "version": "0.2.0",
+  "description": "Angular wrapper for the ScanUpload QR Code Generator — QR code component with real-time file upload previews.",
+  "main": "dist/index.es.js",
+  "module": "dist/index.es.js",
+  "style": "dist/index.css",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build"
+  },
+  "peerDependencies": {
+    "@angular/common": ">=20.2.0",
+    "@angular/core": ">=20.2.0"
+  },
+  "dependencies": {
+    "@scanupload/qr-code-generator-core": "^0.2.0",
+    "lucide": "^0.562.0",
+    "qrcode": "^1.5.4",
+    "tslib": "^2.8.1"
+  },
+  "devDependencies": {
+    "@analogjs/vite-plugin-angular": "^2.6.1",
+    "@angular/build": "^20.3.0",
+    "@angular/common": "^20.3.0",
+    "@angular/compiler": "^20.3.0",
+    "@angular/compiler-cli": "^20.3.0",
+    "@angular/core": "^20.3.0",
+    "@angular/platform-browser": "^20.3.0",
+    "@types/qrcode": "^1.5.5",
+    "rxjs": "^7.8.1",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.11",
+    "vite-plugin-dts": "^4.5.4",
+    "zone.js": "^0.15.0"
+  },
+  "keywords": [
+    "scanupload",
+    "qr-code",
+    "angular",
+    "signalr"
+  ],
+  "author": "Donald Asante",
+  "license": "MIT"
 }

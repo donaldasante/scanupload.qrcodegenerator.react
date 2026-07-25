@@ -1,6 +1,6 @@
 {
   "name": "@scanupload/qr-code-generator-vanilla",
-  "version": "0.1.9",
+  "version": "0.2.0",
   "description": "Vanilla JS/TS adapter for the ScanUpload QR Code Generator core — headless controller for framework-free usage.",
   "main": "dist/index.cjs.js",
   "module": "dist/index.es.js",
@@ -13,7 +13,7 @@
     "build": "tsc && vite build"
   },
   "dependencies": {
-    "@scanupload/qr-code-generator-core": "^0.1.9",
+    "@scanupload/qr-code-generator-core": "^0.2.0",
     "lucide": "^1.7.0",
     "qrcode": "^1.5.4"
   },
