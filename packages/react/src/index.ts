@@ -8,7 +8,6 @@ export type { DownloadButtonProps } from "./DownloadButton";
 
 // Hooks
 export { useQrCodeCore } from "./hooks/useQrCodeCore";
-export { usePersistentState } from "./hooks/usePersistentState";
 
 // Re-export core types for convenience
 export type {

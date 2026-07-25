@@ -1,6 +1,11 @@
-import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
+import {
+    HubConnection,
+    HubConnectionBuilder,
+    HttpTransportType,
+    LogLevel
+} from '@microsoft/signalr';
 import { ApiError, postData } from './apiClient';
-import { debounceAsync, isNullOrEmpty } from './utilities';
+import { isNullOrEmpty } from './utilities';
 import { StorageAdapter, browserStorageAdapter } from './storage';
 import { QrCodeGeneratorState, SessionResponse, UploadedFile } from './types';
 
@@ -35,6 +40,18 @@ export interface QrCodeGeneratorCoreOptions {
      * Supply a custom adapter for SSR, testing, or non-browser environments.
      */
     storage?: StorageAdapter;
+    /**
+     * When `true` (the default), the core will automatically create a
+     * fresh session once the current session's TTL elapses, so the SignalR
+     * channel is reconnected against a non-expired `sessionId`. This
+     * prevents 403s from the hub's `FrontEndSessionAuthorizationHandler`
+     * when a reconnect kicks in past the TTL.
+     *
+     * Set to `false` to fall back to the legacy behaviour: when the TTL
+     * elapses, surface the retry overlay and wait for the user to click
+     * Reload.
+     */
+    autoResession?: boolean;
 }
 
 export type QrCodeGeneratorCoreSetOptions = Partial<
@@ -56,14 +73,15 @@ export class QrCodeGeneratorCore {
     private sessionUrl: string;
     private clientId: string | undefined;
     private _hasStarted = false;
-
-    // Debounced version of _getData — stable across calls, bound to this instance.
-    private readonly _debouncedGetData = debounceAsync(() => this._getData(), 1000);
+    private _disposed = false;
+    private readonly _autoResession: boolean;
+    private _autoResessionInFlight = false;
 
     constructor(options: QrCodeGeneratorCoreOptions) {
         this.sessionUrl = options.sessionUrl;
         this.clientId = options.clientId;
         this._storage = options.storage ?? browserStorageAdapter;
+        this._autoResession = options.autoResession ?? true;
     }
 
     // ─── Public API ────────────────────────────────────────────────────────────
@@ -110,6 +128,7 @@ export class QrCodeGeneratorCore {
     }
 
     dispose(): void {
+        this._disposed = true;
         this._abortController?.abort();
         this._abortController = null;
 
@@ -129,10 +148,6 @@ export class QrCodeGeneratorCore {
         this._setState({ loading: true, retry: false, deviceLoginUrl: '' });
         await this._deleteCurrentSession({ keepLoading: true });
 
-        // Bypass the debounce here: the user explicitly requested a reload, so
-        // we want the new session to go out immediately. The debounce exists
-        // to coalesce rapid-fire session requests from re-mounts, not from
-        // deliberate user interaction.
         const connection = await this._getData();
         if (!connection) {
             this._setState({ isConnected: false, loading: false, retry: true });
@@ -175,8 +190,12 @@ export class QrCodeGeneratorCore {
     }
 
     private async _getSessionInformationAsync(): Promise<void> {
-        // Already have a session — nothing to fetch.
-        if (this._session) return;
+        // Already have a session AND it has not yet expired — nothing to fetch.
+        // The TTL check defends against reusing a cached `_session` past its
+        // `expiresAt`: even if `_deleteCurrentSession` was somehow skipped
+        // (e.g. a non-standard code path), we never hand an expired
+        // `sessionId` to the SignalR `negotiate` call.
+        if (this._session && !this._isSessionExpired()) return;
 
         // A session request is already in flight (e.g. a remount fired `start()`
         // again before the first request resolved). Reuse it instead of issuing a
@@ -192,6 +211,11 @@ export class QrCodeGeneratorCore {
         } finally {
             this._sessionPromise = null;
         }
+    }
+
+    private _isSessionExpired(): boolean {
+        const expiresAt = this._state.expiresAt;
+        return typeof expiresAt === 'number' && Date.now() >= expiresAt;
     }
 
     private async _fetchSessionInformation(): Promise<void> {
@@ -236,7 +260,55 @@ export class QrCodeGeneratorCore {
 
     private async _getHubUrlAsync(): Promise<string> {
         await this._getSessionInformationAsync();
-        return this._session?.hubUrl ?? '';
+        return this._upgradeToHttpsIfPageSecure(this._session?.hubUrl ?? '');
+    }
+
+    /**
+     * If the page is being served over HTTPS, upgrade any `http://` URL the
+     * hub returns to `https://`. This works around a common deployment issue
+     * where a TLS-terminating reverse proxy (Traefik, nginx, Cloudflare, etc.)
+     * sits in front of the hub and the hub's configured `PublicBaseUrl` is
+     * still `http://...`. Without this upgrade, browsers block the
+     * downstream SignalR negotiate + WebSocket requests as mixed content.
+     *
+     * The upgrade only flips the scheme — the host, port, path, and query
+     * are preserved verbatim. URLs that already use `https://` are
+     * returned unchanged. URLs that use `wss://` / `ws://` are also
+     * handled (WS upgrades have the same mixed-content restriction).
+     *
+     * No-op in non-browser environments (no `window.location`).
+     */
+    private _upgradeToHttpsIfPageSecure(url: string): string {
+        if (!url) return url;
+        if (typeof window === 'undefined' || !window.location) return url;
+
+        const isPageSecure = window.location.protocol === 'https:';
+        if (!isPageSecure) return url;
+
+        try {
+            const parsed = new URL(url);
+            if (parsed.protocol === 'http:') {
+                parsed.protocol = 'https:';
+                console.warn(
+                    '[QrCodeGeneratorCore] Hub URL was returned as http:// but the page is https://. ' +
+                    'Auto-upgrading to https:// to avoid a mixed-content block. ' +
+                    'For a permanent fix, set the hub\'s PublicBaseUrl (or ScanUploadAppSettings.PublicBaseUrl) to https://...'
+                );
+                return parsed.toString();
+            }
+            if (parsed.protocol === 'ws:') {
+                parsed.protocol = 'wss:';
+                console.warn(
+                    '[QrCodeGeneratorCore] Hub URL was returned as ws:// but the page is https://. ' +
+                    'Auto-upgrading to wss:// to avoid a mixed-content block.'
+                );
+                return parsed.toString();
+            }
+            return url;
+        } catch {
+            // Malformed URL — leave it alone and let the downstream fetch surface the real error.
+            return url;
+        }
     }
 
     private async _getData(): Promise<HubConnection | null | undefined> {
@@ -333,11 +405,22 @@ export class QrCodeGeneratorCore {
     /**
      * Start (or restart) the 1Hz countdown timer that drives
      * `state.secondsRemaining`. Callers pass the `ttlSeconds` returned by the
-     * session endpoint. When the timer hits 0 the session is auto-cleaned:
-     * the SignalR channel is stopped, the disconnect POST fires so the
-     * server-side slot releases, and `state.retry` is flipped on so the
-     * existing retry CTA surfaces (Logo turns red, the dead QR is
-     * replaced by "Cannot create session — Reload").
+     * session endpoint.
+     *
+     * When the timer hits 0 the cached `sessionId` is past its TTL — the
+     * hub's `FrontEndSessionAuthorizationHandler` will reject any subsequent
+     * SignalR negotiate with 403 if we keep using it. To avoid that, the
+     * timer calls `retrySession()` automatically: it tears down the dead
+     * SignalR channel, POSTs `/disconnect` so the server-side slot
+     * releases, then creates a fresh session and reconnects.
+     *
+     * A single-flight guard (`_autoResessionInFlight`) keeps a simultaneous
+     * manual `retrySession()` call (e.g. the user clicking Reload at the
+     * same moment) from issuing two parallel creates.
+     *
+     * If `autoResession` is disabled on the options, the timer falls back
+     * to the old behaviour: tear down, surface the retry overlay, and wait
+     * for the user to click Reload.
      */
     private _startCountdown(ttlSeconds: number): void {
         this._stopCountdown();
@@ -345,19 +428,43 @@ export class QrCodeGeneratorCore {
         this._setState({ secondsRemaining: remaining });
         this._countdownTimer = setInterval(() => {
             remaining -= 1;
-            if (remaining <= 0) {
-                // Fire-and-forget: the cleanup is async (awaits
-                // `connection.stop()` and the disconnect POST) but the
-                // state transitions inside `_deleteCurrentSession` are
-                // synchronous, so the retry overlay appears immediately.
-                // A subsequent `_deleteCurrentSession()` triggered by a
-                // user click or a server-pushed `sessionDisconnected`
-                // will simply observe `_session === null` and dedupe.
-                void this._deleteCurrentSession({ setRetry: true });
-                this._setState({ secondsRemaining: 0 });
+            if (remaining > 0) {
+                this._setState({ secondsRemaining: remaining });
                 return;
             }
-            this._setState({ secondsRemaining: remaining });
+
+            this._stopCountdown();
+            this._setState({ secondsRemaining: 0 });
+
+            if (this._disposed) return;
+
+            if (!this._autoResession) {
+                // Legacy behaviour: surface the retry overlay and wait for
+                // the user to click Reload. The cached `_session` is
+                // cleared inside `_deleteCurrentSession`.
+                void this._deleteCurrentSession({ setRetry: true });
+                return;
+            }
+
+            // Auto-resession: tear down the dead SignalR channel, POST
+            // `/disconnect` so the server-side slot releases, then POST
+            // `/session` for a fresh session and reconnect.
+            //
+            // `_deleteCurrentSession` clears `_session` synchronously, so a
+            // concurrent manual `retrySession()` will see `null` and skip
+            // its own duplicate POST. The single-flight guard below
+            // additionally prevents a race where the timer fires *and* the
+            // user clicks Reload in the same tick.
+            if (this._autoResessionInFlight) return;
+            this._autoResessionInFlight = true;
+            void (async () => {
+                try {
+                    await this._deleteCurrentSession({ keepLoading: true });
+                    await this.retrySession();
+                } finally {
+                    this._autoResessionInFlight = false;
+                }
+            })();
         }, 1000);
     }
 
@@ -378,12 +485,36 @@ export class QrCodeGeneratorCore {
             return undefined;
         }
 
+        // Upgrade any `http://` (or `ws://`) the hub returned to `https://`
+        // (or `wss://`) when the hosting page is HTTPS. Without this, a hub
+        // sitting behind a TLS-terminating proxy that returns plain `http://`
+        // URLs would have its SignalR negotiate + WebSocket requests blocked
+        // by the browser as mixed content. `_getHubUrlAsync` already does
+        // this for the live `hubUrl`, but this entry point is also called
+        // from retry paths where the upgrade may not have run.
+        hubUrl = this._upgradeToHttpsIfPageSecure(hubUrl);
+
         let connection: HubConnection | undefined;
         try {
             connection = new HubConnectionBuilder()
                 .withUrl(hubUrl, {
                     withCredentials: false,
-                    transport: 1 // prefer wss — connects directly to the hub URL
+                    // WebSockets first, LongPolling as fallback. The previous
+                    // code used `transport: 1` (WebSockets only), which means
+                    // a transient WS failure surfaces as a hard error rather
+                    // than falling back to negotiate-over-HTTP. The hub
+                    // exposes both transports; allowing the fallback keeps
+                    // the connection alive when the WS upgrade is blocked
+                    // by a proxy.
+                    transport:
+                        HttpTransportType.WebSockets |
+                        HttpTransportType.LongPolling,
+                    // Negotiation must run so the hub can validate the
+                    // `Origin` header against `session.Dns` in
+                    // `FrontEndSessionAuthorizationHandler`. The browser
+                    // automatically sets `Origin` on cross-origin requests,
+                    // which is what the hub relies on for auth.
+                    skipNegotiation: false,
                 })
                 .configureLogging(LogLevel.Information)
                 .withAutomaticReconnect({
@@ -421,7 +552,7 @@ export class QrCodeGeneratorCore {
                 this._setState({ uploadedFiles: [] });
             });
 
-            connection.on('sessionDisconnected', (_sessionId: string) => {
+            connection.on('sessionDisconnected', () => {
                 // The hub has signalled that this session is gone. Tear
                 // down the SignalR connection, POST `session/disconnect`
                 // so the server-side slot releases (the same code path
@@ -431,7 +562,7 @@ export class QrCodeGeneratorCore {
                 void this._deleteCurrentSession({ setRetry: true });
             });
 
-            connection.on('sessionReset', (_sessionId: string) => {
+            connection.on('sessionReset', () => {
                 this._setState({ uploadedFiles: [] });
             });
 

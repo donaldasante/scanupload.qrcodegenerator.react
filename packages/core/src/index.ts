@@ -21,13 +21,7 @@ export type { StorageAdapter } from "./storage";
 export { browserStorageAdapter } from "./storage";
 
 // API client
-export { postData, deleteData, ApiError } from "./apiClient";
+export { postData, ApiError } from "./apiClient";
 
 // Utilities
-export {
-  isNullOrEmpty,
-  debounce,
-  debounceAsync,
-  isExpired,
-  truncateWithDots,
-} from "./utilities";
+export { isNullOrEmpty } from "./utilities";

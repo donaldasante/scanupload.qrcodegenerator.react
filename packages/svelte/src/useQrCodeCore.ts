@@ -11,6 +11,8 @@ export interface UseQrCodeCoreOptions {
 export interface QrCodeController {
     /** Reactive store with the latest core state. */
     state: Readable<QrCodeGeneratorState>;
+    /** Underlying core instance — useful for components (e.g. `DownloadButton`) that need access to live state. */
+    core: QrCodeGeneratorCore;
     /** Tear down the current session and create a new one. */
     retrySession: () => Promise<void>;
     /** Update the API endpoint at runtime (mirrors the core `setOptions`). */

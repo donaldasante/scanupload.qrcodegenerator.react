@@ -1,11 +1,8 @@
 # @scanupload/qr-code-generator-vanilla
 
-Vanilla JavaScript and TypeScript wrapper for the ScanUpload QR Code Generator.
-It provides a self-contained `QrCodeGeneratorElement` that renders into a host
-element, manages the session lifecycle, and updates the DOM as files are
-uploaded.
+Framework-free wrapper for the ScanUpload QR Code Generator. `QrCodeGeneratorElement` renders into a host element, manages the session lifecycle, and updates the DOM as files are uploaded.
 
-## Installation
+## Install
 
 ```bash
 npm install @scanupload/qr-code-generator-vanilla
@@ -23,83 +20,47 @@ import { QrCodeGeneratorElement } from "@scanupload/qr-code-generator-vanilla";
 const widget = new QrCodeGeneratorElement({
   container: document.getElementById("widget")!,
   sessionUrl: "/api/front-end/session",
+  clientId: "your-tenant-id",
+  header: "Upload files from your phone",
+  showHeader: true,
+  showDownloadButton: true,
 });
 
 await widget.start();
 ```
 
-## Backend Integration
-
-- [ScanUpload.Api.Client](https://github.com/donaldasante/scanupload.api.client)
-  — ScanUpload backend proxy (.NET)
-
-The component needs two backend endpoints:
-
-| Endpoint     | Method | Description                                                                                                                                                  |
-| ------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `sessionUrl` | `POST` | Creates a ScanUpload session and returns `{ sessionId, deviceLoginUrl, hubUrl, ttlSeconds }`. Clients connect directly to `hubUrl` (no proxy/token refresh). |
-|              |
+By default the built-in stylesheet is injected into `<head>`. Set `injectStyles: false` if you'd rather import the CSS yourself.
 
 ## Options
 
-| Option                | Type          | Default  | Required | Description                                                          |
-| --------------------- | ------------- | -------- | -------- | -------------------------------------------------------------------- | --- | ------------------------- |
-| `container`           | `HTMLElement` | —        | Yes      | Host element to render into.                                         |
-| `sessionUrl`          | `string`      | —        | Yes      | Endpoint that creates a ScanUpload session.                          |
-| `header`              | `string`      | —        | No       | Header text shown when `showHeader` is enabled.                      |
-| `showHeader`          | `boolean`     | `false`  | No       | Whether to render the header.                                        |
-| `showLogo`            | `boolean`     | `true`   | No       | Whether to overlay the logo in the QR code.                          |
-| `clickQrCodeToReload` | `boolean`     | `false`  | No       | Reload by clicking the QR code instead of rendering a reload button. |
-| `filePreviewMode`     | `"grid"       | "list"`  | `"grid"` | No                                                                   | Display files as tiles or a compact list. |
-| `size`                | `"small"      | "medium" | "large"  | "xlarge"`                                                            | `"large"`                                 | No  | Controls the widget size. |
-| `injectStyles`        | `boolean`     | `true`   | No       | Auto-inject the built-in stylesheet into `head`.                     |
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `container` | `HTMLElement` | — (required) | Host element to render into. |
+| `sessionUrl` | `string` | — (required) | Endpoint that creates a ScanUpload session. |
+| `clientId` | `string` | `undefined` | Optional tenant / Keycloak `client_id` sent in the request body. |
+| `header` | `string` | `""` | Header text shown when `showHeader` is `true`. |
+| `showHeader` | `boolean` | `false` | Render the header above the QR code. |
+| `showLogo` | `boolean` | `true` | Overlay the ScanUpload logo in the centre of the QR code. |
+| `clickQrCodeToReload` | `boolean` | `false` | When `true`, clicking the QR code reloads the session. |
+| `filePreviewMode` | `"grid" \| "list"` | `"grid"` | Display uploaded files as tiles or a compact list. |
+| `size` | `"small" \| "medium" \| "large" \| "xlarge"` | `"large"` | Overall size of the QR code container. |
+| `injectStyles` | `boolean` | `true` | Auto-inject the built-in stylesheet into `<head>`. |
+| `showDownloadButton` | `boolean` | `false` | Render a "Download all files" button beneath the previews. |
+
+## Downloads
+
+When `showDownloadButton` is `true`, a "Download all files" button appears beneath the previews. Clicking it iterates the live `state.uploadedFiles` and fetches each `url`, triggering a browser save for every file the hub has surfaced. A per-batch error toast is shown if any file fails.
 
 ## Styling
 
-### Zero-config mode
-
-By default, the package injects its built-in CSS automatically. You do not need
-to import a stylesheet.
-
 ```ts
-new QrCodeGeneratorElement({
-  container: document.getElementById("widget")!,
-  sessionUrl: "/api/front-end/session",
-  injectStyles: true,
-}).start();
-```
-
-### Manual CSS import
-
-If you want predictable override order, disable style injection and import the
-package CSS yourself.
-
-```ts
-import { QrCodeGeneratorElement } from "@scanupload/qr-code-generator-vanilla";
 import "@scanupload/qr-code-generator-vanilla/dist/index.css";
 import "./my-overrides.css";
-
-new QrCodeGeneratorElement({
-  container: document.getElementById("widget")!,
-  sessionUrl: "/api/front-end/session",
-  injectStyles: false,
-}).start();
 ```
 
-```css
-.sqg-root {
-  border-radius: 1rem;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
-}
+Set `injectStyles: false` when you import the CSS yourself to avoid double-injection.
 
-.sqg-spinner {
-  border-top-color: #1e3a5f;
-}
-
-.sqg-error-text {
-  color: #dc2626;
-}
-```
+See the [root README](../../README.md#css-custom-properties) for the full list of `--sqg-*` tokens.
 
 ## Lifecycle
 
@@ -112,23 +73,12 @@ const widget = new QrCodeGeneratorElement({
 await widget.start();
 
 const state = widget.getState();
-await widget.setOptions({ sessionUrl: "/api/new-front-end/session" });
+await widget.setOptions({ sessionUrl: "/api/new-session" });
 await widget.retrySession();
 
 widget.dispose();
 ```
 
-## File preview modes
-
-### `grid`
-
-Shows each uploaded file as a tile with an icon or thumbnail and progress
-information.
-
-### `list`
-
-Shows a compact file list with a thumbnail or icon, file name, and size.
-
 ## License
 
-MIT © Donald Asante
+MIT Donald Asante

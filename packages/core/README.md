@@ -1,18 +1,8 @@
 # @scanupload/qr-code-generator-core
 
-Framework-agnostic runtime for the ScanUpload QR Code Generator. This package
-handles session creation, token refresh, SignalR connection management, upload
-state, and the typed primitives needed to build framework adapters.
+Framework-agnostic runtime for the ScanUpload QR Code Generator. Handles session creation, SignalR connection management, upload state, and the typed primitives needed to build framework adapters.
 
-## What this package provides
-
-- `QrCodeGeneratorCore` runtime class
-- Typed backend contracts and UI state models
-- `StorageAdapter` abstraction for persistence
-- `browserStorageAdapter` for browser environments
-- Small utility and API helper exports
-
-## Installation
+## Install
 
 ```bash
 npm install @scanupload/qr-code-generator-core
@@ -20,14 +10,13 @@ npm install @scanupload/qr-code-generator-core
 
 ## Backend contract
 
-Your backend must expose one public endpoint. The browser automatically sends
-`Origin`, which is what authenticates the request — no token is required.
+The browser calls one endpoint directly — the hub authenticates from the browser's `Origin` header, so no token is required.
 
-| Endpoint     | Method | Description                                                                                                                                                  |
-| ------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `sessionUrl` | `POST` | Creates a ScanUpload session and returns `{ sessionId, deviceLoginUrl, hubUrl, ttlSeconds }`. Clients connect directly to `hubUrl` (no proxy/token refresh). |
+| Endpoint | Method | Description |
+| --- | --- | --- |
+| `sessionUrl` | `POST` | Creates a ScanUpload session. Returns `{ sessionId, deviceLoginUrl, hubUrl, ttlSeconds }`. |
 
-## Basic usage
+## Quick start
 
 ```ts
 import {
@@ -37,54 +26,52 @@ import {
 
 const core = new QrCodeGeneratorCore({
   sessionUrl: "/api/front-end/session",
-  storage: browserStorageAdapter,
+  clientId: "your-tenant-id",        // optional
+  storage: browserStorageAdapter,     // optional, defaults to localStorage
 });
 
 const unsubscribe = core.subscribe(() => {
   const state = core.getState();
-  // state.deviceLoginUrl  - QR code target (encoded into the QR)
-  // state.expiresAt        - absolute expiry timestamp (ms)
-  // state.secondsRemaining - live countdown from response.ttlSeconds
-  // state.errorCode        - 409 (tenant limit) / 429 (rate limit) / null
-  console.log(state.deviceLoginUrl, state.secondsRemaining, state.uploadedFiles);
+  console.log({
+    deviceLoginUrl: state.deviceLoginUrl,
+    secondsRemaining: state.secondsRemaining,
+    files: state.uploadedFiles,
+  });
 });
 
 await core.start();
 
-// Update the endpoint at runtime — the core reconnects automatically
-await core.setOptions({ sessionUrl: "/api/new-front-end/session" });
+// Update at runtime — the core reconnects automatically
+await core.setOptions({ sessionUrl: "/api/new-session" });
 
-// Later
-await core.retrySession();
-
-// Cleanup
+// Tear down
 unsubscribe();
 core.dispose();
 ```
 
-## Public API
+## API
 
-### `QrCodeGeneratorCoreOptions`
+### `new QrCodeGeneratorCore(options)`
 
-| Field        | Type             | Required | Description                                                        |
-| ------------ | ---------------- | -------- | ------------------------------------------------------------------ |
-| `sessionUrl` | `string`         | Yes      | Endpoint used to create a ScanUpload session.                      |
-| `clientId`   | `string`         | No       | Optional client identifier sent in the session-create body.         |
-| `storage`    | `StorageAdapter` | No       | Optional storage implementation. Defaults to browser localStorage. |
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `sessionUrl` | `string` | Yes | Endpoint that creates a ScanUpload session. |
+| `clientId` | `string` | No | Optional tenant / Keycloak `client_id` sent in the request body. |
+| `storage` | `StorageAdapter` | No | Defaults to `localStorage` via `browserStorageAdapter`. |
 
-### `QrCodeGeneratorState`
+### State
 
 ```ts
 interface QrCodeGeneratorState {
-  loading: boolean;
-  isConnected: boolean;
-  retry: boolean;
-  deviceLoginUrl: string;
+  loading: boolean;            // true while the session is being created
+  isConnected: boolean;        // SignalR connection status
+  retry: boolean;              // true when the last session create failed
+  deviceLoginUrl: string;     // URL encoded into the QR code
   uploadedFiles: UploadedFile[];
-  expiresAt: number | null;        // absolute expiry timestamp (ms since epoch)
-  secondsRemaining: number | null;  // live countdown, ticks down once per second
-  errorCode: number | null;        // 409 (tenant limit) / 429 (rate limit) / null
-  sessionId: string | null;        // active session id, null until the first session
+  expiresAt: number | null;   // absolute expiry (ms since epoch)
+  secondsRemaining: number | null;
+  errorCode: number | null;   // 409 (tenant limit) / 429 (rate limit) / null
+  sessionId: string | null;   // active session id
 }
 ```
 
@@ -99,38 +86,24 @@ interface UploadedFile {
   progress: number;
   status: "added" | "uploading" | "success" | "error";
   error?: string;
-  url?: string;
+  url?: string;                // signed download URL — used by DownloadButton
   thumbnailBase64?: string;
 }
 ```
 
-### `StorageAdapter`
+### Methods
 
-```ts
-interface StorageAdapter {
-  getItem<T = unknown>(key: string): T | undefined;
-  setItem(key: string, value: unknown): void;
-}
-```
-
-## Building a custom adapter
-
-Use this package when you want to integrate the QR workflow into another UI
-framework.
-
-1. Create a `QrCodeGeneratorCore` instance.
-2. Call `start()` when your component or widget initializes.
-3. Subscribe to state changes with `subscribe()`.
-4. Read the current state with `getState()` and render your UI.
-5. Call `retrySession()` to refresh the QR code.
-6. Call `dispose()` during teardown.
+- `start()` — create the session and open the SignalR connection
+- `setOptions({ sessionUrl?, clientId? })` — update at runtime; reconnects automatically
+- `retrySession()` — tear down the current session and create a new one
+- `getState()` / `subscribe(listener)` — reactive state
+- `dispose()` — clean up
 
 ## Exports
 
-This package exports:
-
 - `QrCodeGeneratorCore`
 - `browserStorageAdapter`
+- `triggerBrowserDownload(blob, filename)` — browser-only DOM helper
 - `postData`, `deleteData`, `ApiError`
 - `isNullOrEmpty`, `debounce`, `debounceAsync`, `isExpired`, `truncateWithDots`
 - `SessionResponse`, `UploadedFile`, `QrCodeGeneratorState`

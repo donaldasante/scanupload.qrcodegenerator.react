@@ -7,7 +7,6 @@ export { default as DownloadButton } from './DownloadButton.vue';
 
 // Composables
 export { useQrCodeCore } from './composables/useQrCodeCore';
-export { usePersistentState } from './composables/usePersistentState';
 
 // Re-export core types for convenience
 export type {

@@ -1,445 +1,119 @@
 # @scanupload/qr-code-generator
 
-A multi-framework QR code generator that allows a mobile device to securely
-upload files to a ScanUpload session. The desktop component receives real-time
-status updates via a SignalR connection and renders a live preview of every
-uploaded file.
+A multi-framework QR code generator for the [ScanUpload](https://app.scanupload.net) backend. A mobile device scans the QR code, uploads files to a ScanUpload session, and the desktop component receives real-time status updates over SignalR — rendering a live preview of every uploaded file.
 
-The project is a **monorepo** with a framework-agnostic core and dedicated
-adapter packages for React, Vue, Angular, Svelte, and Vanilla JS/TS.
-
----
-
-## Repository Structure
-
-```
-packages/
-  core/       Framework-agnostic runtime — SignalR, session management, state, types
-  react/      React component, hooks, and semantic CSS UI
-  vue/        Vue 3 component, composables, and semantic CSS UI
-  angular/    Angular standalone components, signal controller, and semantic CSS UI
-  svelte/     Svelte 5 component, store controller, and semantic CSS UI
-  vanilla/    QrCodeGeneratorElement for Vanilla JS/TS with built-in DOM rendering
-examples/
-    nextjs-demo/  Next.js App Router demo using the React package (calls the hub directly)
-  react-demo/   Vite + React dev app
-  vue-demo/     Vite + Vue dev app
-  angular-demo/ Vite + Angular dev app
-  svelte-demo/  Vite + Svelte dev app
-  vanilla-js/   Vite + Vanilla TS dev app
-```
-
----
+This is a **monorepo** with a framework-agnostic core and dedicated adapter packages for React, Vue, Angular, Svelte, and Vanilla JS/TS.
 
 ## Packages
 
-| Package                                                                  | Description                                                                     |
-| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
-| [`@scanupload/qr-code-generator-core`](packages/core)                    | Framework-agnostic runtime — SignalR session management, state, types           |
-| [`@scanupload/qr-code-generator-nextjs-server`](packages/next-js/server) | *(removed — the Next.js demo now calls the hub directly)* |
-| [`@scanupload/qr-code-generator-react`](packages/react)                  | React `<QrCodeGenerator>` component with semantic CSS UI and file previews      |
-| [`@scanupload/qr-code-generator-vue`](packages/vue)                      | Vue 3 `<QrCodeGenerator>` component with semantic CSS UI and file previews      |
-| [`@scanupload/qr-code-generator-angular`](packages/angular)              | Angular `<sqg-qr-code-generator>` standalone component with file previews       |
-| [`@scanupload/qr-code-generator-svelte`](packages/svelte)                | Svelte 5 `<QrCodeGenerator>` component with semantic CSS UI and file previews   |
-| [`@scanupload/qr-code-generator-vanilla`](packages/vanilla)              | `QrCodeGeneratorElement` — self-contained DOM renderer, no framework required   |
+| Package | What it provides |
+| --- | --- |
+| [`@scanupload/qr-code-generator-core`](packages/core) | Framework-agnostic runtime — SignalR, session management, types |
+| [`@scanupload/qr-code-generator-react`](packages/react) | React `<QrCodeGenerator>` component |
+| [`@scanupload/qr-code-generator-vue`](packages/vue) | Vue 3 `<QrCodeGenerator>` component |
+| [`@scanupload/qr-code-generator-angular`](packages/angular) | Angular `<sqg-qr-code-generator>` standalone component |
+| [`@scanupload/qr-code-generator-svelte`](packages/svelte) | Svelte 5 `<QrCodeGenerator>` component |
+| [`@scanupload/qr-code-generator-vanilla`](packages/vanilla) | `QrCodeGeneratorElement` — framework-free DOM renderer |
 
----
+See each package's README for full details and a quick-start snippet.
 
-## Architecture
-
-```
-QrCodeGeneratorCore (packages/core)
-├── @microsoft/signalr      — real-time hub connection
-├── apiClient               — session + token fetch wrapper
-├── utilities               — debounce, token parsing
-└── StorageAdapter          — injected; defaults to localStorage
-
-Next.js server package — removed
-└── *(the Next.js demo now calls the ScanUpload hub directly, no client-side proxy)*
-
-React adapter (packages/react)
-├── useQrCodeCore           — useSyncExternalStore wrapper around Core
-├── QrCodeGenerator         — semantic CSS component (props-driven)
-└── DocumentPreviewer, FileList, ProgressBar, Logo
-
-Vue adapter (packages/vue)
-├── useQrCodeCore           — reactive ref wrapper around Core
-├── QrCodeGenerator         — semantic CSS component (props-driven)
-└── DocumentPreviewer, FileList, ProgressBar, Logo
-
-Angular adapter (packages/angular)
-├── useQrCodeCore           — signal-based controller wrapping Core
-├── QrCodeGeneratorComponent — semantic CSS standalone component (input-driven)
-└── DocumentPreviewer, FileList, ProgressBar, Logo
-
-Svelte adapter (packages/svelte)
-├── createQrCodeController   — svelte/store readable wrapper around Core
-├── QrCodeGenerator          — semantic CSS component (props-driven, runes)
-└── DocumentPreviewer, FileList, ProgressBar, Logo
-
-Vanilla adapter (packages/vanilla)
-├── QrCodeGeneratorElement  — builds and manages its own DOM subtree
-└── generateQrSvg           — qrcode → inline SVG helper
-```
-
-The core never imports React or any other framework. Framework adapters depend
-on core and inject platform-specific storage through the `StorageAdapter`
-interface.
-
----
-
-## Backend Integration
-
-- [ScanUpload.Api.Client](https://github.com/donaldasante/scanupload.api.client)
-  — ScanUpload backend proxy (.NET)
-
-The component needs two backend endpoints:
-
-| Endpoint     | Method | Description                                                                                                       |
-| ------------- | ------ | ----------------------------------------------------------------------------------------------------------------- |
-| `sessionUrl`  | `POST` | Creates a ScanUpload session and returns `{ sessionId, deviceLoginUrl, hubUrl, ttlSeconds }`. Origin is the only auth. |
-
----
-
-## Installation
-
-### React
+## Quick start (React)
 
 ```bash
 npm install @scanupload/qr-code-generator-react
 ```
 
-Peer dependencies: `react >= 19`, `react-dom >= 19`.
-
 ```tsx
-import { QrCodeGenerator } from '@scanupload/qr-code-generator-react';
-import '@scanupload/qr-code-generator-react/dist/index.css';
+import { QrCodeGenerator } from "@scanupload/qr-code-generator-react";
+import "@scanupload/qr-code-generator-react/dist/index.css";
 
-<QrCodeGenerator sessionUrl='/api/session' />;
+export function UploadWidget() {
+  return (
+    <QrCodeGenerator
+      sessionUrl="https://hub.scanupload.net/api/v2/front-end/session"
+      clientId="your-tenant-id"
+      header="Upload files from your phone"
+      showHeader
+      showDownloadButton
+    />
+  );
+}
 ```
 
-**Custom CSS / overrides**
+The browser `POST`s to `sessionUrl` directly. The ScanUpload hub authenticates the request from the browser's `Origin` header — no API token, no client-side proxy.
 
-The package ships a `dist/index.css` containing all `.sqg-*` rules and CSS
-custom properties. Import your overrides **after** the package CSS so
-same-specificity rules win via cascade:
+## Common props
 
-```tsx
-import '@scanupload/qr-code-generator-react/dist/index.css'; // base styles
-import './my-overrides.css'; // your overrides
-```
+All framework adapters share the same prop names. (Vue uses kebab-case in templates; Angular binds booleans with `[propName]`.) See each package's README for adapter-specific syntax.
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `sessionUrl` | `string` | — (required) | Endpoint that creates a ScanUpload session. The browser POSTs here; the hub authenticates from `Origin`. |
+| `clientId` | `string` | `undefined` | Optional tenant / Keycloak `client_id` sent in the request body as `{ "clientId": "..." }`. |
+| `header` | `string` | `""` | Header text shown when `showHeader` is `true`. |
+| `showHeader` | `boolean` | `false` | Render the header above the QR code. |
+| `showLogo` | `boolean` | `true` | Overlay the ScanUpload logo in the centre of the QR code. |
+| `clickQrCodeToReload` | `boolean` | `false` | When `true`, clicking the QR code reloads the session. When `false`, a Reload button is shown. |
+| `filePreviewMode` | `"grid" \| "list"` | `"grid"` | Display uploaded files as tiles or a compact list. |
+| `size` | `"small" \| "medium" \| "large" \| "xlarge"` | `"large"` | Overall size of the QR code container. |
+| `showDownloadButton` | `boolean` | `false` | Show a "Download all files" button beneath the previews. When clicked, the component fetches every `UploadedFile.url` the SignalR hub has surfaced and triggers a browser save for each. |
+
+## CSS custom properties
+
+All packages share the same `--sqg-*` token names. Override them on `:root` to theme every widget at once.
 
 ```css
-/* my-overrides.css */
 :root {
-    --sqg-primary: #6366f1; /* spinner, connected logo, retry button */
-    --sqg-border-radius: 1rem; /* root + qr wrapper corners */
-    --sqg-error-color: #e11d48; /* error text and disconnected logo */
-}
-
-/* Or target specific elements directly */
-.sqg-root {
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+  --sqg-primary: #6366f1;
+  --sqg-radius: 1rem;
 }
 ```
 
-You can also use the `classNames` or `style` props for per-instance overrides
-(see [classNames Customisation](#classnames-customisation) below).
+| Token | Default | Affects |
+| --- | --- | --- |
+| `--sqg-primary` | `#1e3a5f` | Spinner ring, connected logo, retry / download button background |
+| `--sqg-primary-hover` | `#1e40af` | Hover state for primary buttons |
+| `--sqg-bg` | `#ffffff` | Widget background |
+| `--sqg-text` | `#111827` | Main text colour |
+| `--sqg-text-muted` | `#6b7280` | Hint text, file sizes |
+| `--sqg-border` | `#d1d5db` | QR wrapper border, file card border |
+| `--sqg-success` | `#22c55e` | Connected logo accent |
+| `--sqg-error` | `#dc2626` | Error overlay text, disconnected logo, download error text |
+| `--sqg-error-dark` | `#991b1b` | Disconnected logo gradient end |
+| `--sqg-overlay-bg` | `rgba(255,255,255,0.9)` | Loading / error overlay background |
+| `--sqg-retry-bg` | `#93c5fd` | Retry button background |
+| `--sqg-retry-bg-hover` | `#3b82f6` | Retry button hover |
+| `--sqg-reload-bg` | `#6b7280` | Reload button background |
+| `--sqg-reload-bg-hover` | `var(--sqg-primary-hover)` | Reload button hover |
+| `--sqg-spinner-color` | `var(--sqg-primary)` | Spinner ring colour |
+| `--sqg-radius` | `0.5rem` | Border radius for buttons and cards |
 
-### Vue
+## Demos
 
-```bash
-npm install @scanupload/qr-code-generator-vue
-```
+Runnable examples live in `examples/`. Each demo calls the hub directly using `VITE_SESSION_URL` (or `NEXT_PUBLIC_SESSION_URL`):
 
-Peer dependency: `vue >= 3.4`.
+| Demo | Run |
+| --- | --- |
+| [React + Vite](examples/react-demo) | `npm run dev:react` |
+| [Vue 3 + Vite](examples/vue-demo) | `npm run dev:vue` |
+| [Angular + Vite](examples/angular-demo) | `npm run dev:angular` |
+| [Svelte 5 + Vite](examples/svelte-demo) | `npm run dev:svelte` |
+| [Vanilla JS + Vite](examples/vanilla-js) | `npm run dev:vanilla` |
+| [Next.js App Router](examples/nextjs-demo) | `npm run dev:nextjs` |
 
-```vue
-<script setup lang="ts">
-import { QrCodeGenerator } from '@scanupload/qr-code-generator-vue';
-import '@scanupload/qr-code-generator-vue/dist/index.css';
-</script>
+## Architecture
 
-<template>
-    <QrCodeGenerator session-url="/api/session" />
-</template>
-```
-
-**Custom CSS / overrides**
-
-The package ships a `dist/index.css` containing all `.sqg-*` rules and CSS
-custom properties. Import your overrides **after** the package CSS so
-same-specificity rules win via cascade:
-
-```ts
-import '@scanupload/qr-code-generator-vue/dist/index.css'; // base styles
-import './my-overrides.css'; // your overrides
-```
-
-### Angular
-
-```bash
-npm install @scanupload/qr-code-generator-angular
-```
-
-Peer dependencies: `@angular/core >= 20.2.0`, `@angular/common >= 20.2.0`.
-
-```ts
-import { Component } from '@angular/core';
-import { QrCodeGeneratorComponent } from '@scanupload/qr-code-generator-angular';
-
-@Component({
-    selector: 'app-root',
-    standalone: true,
-    imports: [QrCodeGeneratorComponent],
-    template: ` <sqg-qr-code-generator sessionUrl="/api/session"></sqg-qr-code-generator> `
-})
-export class AppComponent {}
-```
-
-**Custom CSS / overrides**
-
-Import the package stylesheet once (e.g. in `styles.css`), then your overrides
-**after** it so same-specificity rules win via cascade:
-
-```css
-@import '@scanupload/qr-code-generator-angular/dist/index.css'; /* base styles */
-@import './my-overrides.css'; /* your overrides */
-```
-
-### Svelte
-
-```bash
-npm install @scanupload/qr-code-generator-svelte
-```
-
-Peer dependency: `svelte >= 5`.
-
-```svelte
-<script lang="ts">
-    import { QrCodeGenerator } from '@scanupload/qr-code-generator-svelte';
-</script>
-
-<QrCodeGenerator sessionUrl="/api/session" />
-```
-
-**Custom CSS / overrides**
-
-Importing the component automatically pulls in `dist/index.css` (it is imported
-from the package entry). Import your overrides **after** the component so
-same-specificity rules win via cascade:
-
-```ts
-import '@scanupload/qr-code-generator-svelte/dist/index.css'; // base styles (optional — already bundled)
-import './my-overrides.css'; // your overrides
-```
-
-### Vanilla JS / TypeScript
-
-```bash
-npm install @scanupload/qr-code-generator-vanilla
-```
-
-```html
-<div id="widget"></div>
-```
-
-**Zero-config (styles auto-injected)**
-
-```ts
-import { QrCodeGeneratorElement } from '@scanupload/qr-code-generator-vanilla';
-
-new QrCodeGeneratorElement({
-    container: document.getElementById('widget')!,
-    sessionUrl: '/api/session'
-    // injectStyles defaults to true
-}).start();
-```
-
-Styles are injected automatically into `<head>` — no CSS import required.
-
-**Custom CSS / overrides**
-
-The package ships a `dist/index.css` file containing all `.sqg-*` styles. To
-override them, disable auto-injection and import the stylesheet yourself so your
-overrides cascade correctly:
-
-```ts
-import { QrCodeGeneratorElement } from '@scanupload/qr-code-generator-vanilla';
-import '@scanupload/qr-code-generator-vanilla/dist/index.css'; // base styles
-import './my-overrides.css'; // your overrides
-
-new QrCodeGeneratorElement({
-    container: document.getElementById('widget')!,
-    sessionUrl: '/api/session',
-    injectStyles: false // prevents double-injection
-}).start();
-```
-
-`my-overrides.css` example:
-
-```css
-/* Change the QR wrapper border */
-.sqg-root {
-    border-radius: 1rem;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
-}
-
-/* Accent colour for the spinner */
-.sqg-spinner {
-    border-top-color: #6366f1;
-}
-
-/* Connected logo state */
-.sqg-logo--connected {
-    background: #22c55e;
-}
-
-/* Error text */
-.sqg-error-text {
-    color: #e11d48;
-}
-```
-
-Import order is what matters — your file must come **after** the package CSS so
-same-specificity rules win by cascade. No `!important` needed.
-
-### Core only (custom framework adapters)
-
-```bash
-npm install @scanupload/qr-code-generator-core
-```
-
----
+See [README_FULL_ARCHITECTURE.md](README_FULL_ARCHITECTURE.md) for the full architecture overview.
 
 ## Development
 
 ```bash
-# Install all workspace dependencies
-npm install
-
-# Build all packages in dependency order (core → react → vanilla → vue → angular → svelte)
-npm run build
-
-# Build individual packages
-npm run build:core
-npm run build:react
-npm run build:vanilla
-npm run build:vue
-npm run build:angular
-npm run build:svelte
-
-# Run the dev examples (rebuilding packages first is recommended)
-npm run build ; npm run dev:nextjs
-npm run build ; npm run dev:react
-npm run build ; npm run dev:vue
-npm run build ; npm run dev:angular
-npm run build ; npm run dev:svelte
-npm run build ; npm run dev:vanilla
+npm install              # install all workspace dependencies
+npm run build            # build all packages in dependency order
+npm run dev:react        # run the React demo (rebuild packages first)
 ```
 
-> The examples resolve packages from their local `dist/` folder. Always rebuild
-> after changing any package source.
-
----
-
-## React, Vue, Angular & Svelte Props Reference
-
-The React, Vue, Angular, and Svelte `<QrCodeGenerator>` components accept the same
-props. In Vue, use kebab-case attribute names (e.g. `session-url`, `show-header`).
-In Angular, bind booleans with `[showHeader]="true"` and the selector is
-`<sqg-qr-code-generator>`. In Svelte, pass booleans as `showHeader={true}`.
-
-| Prop                  | Type                                         | Default   | Required | Description                                                                                            |
-| --------------------- | -------------------------------------------- | --------- | -------- | ------------------------------------------------------------------------------------------------------ |
-| `sessionUrl`          | `string`                                     | —         | ✅       | Endpoint that creates a ScanUpload session (`POST`). Identity is read from the browser's `Origin` header. |
-| `header`              | `string`                                     | —         |          | Text shown in the header (visible only when `showHeader` is `true`).                                   |
-| `showHeader`          | `boolean`                                    | `false`   |          | Whether to render the header above the QR code.                                                        |
-| `showLogo`            | `boolean`                                    | `true`    |          | Whether to overlay the ScanUpload logo in the centre of the QR code.                                   |
-| `clickQrCodeToReload` | `boolean`                                    | `false`   |          | When `true`, clicking the QR code reloads the session. When `false`, a Reload button is shown instead. |
-| `size`                | `"small" \| "medium" \| "large" \| "xlarge"` | `"large"` |          | Overall size of the QR code container.                                                                 |
-| `filePreviewMode`     | `"list" \| "grid"`                           | `"grid"`  |          | Display uploaded files as a grid of tiles or a compact list.                                           |
-
----
-
-## Vanilla JS Options Reference
-
-`QrCodeGeneratorElement` accepts all of the same options as the React component
-(minus `classNames` and `style`), plus:
-
-| Option         | Type          | Default | Required | Description                                                                                             |
-| -------------- | ------------- | ------- | -------- | ------------------------------------------------------------------------------------------------------- |
-| `container`    | `HTMLElement` | —       | ✅       | Host element to render the widget into.                                                                 |
-| `injectStyles` | `boolean`     | `true`  |          | Automatically inject the built-in stylesheet into `<head>`. Set to `false` when importing CSS manually. |
-
----
-
-````
-
----
-
-## CSS Custom Properties (React, Vue, Angular, Svelte & Vanilla)
-
-All packages share the same `--sqg-*` token names. Setting them once on `:root`
-themes every widget simultaneously.
-
-| Token                 | Default                  | Affects                                       |
-| --------------------- | ------------------------ | --------------------------------------------- |
-| `--sqg-primary`       | `#1e3a5f`                | Spinner ring, connected logo, retry button bg |
-| `--sqg-error-color`   | `#dc2626`                | Error overlay text, disconnected logo         |
-| `--sqg-border-color`  | `#e5e7eb`                | QR wrapper border, file card border           |
-| `--sqg-border-radius` | `0.75rem`                | Root wrapper and QR code box corners          |
-| `--sqg-bg`            | `#ffffff`                | Component background                          |
-| `--sqg-overlay-bg`    | `rgba(255,255,255,0.85)` | Loading / error overlay background            |
-| `--sqg-text-color`    | `#111827`                | Header, file names, general text              |
-| `--sqg-subtext-color` | `#6b7280`                | Hint text, file sizes                         |
-| `--sqg-spinner-size`  | `2.5rem`                 | Width and height of the loading spinner       |
-| `--sqg-spinner-width` | `3px`                    | Spinner ring stroke width                     |
-
----
-
-## Creating a New Framework Adapter
-
-1. Create `packages/<framework>/` and add `@scanupload/qr-code-generator-core` as a dependency.
-2. Instantiate `QrCodeGeneratorCore` with a `StorageAdapter` for your platform.
-3. Wire `subscribe()` and `getState()` to your framework's reactivity model.
-4. Build your UI using the `QrCodeGeneratorState` shape.
-
-### CSS custom properties
-
-Use `style` to inject design tokens per-instance:
-
-```tsx
-<QrCodeGenerator
-    sessionUrl='/api/session'
-    sessionUrl='/api/session'
-/>
-````
-
-See the full token list in
-[CSS Custom Properties](#css-custom-properties-react-vue-angular-svelte--vanilla).
-
----
-
-## File Preview Modes
-
-### `"grid"` (default)
-
-Renders each file as a `DocumentPreviewer` tile with:
-
-- A file-type icon colour-coded by extension (PDF → red, Word → blue, Excel →
-  green, images → purple, etc.)
-- A thumbnail for image files (when `thumbnailBase64` is provided by the server)
-- An upload progress bar
-
-### `"list"`
-
-Renders all files as a compact `FileList` with:
-
-- A 48 × 48 thumbnail (or a generic document icon if no thumbnail is available)
-- File name (truncated) and size in KB
-
----
+> The demos resolve packages from their local `dist/` folder. Always rebuild after changing any package source.
 
 ## License
 
