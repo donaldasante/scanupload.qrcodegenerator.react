@@ -4,19 +4,19 @@ WORKDIR /app
 
 # Inlined into the SPA bundle by Vite at build time. The Azure pipeline
 # passes these via --build-arg from the scanupload-qrcodegenerator-demo-env
-# Variable Group so the demo always points at the correct hub/tenant per
-# environment. Default values match `.env` — if the pipeline passes a
-# build-arg it overrides the default, otherwise the bundled default is used.
-ARG VITE_CLIENT_ID=442585d5-8625-4401-adff-8f00ef11e6d5.asante-it.scanupload.hub
-ARG VITE_SESSION_URL=https://hub.scanupload.net/api/v2/front-end/session
-ENV VITE_CLIENT_ID=$VITE_CLIENT_ID
-ENV VITE_SESSION_URL=$VITE_SESSION_URL
+# Variable Group. When provided, the variable is exported so Vite picks it
+# up (process.env always wins over .env). When not provided (empty), the
+# export is skipped entirely, so Vite falls back to the `.env` file value.
+ARG VITE_CLIENT_ID
+ARG VITE_SESSION_URL
 
 COPY package*.json ./
 RUN npm install
 
 COPY . .
-RUN npm run build
+RUN if [ -n "${VITE_CLIENT_ID}" ]; then export VITE_CLIENT_ID="${VITE_CLIENT_ID}"; fi && \
+    if [ -n "${VITE_SESSION_URL}" ]; then export VITE_SESSION_URL="${VITE_SESSION_URL}"; fi && \
+    npm run build
 
 # Serve with Nginx. We renamed nginx.conf.template -> nginx.conf and move
 # it to /etc/nginx/conf.d/ so the nginx image's auto-envsubst script
