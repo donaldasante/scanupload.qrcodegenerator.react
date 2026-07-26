@@ -147,6 +147,7 @@ stages:
                 $(qaTag)
               arguments: |
                 --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID)
+                --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
 
           - task: Docker@2
             displayName: Build Svelte demo example image
@@ -161,7 +162,7 @@ stages:
                 $(qaTag)
               arguments: |
                 --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID)
-
+                --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
           - task: Docker@2
             displayName: Build Vue demo example image
             inputs:
@@ -175,6 +176,7 @@ stages:
                 $(qaTag)
               arguments: |
                 --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID)
+                --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
 
           - task: Docker@2
             displayName: Build React demo example image
@@ -189,6 +191,7 @@ stages:
                 $(qaTag)
               arguments: |
                 --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID)
+                --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
 
           - task: Docker@2
             displayName: Build Vanilla JS demo example image
@@ -203,6 +206,7 @@ stages:
                 $(qaTag)
               arguments: |
                 --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID)
+                --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
 
   # ────────────────────────────────────────────────────────────────────
   # Stage 2 — Deploy (self-hosted "ScanUpload QA New" agent pool)
@@ -230,8 +234,12 @@ stages:
                   echo "containerName=angular-example.scanupload"
                   echo "subDomain=angular-example.scanupload.net"
                   echo "FRAME_SRC=${FRAME_SRC:-https://app.scanupload.net https://hub.scanupload.net}"
-                  echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://static.cloudflareinsights.com}"
+                  # wss:// is required alongside https:// because CSP treats
+                  # them as separate schemes. The browser opens a WebSocket
+                  # to wss://hub.scanupload.net for SignalR.
+                  echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://static.cloudflareinsights.com wss://hub.scanupload.net}"
                   echo "VITE_CLIENT_ID=$(VITE_CLIENT_ID)"
+                  echo "VITE_SESSION_URL=$(VITE_SESSION_URL)"
               } > "$outdir/.env"
             displayName: "Generate .env file scanupload.angular.client.example"
 
@@ -250,8 +258,12 @@ stages:
                   echo "containerName=vue-example.scanupload"
                   echo "subDomain=vue-example.scanupload.net"
                   echo "FRAME_SRC=${FRAME_SRC:-https://app.scanupload.net https://hub.scanupload.net}"
-                  echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://static.cloudflareinsights.com}"
+                  # wss:// is required alongside https:// because CSP treats
+                  # them as separate schemes. The browser opens a WebSocket
+                  # to wss://hub.scanupload.net for SignalR.
+                  echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://static.cloudflareinsights.com wss://hub.scanupload.net}"
                   echo "VITE_CLIENT_ID=$(VITE_CLIENT_ID)"
+                  echo "VITE_SESSION_URL=$(VITE_SESSION_URL)"
               } > "$outdir/.env"
             displayName: "Generate .env file scanupload.vue.client.example"
 
@@ -270,8 +282,12 @@ stages:
                   echo "containerName=svelte-example.scanupload"
                   echo "subDomain=svelte-example.scanupload.net"
                   echo "FRAME_SRC=${FRAME_SRC:-https://app.scanupload.net https://hub.scanupload.net}"
-                  echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://static.cloudflareinsights.com}"
+                  # wss:// is required alongside https:// because CSP treats
+                  # them as separate schemes. The browser opens a WebSocket
+                  # to wss://hub.scanupload.net for SignalR.
+                  echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://static.cloudflareinsights.com wss://hub.scanupload.net}"
                   echo "VITE_CLIENT_ID=$(VITE_CLIENT_ID)"
+                  echo "VITE_SESSION_URL=$(VITE_SESSION_URL)"
               } > "$outdir/.env"
             displayName: "Generate .env file scanupload.svelte.client.example"
 
@@ -290,8 +306,12 @@ stages:
                   echo "containerName=react-example.scanupload"
                   echo "subDomain=react-example.scanupload.net"
                   echo "FRAME_SRC=${FRAME_SRC:-https://app.scanupload.net https://hub.scanupload.net}"
-                  echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://static.cloudflareinsights.com}"
+                  # wss:// is required alongside https:// because CSP treats
+                  # them as separate schemes. The browser opens a WebSocket
+                  # to wss://hub.scanupload.net for SignalR.
+                  echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://static.cloudflareinsights.com wss://hub.scanupload.net}"
                   echo "VITE_CLIENT_ID=$(VITE_CLIENT_ID)"
+                  echo "VITE_SESSION_URL=$(VITE_SESSION_URL)"
               } > "$outdir/.env"
             displayName: "Generate .env file scanupload.react.client.example"
 
@@ -310,8 +330,12 @@ stages:
                   echo "containerName=vanilla-example.scanupload"
                   echo "subDomain=vanilla-example.scanupload.net"
                   echo "FRAME_SRC=${FRAME_SRC:-https://app.scanupload.net https://hub.scanupload.net}"
-                  echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://static.cloudflareinsights.com}"
+                  # wss:// is required alongside https:// because CSP treats
+                  # them as separate schemes. The browser opens a WebSocket
+                  # to wss://hub.scanupload.net for SignalR.
+                  echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://static.cloudflareinsights.com wss://hub.scanupload.net}"
                   echo "VITE_CLIENT_ID=$(VITE_CLIENT_ID)"
+                  echo "VITE_SESSION_URL=$(VITE_SESSION_URL)"
               } > "$outdir/.env"
             displayName: "Generate .env file scanupload.vanilla.client.example"
 
