@@ -7,6 +7,16 @@ server {
 
     location / {
         try_files $uri /index.html;
+        add_header Content-Security-Policy "
+        default-src 'self';
+        img-src 'self' blob: data:;
+        script-src 'self' https://static.cloudflareinsights.com;
+        frame-src 'self' ${FRAME_SRC:-https://app.scanupload.net https://hub.scanupload.net};
+        connect-src 'self' ${CONNECT_SRC:-https://hub.scanupload.net https://static.cloudflareinsights.com};
+        style-src 'self' 'unsafe-inline';
+        object-src 'none';
+        base-uri 'self';
+    " always;
     }
 
     location ~* \.(?:ico|css|js|gif|jpe?g|png|woff2?|eot|ttf|svg)$ {
@@ -22,7 +32,7 @@ server {
     # hub (no CORS) and lets the hub URL change per environment without
     # rebuilding the image.
     location /hub-api/ {
-        proxy_pass ${HUB_API_URL};
+        proxy_pass ${HUB_API_URL:-https://hub.scanupload.net};
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header Upgrade $http_upgrade;
