@@ -5,9 +5,10 @@ WORKDIR /app
 # Inlined into the SPA bundle by Vite at build time. The Azure pipeline
 # passes these via --build-arg from the scanupload-qrcodegenerator-demo-env
 # Variable Group so the demo always points at the correct hub/tenant per
-# environment.
-ARG VITE_CLIENT_ID
-ARG VITE_SESSION_URL
+# environment. Default values match `.env` — if the pipeline passes a
+# build-arg it overrides the default, otherwise the bundled default is used.
+ARG VITE_CLIENT_ID=442585d5-8625-4401-adff-8f00ef11e6d5.asante-it.scanupload.hub
+ARG VITE_SESSION_URL=https://hub.scanupload.net/api/v2/front-end/session
 ENV VITE_CLIENT_ID=$VITE_CLIENT_ID
 ENV VITE_SESSION_URL=$VITE_SESSION_URL
 
