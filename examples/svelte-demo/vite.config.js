@@ -1,28 +1,17 @@
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig } from "vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import mkcert from "vite-plugin-mkcert";
 
-export default defineConfig(({ mode }) => {
-    // Load .env so we can read VITE_HUB_API_TARGET_DEV for the dev proxy.
-    // Production builds inline VITE_SESSION_URL (= "/hub-api/...") into the
-    // bundle; Nginx then reverse-proxies /hub-api/* to the hub. The dev
-    // server can't use a runtime nginx, so we proxy here instead.
-    const env = loadEnv(mode, process.cwd(), "");
-
+// The bundle calls https://hub.scanupload.net/... directly (VITE_SESSION_URL
+// is inlined at build time). No dev-server proxy is needed: the browser
+// connects straight to the hub and the hub's CORS allowlist controls access.
+export default defineConfig(() => {
     return {
         plugins: [svelte(), mkcert()],
         server: {
             port: 5176,
             open: true,
             strictPort: true,
-            proxy: {
-                "/hub-api": {
-                    target: env.VITE_HUB_API_TARGET_DEV,
-                    changeOrigin: true,
-                    secure: false,
-                    rewrite: (path) => path.replace(/^\/hub-api/, ""),
-                },
-            },
         },
     };
 });
