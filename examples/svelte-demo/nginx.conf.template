@@ -24,6 +24,13 @@ server {
     location /hub-api/ {
         proxy_pass ${HUB_API_URL};
         proxy_http_version 1.1;
+        # Required when proxying to an HTTPS upstream behind a CDN (e.g.
+        # Cloudflare): nginx connects to the resolved IP, so without SNI
+        # the upstream TLS cert (issued for hub.scanupload.net, not the IP)
+        # fails the handshake with SSL alert 40.
+        proxy_ssl_server_name on;
+        proxy_ssl_name ${HUB_API_HOSTNAME};
+        proxy_ssl_protocols TLSv1.2 TLSv1.3;
         proxy_set_header Host $host;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
