@@ -150,7 +150,10 @@ stages:
               tags: |
                 $(dockerImageTag)
                 $(qaTag)
-              arguments: --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID) --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
+              arguments: --build-arg VITE_CLIENT_ID=$VITE_CLIENT_ID --build-arg VITE_SESSION_URL=$VITE_SESSION_URL
+          env:
+            VITE_CLIENT_ID: $(VITE_CLIENT_ID)
+            VITE_SESSION_URL: $(VITE_SESSION_URL)
 
           - task: Docker@2
             displayName: Build Svelte demo example image
@@ -163,7 +166,10 @@ stages:
               tags: |
                 $(dockerImageTag)
                 $(qaTag)
-              arguments: --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID) --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
+              arguments: --build-arg VITE_CLIENT_ID=$VITE_CLIENT_ID --build-arg VITE_SESSION_URL=$VITE_SESSION_URL
+          env:
+            VITE_CLIENT_ID: $(VITE_CLIENT_ID)
+            VITE_SESSION_URL: $(VITE_SESSION_URL)
           - task: Docker@2
             displayName: Build Vue demo example image
             inputs:
@@ -175,7 +181,10 @@ stages:
               tags: |
                 $(dockerImageTag)
                 $(qaTag)
-              arguments: --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID) --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
+              arguments: --build-arg VITE_CLIENT_ID=$VITE_CLIENT_ID --build-arg VITE_SESSION_URL=$VITE_SESSION_URL
+          env:
+            VITE_CLIENT_ID: $(VITE_CLIENT_ID)
+            VITE_SESSION_URL: $(VITE_SESSION_URL)
 
           - task: Docker@2
             displayName: Build React demo example image
@@ -188,7 +197,10 @@ stages:
               tags: |
                 $(dockerImageTag)
                 $(qaTag)
-              arguments: --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID) --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
+              arguments: --build-arg VITE_CLIENT_ID=$VITE_CLIENT_ID --build-arg VITE_SESSION_URL=$VITE_SESSION_URL
+          env:
+            VITE_CLIENT_ID: $(VITE_CLIENT_ID)
+            VITE_SESSION_URL: $(VITE_SESSION_URL)
 
           - task: Docker@2
             displayName: Build Vanilla JS demo example image
@@ -201,7 +213,10 @@ stages:
               tags: |
                 $(dockerImageTag)
                 $(qaTag)
-              arguments: --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID) --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
+              arguments: --build-arg VITE_CLIENT_ID=$VITE_CLIENT_ID --build-arg VITE_SESSION_URL=$VITE_SESSION_URL
+          env:
+            VITE_CLIENT_ID: $(VITE_CLIENT_ID)
+            VITE_SESSION_URL: $(VITE_SESSION_URL)
 
   # ────────────────────────────────────────────────────────────────────
   # Stage 2 — Deploy (self-hosted "ScanUpload QA New" agent pool)
