@@ -132,7 +132,12 @@ stages:
                 echo "##vso[task.setvariable variable=dockerImageTag]$(Build.SourceBranchName).$(Build.BuildId)"
                 echo "##vso[task.setvariable variable=qaTag]qa"
                 # Example using short commit hash
-                # echo "##vso[task.setvariable variable=dockerImageTag]$(git rev-parse --short HEAD)"     
+                # echo "##vso[task.setvariable variable=dockerImageTag]$(git rev-parse --short HEAD)"
+
+          - script: |
+              echo "VITE_CLIENT_ID  length = ${#VITE_CLIENT_ID}"
+              echo "VITE_SESSION_URL length = ${#VITE_SESSION_URL}"
+            displayName: "Debug: verify Variable Group values"
 
           - task: Docker@2
             displayName: Build Angular demo example image
@@ -145,9 +150,7 @@ stages:
               tags: |
                 $(dockerImageTag)
                 $(qaTag)
-              arguments: |
-                --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID)
-                --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
+              arguments: --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID) --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
 
           - task: Docker@2
             displayName: Build Svelte demo example image
@@ -160,9 +163,7 @@ stages:
               tags: |
                 $(dockerImageTag)
                 $(qaTag)
-              arguments: |
-                --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID)
-                --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
+              arguments: --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID) --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
           - task: Docker@2
             displayName: Build Vue demo example image
             inputs:
@@ -174,9 +175,7 @@ stages:
               tags: |
                 $(dockerImageTag)
                 $(qaTag)
-              arguments: |
-                --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID)
-                --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
+              arguments: --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID) --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
 
           - task: Docker@2
             displayName: Build React demo example image
@@ -189,9 +188,7 @@ stages:
               tags: |
                 $(dockerImageTag)
                 $(qaTag)
-              arguments: |
-                --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID)
-                --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
+              arguments: --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID) --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
 
           - task: Docker@2
             displayName: Build Vanilla JS demo example image
@@ -204,9 +201,7 @@ stages:
               tags: |
                 $(dockerImageTag)
                 $(qaTag)
-              arguments: |
-                --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID)
-                --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
+              arguments: --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID) --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
 
   # ────────────────────────────────────────────────────────────────────
   # Stage 2 — Deploy (self-hosted "ScanUpload QA New" agent pool)
