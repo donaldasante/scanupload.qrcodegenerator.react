@@ -2,8 +2,24 @@
     import { QrCodeGenerator } from '@scanupload/qr-code-generator-svelte';
 
     // Endpoints + client id live in `.env` / `.env.local`. See `.env.example`.
-    const sessionUrl = import.meta.env.VITE_SESSION_URL;
-    const clientId = import.meta.env.VITE_CLIENT_ID;
+    function readSessionUrl(): string {
+        const value = import.meta.env.VITE_SESSION_URL;
+        if (!value) {
+            throw new Error('VITE_SESSION_URL is not set. Copy .env.example to .env.local or provide it as a Docker build argument.');
+        }
+        return value;
+    }
+
+    function readClientId(): string {
+        const value = import.meta.env.VITE_CLIENT_ID;
+        if (!value) {
+            throw new Error('VITE_CLIENT_ID is not set. Copy .env.example to .env.local or provide it as a Docker build argument.');
+        }
+        return value;
+    }
+
+    const sessionUrl = readSessionUrl();
+    const clientId = readClientId();
 
     let showQrCodeLogo = $state(true);
     let clickQrcodeReload = $state(true);
@@ -87,9 +103,7 @@
             </div>
 
             <div class="flex flex-col gap-0 mt-2">
-                <div class="text-sm font-medium text-gray-700 select-none cursor-pointer text-left">
-                    File preview mode
-                </div>
+                <div class="text-sm font-medium text-gray-700 select-none cursor-pointer text-left">File preview mode</div>
                 <div class="flex flex-row items-start mt-2 space-x-4">
                     <label class="flex items-center cursor-pointer group">
                         <input
@@ -99,9 +113,7 @@
                             name="file-preview-mode"
                             class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600"
                         />
-                        <span class="ml-3 text-sm font-medium text-gray-700 group-hover:text-indigo-600 transition-colors">
-                            List
-                        </span>
+                        <span class="ml-3 text-sm font-medium text-gray-700 group-hover:text-indigo-600 transition-colors"> List </span>
                     </label>
                     <label class="flex items-center cursor-pointer group">
                         <input
@@ -111,17 +123,13 @@
                             name="file-preview-mode"
                             class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600"
                         />
-                        <span class="ml-3 text-sm font-medium text-gray-700 group-hover:text-indigo-600 transition-colors">
-                            Grid
-                        </span>
+                        <span class="ml-3 text-sm font-medium text-gray-700 group-hover:text-indigo-600 transition-colors"> Grid </span>
                     </label>
                 </div>
             </div>
 
             <div class="flex flex-col gap-0 mt-2">
-                <div class="text-sm font-medium text-gray-700 select-none cursor-pointer text-left">
-                    Qr Code size
-                </div>
+                <div class="text-sm font-medium text-gray-700 select-none cursor-pointer text-left">Qr Code size</div>
                 <div class="flex flex-row items-start mt-2 space-x-4">
                     {#each sizeOptions as size (size.value)}
                         <!-- items-start keeps the radio at the top of
@@ -161,12 +169,10 @@
             showLogo={showQrCodeLogo}
             clickQrCodeToReload={clickQrcodeReload}
             {filePreviewMode}
-            showDownloadButton={showDownloadButton}
+            {showDownloadButton}
         />
     </div>
 </div>
 <p class="demo-back-link">
-    <a href="https://app.scanupload.net/" class="text-blue-600 hover:text-blue-800 underline">
-        Back to ScanUpload
-    </a>
+    <a href="https://app.scanupload.net/" class="text-blue-600 hover:text-blue-800 underline"> Back to ScanUpload </a>
 </p>

@@ -11,6 +11,22 @@ interface SizeOption {
     label: string;
 }
 
+function readSessionUrl(): string {
+    const value = import.meta.env.VITE_SESSION_URL;
+    if (!value) {
+        throw new Error('VITE_SESSION_URL is not set. Copy .env.example to .env.local or provide it as a Docker build argument.');
+    }
+    return value;
+}
+
+function readClientId(): string {
+    const value = import.meta.env.VITE_CLIENT_ID;
+    if (!value) {
+        throw new Error('VITE_CLIENT_ID is not set. Copy .env.example to .env.local or provide it as a Docker build argument.');
+    }
+    return value;
+}
+
 @Component({
     selector: 'app-root',
     standalone: true,
@@ -63,7 +79,10 @@ interface SizeOption {
                             [(ngModel)]="showDownloadButton"
                             class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 mr-2"
                         />
-                        <label for="checkDownloadButton" class="text-sm font-medium text-gray-700 select-none cursor-pointer w-40 text-left">
+                        <label
+                            for="checkDownloadButton"
+                            class="text-sm font-medium text-gray-700 select-none cursor-pointer w-40 text-left"
+                        >
                             Show download button
                         </label>
                     </div>
@@ -82,9 +101,7 @@ interface SizeOption {
                     </div>
 
                     <div class="flex flex-col gap-0 mt-2">
-                        <div class="text-sm font-medium text-gray-700 select-none cursor-pointer text-left">
-                            File preview mode
-                        </div>
+                        <div class="text-sm font-medium text-gray-700 select-none cursor-pointer text-left">File preview mode</div>
                         <div class="flex flex-row items-start mt-2 space-x-4">
                             <label class="flex items-center cursor-pointer group">
                                 <input
@@ -114,9 +131,7 @@ interface SizeOption {
                     </div>
 
                     <div class="flex flex-col gap-0 mt-2">
-                        <div class="text-sm font-medium text-gray-700 select-none cursor-pointer text-left">
-                            Qr Code size
-                        </div>
+                        <div class="text-sm font-medium text-gray-700 select-none cursor-pointer text-left">Qr Code size</div>
                         <div class="flex flex-row items-start mt-2 space-x-4">
                             <!-- items-start (not items-center) so the
                                  radio stays aligned at the top of the
@@ -154,16 +169,14 @@ interface SizeOption {
             </div>
         </div>
         <p class="demo-back-link">
-            <a href="https://app.scanupload.net/" class="text-blue-600 hover:text-blue-800 underline">
-                Back to ScanUpload
-            </a>
+            <a href="https://app.scanupload.net/" class="text-blue-600 hover:text-blue-800 underline"> Back to ScanUpload </a>
         </p>
     `
 })
 export class AppComponent {
     // Endpoints + client id live in `.env` / `.env.local`. See `.env.example`.
-    protected readonly sessionUrl = import.meta.env.VITE_SESSION_URL;
-    protected readonly clientId = import.meta.env.VITE_CLIENT_ID;
+    protected readonly sessionUrl = readSessionUrl();
+    protected readonly clientId = readClientId();
 
     protected showQrCodeLogo = true;
     protected clickQrcodeReload = true;

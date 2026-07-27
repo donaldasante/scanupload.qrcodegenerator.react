@@ -12,8 +12,28 @@ import "./index.css";
 import "./override.css";
 
 // Endpoints + client id live in `.env` / `.env.local`. See `.env.example`.
-const sessionUrl = import.meta.env.VITE_SESSION_URL;
-const clientId = import.meta.env.VITE_CLIENT_ID;
+function readSessionUrl(): string {
+  const value = import.meta.env.VITE_SESSION_URL;
+  if (!value) {
+    throw new Error(
+      "VITE_SESSION_URL is not set. Copy .env.example to .env.local or provide it as a Docker build argument.",
+    );
+  }
+  return value;
+}
+
+function readClientId(): string {
+  const value = import.meta.env.VITE_CLIENT_ID;
+  if (!value) {
+    throw new Error(
+      "VITE_CLIENT_ID is not set. Copy .env.example to .env.local or provide it as a Docker build argument.",
+    );
+  }
+  return value;
+}
+
+const sessionUrl = readSessionUrl();
+const clientId = readClientId();
 
 type FilePreviewMode = "list" | "grid";
 type QrCodeSize = "small" | "medium" | "large" | "xlarge";

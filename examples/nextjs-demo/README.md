@@ -1,6 +1,6 @@
 # Next.js App Router demo
 
-A minimal Next.js (App Router) app that integrates [`@scanupload/qr-code-generator-react`](../../packages/react). The browser calls the hub directly — no client-side or Next.js-side proxy is involved.
+A minimal Next.js (App Router) app that integrates [`@scanupload/qr-code-generator-react`](../../packages/react). The session API request uses the included `/hub-api` rewrite; SignalR still needs to be allowed by the browser and any proxy in front of the app.
 
 ## Run
 
@@ -27,11 +27,12 @@ On the first visit the browser shows a "Your connection is not private" warning 
 Copy `.env.example` to `.env.local` and fill in:
 
 ```env
-NEXT_PUBLIC_SESSION_URL=https://hub.scanupload.net/api/v2/front-end/session
+NEXT_PUBLIC_SESSION_URL=/hub-api/api/v2/front-end/session
+NEXT_PUBLIC_HUB_API_TARGET=https://hub.scanupload.net
 NEXT_PUBLIC_CLIENT_ID=your-tenant-id
 ```
 
-The browser calls `NEXT_PUBLIC_SESSION_URL` directly; the hub authenticates from the `Origin` header.
+`NEXT_PUBLIC_SESSION_URL` is the browser-visible route. `next.config.ts` rewrites `/hub-api/*` to `NEXT_PUBLIC_HUB_API_TARGET`; set the target to the hub base URL without a trailing slash. The hub authenticates from the browser's `Origin` header.
 
 ## Get a client ID
 
@@ -40,6 +41,36 @@ The browser calls `NEXT_PUBLIC_SESSION_URL` directly; the hub authenticates from
 3. Navigate to the **Client Credentials** section to generate your client ID.
 
 The client secret is only used by server-side integrations — leave it out of any client-side env file. The browser only needs the client ID.
+
+## Production troubleshooting
+
+The session API request is same-origin when you use the supplied `/hub-api` rewrite, but the widget still uses SignalR and can receive an absolute hub URL. Test the API request and SignalR negotiation separately in DevTools.
+
+### CSP
+
+Allow the hub WebSocket in `connect-src`; also allow the hub HTTPS origin when you use a direct session URL or the hub returns an absolute negotiate URL:
+
+```text
+connect-src 'self' https://hub.scanupload.net wss://hub.scanupload.net;
+```
+
+`https://` permits HTTP(S) session and negotiate requests; `wss://` permits SignalR WebSockets. CSP does not infer `wss://` permission from `https://`. Configure this directive at the server, CDN, or hosting platform that serves your document. Do not relax the policy to `connect-src *`.
+
+Inspect the **document** response in browser DevTools. All CSP headers are enforced together; a `Content-Security-Policy-Report-Only` header only logs, so a browser extension, CDN, or reverse proxy may add warnings even when it does not block the request.
+
+### CORS, SignalR, and proxies
+
+- Register the exact public application origin in ScanUpload, including its scheme, hostname, and non-default port.
+- Use HTTPS in production. An HTTP page cannot establish a secure `wss://` connection without mixed-content restrictions.
+- Keep the `/hub-api` rewrite when you want a same-origin session request. If a CDN or reverse proxy handles that route instead, preserve the browser `Origin` header.
+- When a proxy carries SignalR traffic, it must allow WebSocket upgrades (`Upgrade` and `Connection` headers) and use timeouts appropriate for persistent connections.
+- A successful session request followed by a failed `negotiate` request normally indicates missing CSP permission, an unregistered origin, or blocked WebSocket upgrades.
+
+### Configuration and diagnostics
+
+`NEXT_PUBLIC_*` values are exposed to browser code. Do not place a client secret in any `NEXT_PUBLIC_*` variable. Rebuild/redeploy when changing values that Next.js inlines into the client bundle; restart the server after changing the rewrite target.
+
+Use the Console to find CSP and mixed-content failures. In Network, inspect the session request, `negotiate` request, and WebSocket connection, including their response headers and the browser-sent `Origin` value.
 
 ## What it shows
 
