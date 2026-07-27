@@ -1,6 +1,6 @@
 {
   "name": "@scanupload/qr-code-generator-svelte",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Svelte wrapper for the ScanUpload QR Code Generator — QR code component with real-time file upload previews.",
   "type": "module",
   "svelte": "./dist/index.js",
@@ -25,7 +25,7 @@
     "svelte": ">=5"
   },
   "dependencies": {
-    "@scanupload/qr-code-generator-core": "^0.2.0",
+    "@scanupload/qr-code-generator-core": "^0.2.1",
     "lucide": "^0.562.0",
     "qrcode": "^1.5.4"
   },

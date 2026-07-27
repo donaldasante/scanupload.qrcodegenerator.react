@@ -1,6 +1,6 @@
 {
   "name": "@scanupload/qr-code-generator-vue",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Vue 3 wrapper for the ScanUpload QR Code Generator — QR code component with real-time file upload previews.",
   "main": "dist/index.cjs.js",
   "module": "dist/index.es.js",
@@ -16,7 +16,7 @@
     "vue": ">=3.4"
   },
   "dependencies": {
-    "@scanupload/qr-code-generator-core": "^0.2.0",
+    "@scanupload/qr-code-generator-core": "^0.2.1",
     "lucide-vue-next": "^0.562.0",
     "qrcode.vue": "^3.6.0"
   },

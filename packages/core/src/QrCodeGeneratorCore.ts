@@ -591,9 +591,16 @@ export class QrCodeGeneratorCore {
             });
 
             connection.onreconnected(async (connectionId) => {
+                // A terminal session teardown may have stopped this connection
+                // while SignalR was completing a reconnect. Do not let that
+                // stale callback restore the green connected state.
+                if (this._connection !== connection || !this._session) return;
+
                 console.log('Connection re-established:', connectionId);
                 try {
                     const files = (await connection?.invoke<UploadedFile[]>('GetSessionFiles', this._session?.sessionId)) ?? [];
+                    if (this._connection !== connection || !this._session) return;
+
                     const prevMap = new Map(this._state.uploadedFiles.map((f) => [f.id, f]));
                     const merged = files.map((serverFile) => {
                         const existing = prevMap.get(serverFile.id);
@@ -613,6 +620,10 @@ export class QrCodeGeneratorCore {
             });
 
             connection.onclose((error) => {
+                // Ignore the close event of a connection that a newer session
+                // has already replaced.
+                if (this._connection && this._connection !== connection) return;
+
                 console.log('Connection closed', error);
                 this._setState({ isConnected: false, uploadedFiles: [] });
             });
