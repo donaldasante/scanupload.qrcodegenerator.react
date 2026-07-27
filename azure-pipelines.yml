@@ -150,7 +150,7 @@ stages:
               tags: |
                 $(dockerImageTag)
                 $(qaTag)
-              arguments: --build-arg VITE_CLIENT_ID=$VITE_CLIENT_ID --build-arg VITE_SESSION_URL=$VITE_SESSION_URL
+              arguments: --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID) --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
             env:
               VITE_CLIENT_ID: $(VITE_CLIENT_ID)
               VITE_SESSION_URL: $(VITE_SESSION_URL)
@@ -166,7 +166,7 @@ stages:
               tags: |
                 $(dockerImageTag)
                 $(qaTag)
-              arguments: --build-arg VITE_CLIENT_ID=$VITE_CLIENT_ID --build-arg VITE_SESSION_URL=$VITE_SESSION_URL
+              arguments: --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID) --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
             env:
               VITE_CLIENT_ID: $(VITE_CLIENT_ID)
               VITE_SESSION_URL: $(VITE_SESSION_URL)
@@ -181,7 +181,7 @@ stages:
               tags: |
                 $(dockerImageTag)
                 $(qaTag)
-              arguments: --build-arg VITE_CLIENT_ID=$VITE_CLIENT_ID --build-arg VITE_SESSION_URL=$VITE_SESSION_URL
+              arguments: --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID) --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
             env:
               VITE_CLIENT_ID: $(VITE_CLIENT_ID)
               VITE_SESSION_URL: $(VITE_SESSION_URL)
@@ -197,7 +197,7 @@ stages:
               tags: |
                 $(dockerImageTag)
                 $(qaTag)
-              arguments: --build-arg VITE_CLIENT_ID=$VITE_CLIENT_ID --build-arg VITE_SESSION_URL=$VITE_SESSION_URL
+              arguments: --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID) --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
             env:
               VITE_CLIENT_ID: $(VITE_CLIENT_ID)
               VITE_SESSION_URL: $(VITE_SESSION_URL)
@@ -213,7 +213,7 @@ stages:
               tags: |
                 $(dockerImageTag)
                 $(qaTag)
-              arguments: --build-arg VITE_CLIENT_ID=$VITE_CLIENT_ID --build-arg VITE_SESSION_URL=$VITE_SESSION_URL
+              arguments: --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID) --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
             env:
               VITE_CLIENT_ID: $(VITE_CLIENT_ID)
               VITE_SESSION_URL: $(VITE_SESSION_URL)
