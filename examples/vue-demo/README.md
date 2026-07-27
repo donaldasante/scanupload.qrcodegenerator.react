@@ -64,9 +64,9 @@ In DevTools, check the Console for CSP and mixed-content errors, then check Netw
 ## What it shows
 
 - An "Example Form" settings panel above the widget with:
-  - Checkboxes for **Show Logo**, **Click QR code to reload**, and **Show header**
-  - A text field for the header text
-  - Radio groups for **File preview mode** (list/grid) and **Qr Code size** (small/medium/large/X-Large — mapped to the `"xlarge"` prop value)
+    - Checkboxes for **Show Logo**, **Click QR code to reload**, and **Show header**
+    - A text field for the header text
+    - Radio groups for **File preview mode** (list/grid) and **Qr Code size** (small/medium/large/X-Large — mapped to the `"xlarge"` prop value)
 - The QR code, loading overlay, and error overlay
 - The "Download all files" button (via `:show-download-button="true"`)
 
