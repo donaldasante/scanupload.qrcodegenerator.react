@@ -4,354 +4,403 @@
 # Stage 2 deploys the demo images on the self-hosted "ScanUpload QA New" agent pool.
 
 trigger:
-  tags:
-    include:
-      - release.*
+    tags:
+        include:
+            - release.*
 
 variables:
-  - name: dockerRegistryServiceConnection
-    value: "gitlab-registry"
-  - group: scanupload-qrcodegenerator-react-variables
-  - group: scanupload-qrcodegenerator-demo-env
+    - name: dockerRegistryServiceConnection
+      value: 'gitlab-registry'
+    - group: scanupload-qrcodegenerator-react-variables
+    - group: scanupload-qrcodegenerator-demo-env
 
 # ────────────────────────────────────────────────────────────────────
 # Stage 1 — Build (Microsoft-hosted ubuntu-latest agent)
 # ────────────────────────────────────────────────────────────────────
 stages:
-  - stage: Build
-    displayName: "Build packages and Docker images"
-    pool:
-      vmImage: "ubuntu-latest"
-    jobs:
-      - job: BuildJob
-        displayName: "Build, publish, and push images"
-        steps:
-          - checkout: self
-            fetchDepth: 0
+    - stage: Build
+      displayName: 'Build packages and Docker images'
+      pool:
+          vmImage: 'ubuntu-latest'
+      jobs:
+          - job: BuildJob
+            displayName: 'Build, publish, and push images'
+            steps:
+                - checkout: self
+                  fetchDepth: 0
 
-          - script: |
-              git config --global user.email "azdo_ci@scanupload.net"
-              git config --global user.name "Azure DevOps CI"
-              git config --global http.postBuffer 524288000
+                - script: |
+                      git config --global user.email "azdo_ci@scanupload.net"
+                      git config --global user.name "Azure DevOps CI"
+                      git config --global http.postBuffer 524288000
 
-              git remote add github https://$(GITHUB_PAT)@github.com/donaldasante/scanupload.qrcodegenerator.react || true
+                      git remote add github https://$(GITHUB_PAT)@github.com/donaldasante/scanupload.qrcodegenerator.react || true
 
-              git push github HEAD:refs/heads/main --force
-              git push github --tags --force
-            displayName: Mirror repo to GitHub
+                      git push github HEAD:refs/heads/main --force
+                      git push github --tags --force
+                  displayName: Mirror repo to GitHub
 
-          - task: NodeTool@0
-            inputs:
-              versionSpec: "20.x"
-            displayName: "Install Node.js"
+                - task: NodeTool@0
+                  inputs:
+                      versionSpec: '20.x'
+                  displayName: 'Install Node.js'
 
-          - script: npm ci
-            displayName: "Install workspace dependencies"
+                - script: npm ci
+                  displayName: 'Install workspace dependencies'
 
-          - script: npm run build
-            displayName:
-              "Build all packages (core → react → vanilla → vue → angular →
-              svelte)"
+                - script: npm run build
+                  displayName: 'Build all packages (core → react → vanilla → vue → angular →
+                      svelte)'
 
-          - script: |
-              echo "//registry.npmjs.org/:_authToken=$(NPM_TOKEN)" > .npmrc
-            displayName: "Configure npm auth"
+                - script: |
+                      echo "//registry.npmjs.org/:_authToken=$(NPM_TOKEN)" > .npmrc
+                  displayName: 'Configure npm auth'
 
-          - script: |
-              cd packages/core
-              VERSION=$(node -p "require('./package.json').version")
-              if npm view @scanupload/qr-code-generator-core@$VERSION version > /dev/null 2>&1; then
-                echo "@scanupload/qr-code-generator-core@$VERSION already published — skipping"
-              else
-                echo "Publishing @scanupload/qr-code-generator-core@$VERSION"
-                npm publish --access public
-              fi
-            displayName: "Publish core package"       
+                - script: |
+                      cd packages/core
+                      VERSION=$(node -p "require('./package.json').version")
+                      if npm view @scanupload/qr-code-generator-core@$VERSION version > /dev/null 2>&1; then
+                        echo "@scanupload/qr-code-generator-core@$VERSION already published — skipping"
+                      else
+                        echo "Publishing @scanupload/qr-code-generator-core@$VERSION"
+                        npm publish --access public
+                      fi
+                  displayName: 'Publish core package'
 
-          - script: |
-              cd packages/react
-              VERSION=$(node -p "require('./package.json').version")
-              if npm view @scanupload/qr-code-generator-react@$VERSION version > /dev/null 2>&1; then
-                echo "@scanupload/qr-code-generator-react@$VERSION already published — skipping"
-              else
-                echo "Publishing @scanupload/qr-code-generator-react@$VERSION"
-                npm publish --access public
-              fi
-            displayName: "Publish react package"
+                - script: |
+                      cd packages/react
+                      VERSION=$(node -p "require('./package.json').version")
+                      if npm view @scanupload/qr-code-generator-react@$VERSION version > /dev/null 2>&1; then
+                        echo "@scanupload/qr-code-generator-react@$VERSION already published — skipping"
+                      else
+                        echo "Publishing @scanupload/qr-code-generator-react@$VERSION"
+                        npm publish --access public
+                      fi
+                  displayName: 'Publish react package'
 
-          - script: |
-              cd packages/vanilla
-              VERSION=$(node -p "require('./package.json').version")
-              if npm view @scanupload/qr-code-generator-vanilla@$VERSION version > /dev/null 2>&1; then
-                echo "@scanupload/qr-code-generator-vanilla@$VERSION already published — skipping"
-              else
-                echo "Publishing @scanupload/qr-code-generator-vanilla@$VERSION"
-                npm publish --access public
-              fi
-            displayName: "Publish vanilla JS package"
+                - script: |
+                      cd packages/vanilla
+                      VERSION=$(node -p "require('./package.json').version")
+                      if npm view @scanupload/qr-code-generator-vanilla@$VERSION version > /dev/null 2>&1; then
+                        echo "@scanupload/qr-code-generator-vanilla@$VERSION already published — skipping"
+                      else
+                        echo "Publishing @scanupload/qr-code-generator-vanilla@$VERSION"
+                        npm publish --access public
+                      fi
+                  displayName: 'Publish vanilla JS package'
 
-          - script: |
-              cd packages/vue
-              VERSION=$(node -p "require('./package.json').version")
-              if npm view @scanupload/qr-code-generator-vue@$VERSION version > /dev/null 2>&1; then
-                echo "@scanupload/qr-code-generator-vue@$VERSION already published — skipping"
-              else
-                echo "Publishing @scanupload/qr-code-generator-vue@$VERSION"
-                npm publish --access public
-              fi
-            displayName: "Publish vue package"
+                - script: |
+                      cd packages/vue
+                      VERSION=$(node -p "require('./package.json').version")
+                      if npm view @scanupload/qr-code-generator-vue@$VERSION version > /dev/null 2>&1; then
+                        echo "@scanupload/qr-code-generator-vue@$VERSION already published — skipping"
+                      else
+                        echo "Publishing @scanupload/qr-code-generator-vue@$VERSION"
+                        npm publish --access public
+                      fi
+                  displayName: 'Publish vue package'
 
-          - script: |
-              cd packages/angular
-              VERSION=$(node -p "require('./package.json').version")
-              if npm view @scanupload/qr-code-generator-angular@$VERSION version > /dev/null 2>&1; then
-                echo "@scanupload/qr-code-generator-angular@$VERSION already published — skipping"
-              else
-                echo "Publishing @scanupload/qr-code-generator-angular@$VERSION"
-                npm publish --access public
-              fi
-            displayName: "Publish angular package"
+                - script: |
+                      cd packages/angular
+                      VERSION=$(node -p "require('./package.json').version")
+                      if npm view @scanupload/qr-code-generator-angular@$VERSION version > /dev/null 2>&1; then
+                        echo "@scanupload/qr-code-generator-angular@$VERSION already published — skipping"
+                      else
+                        echo "Publishing @scanupload/qr-code-generator-angular@$VERSION"
+                        npm publish --access public
+                      fi
+                  displayName: 'Publish angular package'
 
-          - script: |
-              cd packages/svelte
-              VERSION=$(node -p "require('./package.json').version")
-              if npm view @scanupload/qr-code-generator-svelte@$VERSION version > /dev/null 2>&1; then
-                echo "@scanupload/qr-code-generator-svelte@$VERSION already published — skipping"
-              else
-                echo "Publishing @scanupload/qr-code-generator-svelte@$VERSION"
-                npm publish --access public
-              fi
-            displayName: "Publish svelte package"
+                - script: |
+                      cd packages/svelte
+                      VERSION=$(node -p "require('./package.json').version")
+                      if npm view @scanupload/qr-code-generator-svelte@$VERSION version > /dev/null 2>&1; then
+                        echo "@scanupload/qr-code-generator-svelte@$VERSION already published — skipping"
+                      else
+                        echo "Publishing @scanupload/qr-code-generator-svelte@$VERSION"
+                        npm publish --access public
+                      fi
+                  displayName: 'Publish svelte package'
 
-          - task: Bash@3
-            displayName: "Set Docker Tag Variable"
-            inputs:
-              targetType: "inline"
-              script: |
-                # Example using Git tag name directly
-                echo "##vso[task.setvariable variable=dockerImageTag]$(Build.SourceBranchName).$(Build.BuildId)"
-                echo "##vso[task.setvariable variable=qaTag]qa"
-                # Example using short commit hash
-                # echo "##vso[task.setvariable variable=dockerImageTag]$(git rev-parse --short HEAD)"
+                - task: Bash@3
+                  displayName: 'Set Docker Tag Variable'
+                  inputs:
+                      targetType: 'inline'
+                      script: |
+                          # Example using Git tag name directly
+                          echo "##vso[task.setvariable variable=dockerImageTag]$(Build.SourceBranchName).$(Build.BuildId)"
+                          echo "##vso[task.setvariable variable=qaTag]qa"
+                          # Example using short commit hash
+                          # echo "##vso[task.setvariable variable=dockerImageTag]$(git rev-parse --short HEAD)"
 
-          - script: |
-              echo "VITE_CLIENT_ID  length = ${#VITE_CLIENT_ID}"
-              echo "VITE_SESSION_URL length = ${#VITE_SESSION_URL}"
-            displayName: "Debug: verify Variable Group values"
+                - script: |
+                      echo "VITE_CLIENT_ID  length = ${#VITE_CLIENT_ID}"
+                      echo "VITE_SESSION_URL length = ${#VITE_SESSION_URL}"
+                  displayName: 'Debug: verify Variable Group values'
 
-          - task: Docker@2
-            displayName: Build Angular demo example image
-            inputs:
-              command: buildAndPush
-              containerRegistry: $(dockerRegistryServiceConnection)
-              repository: "asanteit/scanupload/scanupload-angular-client-example"
-              dockerfile: "$(Build.SourcesDirectory)/examples/angular-demo/Dockerfile_Prod"
-              buildContext: "$(Build.SourcesDirectory)/examples/angular-demo"
-              tags: |
-                $(dockerImageTag)
-                $(qaTag)
-              arguments: --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID) --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
-            env:
-              VITE_CLIENT_ID: $(VITE_CLIENT_ID)
-              VITE_SESSION_URL: $(VITE_SESSION_URL)
+                - task: Docker@2
+                  displayName: Build Angular demo example image
+                  inputs:
+                      command: build
+                      containerRegistry: $(dockerRegistryServiceConnection)
+                      repository: 'asanteit/scanupload/scanupload-angular-client-example'
+                      dockerfile: '$(Build.SourcesDirectory)/examples/angular-demo/Dockerfile_Prod'
+                      buildContext: '$(Build.SourcesDirectory)/examples/angular-demo'
+                      tags: |
+                          $(dockerImageTag)
+                          $(qaTag)
+                      arguments: --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID) --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
+                  env:
+                      VITE_CLIENT_ID: $(VITE_CLIENT_ID)
+                      VITE_SESSION_URL: $(VITE_SESSION_URL)
 
-          - task: Docker@2
-            displayName: Build Svelte demo example image
-            inputs:
-              command: buildAndPush
-              containerRegistry: $(dockerRegistryServiceConnection)
-              repository: "asanteit/scanupload/scanupload-svelte-client-example"
-              dockerfile: "$(Build.SourcesDirectory)/examples/svelte-demo/Dockerfile_Prod"
-              buildContext: "$(Build.SourcesDirectory)/examples/svelte-demo"
-              tags: |
-                $(dockerImageTag)
-                $(qaTag)
-              arguments: --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID) --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
-            env:
-              VITE_CLIENT_ID: $(VITE_CLIENT_ID)
-              VITE_SESSION_URL: $(VITE_SESSION_URL)
-          - task: Docker@2
-            displayName: Build Vue demo example image
-            inputs:
-              command: buildAndPush
-              containerRegistry: $(dockerRegistryServiceConnection)
-              repository: "asanteit/scanupload/scanupload-vue-client-example"
-              dockerfile: "$(Build.SourcesDirectory)/examples/vue-demo/Dockerfile_Prod"
-              buildContext: "$(Build.SourcesDirectory)/examples/vue-demo"
-              tags: |
-                $(dockerImageTag)
-                $(qaTag)
-              arguments: --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID) --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
-            env:
-              VITE_CLIENT_ID: $(VITE_CLIENT_ID)
-              VITE_SESSION_URL: $(VITE_SESSION_URL)
+                - task: Docker@2
+                  displayName: Build Svelte demo example image
+                  inputs:
+                      command: build
+                      containerRegistry: $(dockerRegistryServiceConnection)
+                      repository: 'asanteit/scanupload/scanupload-svelte-client-example'
+                      dockerfile: '$(Build.SourcesDirectory)/examples/svelte-demo/Dockerfile_Prod'
+                      buildContext: '$(Build.SourcesDirectory)/examples/svelte-demo'
+                      tags: |
+                          $(dockerImageTag)
+                          $(qaTag)
+                      arguments: --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID) --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
+                  env:
+                      VITE_CLIENT_ID: $(VITE_CLIENT_ID)
+                      VITE_SESSION_URL: $(VITE_SESSION_URL)
+                - task: Docker@2
+                  displayName: Build Vue demo example image
+                  inputs:
+                      command: build
+                      containerRegistry: $(dockerRegistryServiceConnection)
+                      repository: 'asanteit/scanupload/scanupload-vue-client-example'
+                      dockerfile: '$(Build.SourcesDirectory)/examples/vue-demo/Dockerfile_Prod'
+                      buildContext: '$(Build.SourcesDirectory)/examples/vue-demo'
+                      tags: |
+                          $(dockerImageTag)
+                          $(qaTag)
+                      arguments: --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID) --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
+                  env:
+                      VITE_CLIENT_ID: $(VITE_CLIENT_ID)
+                      VITE_SESSION_URL: $(VITE_SESSION_URL)
 
-          - task: Docker@2
-            displayName: Build React demo example image
-            inputs:
-              command: buildAndPush
-              containerRegistry: $(dockerRegistryServiceConnection)
-              repository: "asanteit/scanupload/scanupload-react-client-example"
-              dockerfile: "$(Build.SourcesDirectory)/examples/react-demo/Dockerfile_Prod"
-              buildContext: "$(Build.SourcesDirectory)/examples/react-demo"
-              tags: |
-                $(dockerImageTag)
-                $(qaTag)
-              arguments: --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID) --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
-            env:
-              VITE_CLIENT_ID: $(VITE_CLIENT_ID)
-              VITE_SESSION_URL: $(VITE_SESSION_URL)
+                - task: Docker@2
+                  displayName: Build React demo example image
+                  inputs:
+                      command: build
+                      containerRegistry: $(dockerRegistryServiceConnection)
+                      repository: 'asanteit/scanupload/scanupload-react-client-example'
+                      dockerfile: '$(Build.SourcesDirectory)/examples/react-demo/Dockerfile_Prod'
+                      buildContext: '$(Build.SourcesDirectory)/examples/react-demo'
+                      tags: |
+                          $(dockerImageTag)
+                          $(qaTag)
+                      arguments: --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID) --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
+                  env:
+                      VITE_CLIENT_ID: $(VITE_CLIENT_ID)
+                      VITE_SESSION_URL: $(VITE_SESSION_URL)
 
-          - task: Docker@2
-            displayName: Build Vanilla JS demo example image
-            inputs:
-              command: buildAndPush
-              containerRegistry: $(dockerRegistryServiceConnection)
-              repository: "asanteit/scanupload/scanupload-vanilla-client-example"
-              dockerfile: "$(Build.SourcesDirectory)/examples/vanilla-js/Dockerfile_Prod"
-              buildContext: "$(Build.SourcesDirectory)/examples/vanilla-js"
-              tags: |
-                $(dockerImageTag)
-                $(qaTag)
-              arguments: --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID) --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
-            env:
-              VITE_CLIENT_ID: $(VITE_CLIENT_ID)
-              VITE_SESSION_URL: $(VITE_SESSION_URL)
+                - task: Docker@2
+                  displayName: Build Vanilla JS demo example image
+                  inputs:
+                      command: build
+                      containerRegistry: $(dockerRegistryServiceConnection)
+                      repository: 'asanteit/scanupload/scanupload-vanilla-client-example'
+                      dockerfile: '$(Build.SourcesDirectory)/examples/vanilla-js/Dockerfile_Prod'
+                      buildContext: '$(Build.SourcesDirectory)/examples/vanilla-js'
+                      tags: |
+                          $(dockerImageTag)
+                          $(qaTag)
+                      arguments: --build-arg VITE_CLIENT_ID=$(VITE_CLIENT_ID) --build-arg VITE_SESSION_URL=$(VITE_SESSION_URL)
+                  env:
+                      VITE_CLIENT_ID: $(VITE_CLIENT_ID)
+                      VITE_SESSION_URL: $(VITE_SESSION_URL)
 
-  # ────────────────────────────────────────────────────────────────────
-  # Stage 2 — Deploy (self-hosted "ScanUpload QA New" agent pool)
-  # ────────────────────────────────────────────────────────────────────
-  - stage: Deploy
-    displayName: "Deploy demo images to QA"
-    dependsOn: Build
-    pool:
-      name: "ScanUpload QA New"
-    jobs:
-      - job: DeployExamples
-        displayName: "Deploy React, Vanilla JS, Angular, Vue, and Svelte demos"
-        steps:
-          - task: Docker@2
-            displayName: Login to private registry
-            inputs:
-              command: login
-              containerRegistry: $(dockerRegistryServiceConnection)
+                - task: Docker@2
+                  displayName: Push Angular demo example image
+                  inputs:
+                      command: push
+                      containerRegistry: $(dockerRegistryServiceConnection)
+                      repository: 'asanteit/scanupload/scanupload-angular-client-example'
+                      tags: |
+                          $(dockerImageTag)
+                          $(qaTag)
 
-          - script: |
-              outdir=/home/donald/apps/scanupload/scanupload.angular.client.example
-              mkdir -p "$outdir"
-              {
-                  echo "dockerImageTag=qa"
-                  echo "containerName=angular-example.scanupload"
-                  echo "subDomain=angular-example.scanupload.net"
-                  echo "FRAME_SRC=${FRAME_SRC:-https://app.scanupload.net https://hub.scanupload.net}"
-                  # wss:// is required alongside https:// because CSP treats
-                  # them as separate schemes. The browser opens a WebSocket
-                  # to wss://hub.scanupload.net for SignalR.
-                  echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://static.cloudflareinsights.com wss://hub.scanupload.net}"
-                  echo "VITE_CLIENT_ID=$(VITE_CLIENT_ID)"
-                  echo "VITE_SESSION_URL=$(VITE_SESSION_URL)"
-              } > "$outdir/.env"
-            displayName: "Generate .env file scanupload.angular.client.example"
+                - task: Docker@2
+                  displayName: Push Svelte demo example image
+                  inputs:
+                      command: push
+                      containerRegistry: $(dockerRegistryServiceConnection)
+                      repository: 'asanteit/scanupload/scanupload-svelte-client-example'
+                      tags: |
+                          $(dockerImageTag)
+                          $(qaTag)
 
-          - script: |
-              cd /home/donald/apps/scanupload/scanupload.angular.client.example
-              docker compose down || true   # don't fail if nothing is running
-              docker compose pull           # ensure latest image
-              docker compose up -d --remove-orphans
-            displayName: Pull and run scanupload.angular.client.example
+                - task: Docker@2
+                  displayName: Push Vue demo example image
+                  inputs:
+                      command: push
+                      containerRegistry: $(dockerRegistryServiceConnection)
+                      repository: 'asanteit/scanupload/scanupload-vue-client-example'
+                      tags: |
+                          $(dockerImageTag)
+                          $(qaTag)
 
-          - script: |
-              outdir=/home/donald/apps/scanupload/scanupload.vue.client.example
-              mkdir -p "$outdir"
-              {
-                  echo "dockerImageTag=qa"
-                  echo "containerName=vue-example.scanupload"
-                  echo "subDomain=vue-example.scanupload.net"
-                  echo "FRAME_SRC=${FRAME_SRC:-https://app.scanupload.net https://hub.scanupload.net}"
-                  # wss:// is required alongside https:// because CSP treats
-                  # them as separate schemes. The browser opens a WebSocket
-                  # to wss://hub.scanupload.net for SignalR.
-                  echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://static.cloudflareinsights.com wss://hub.scanupload.net}"
-                  echo "VITE_CLIENT_ID=$(VITE_CLIENT_ID)"
-                  echo "VITE_SESSION_URL=$(VITE_SESSION_URL)"
-              } > "$outdir/.env"
-            displayName: "Generate .env file scanupload.vue.client.example"
+                - task: Docker@2
+                  displayName: Push React demo example image
+                  inputs:
+                      command: push
+                      containerRegistry: $(dockerRegistryServiceConnection)
+                      repository: 'asanteit/scanupload/scanupload-react-client-example'
+                      tags: |
+                          $(dockerImageTag)
+                          $(qaTag)
 
-          - script: |
-              cd /home/donald/apps/scanupload/scanupload.vue.client.example
-              docker compose down || true   # don't fail if nothing is running
-              docker compose pull           # ensure latest image
-              docker compose up -d --remove-orphans
-            displayName: Pull and run scanupload.vue.client.example
+                - task: Docker@2
+                  displayName: Push Vanilla JS demo example image
+                  inputs:
+                      command: push
+                      containerRegistry: $(dockerRegistryServiceConnection)
+                      repository: 'asanteit/scanupload/scanupload-vanilla-client-example'
+                      tags: |
+                          $(dockerImageTag)
+                          $(qaTag)
 
-          - script: |
-              outdir=/home/donald/apps/scanupload/scanupload.svelte.client.example
-              mkdir -p "$outdir"
-              {
-                  echo "dockerImageTag=qa"
-                  echo "containerName=svelte-example.scanupload"
-                  echo "subDomain=svelte-example.scanupload.net"
-                  echo "FRAME_SRC=${FRAME_SRC:-https://app.scanupload.net https://hub.scanupload.net}"
-                  # wss:// is required alongside https:// because CSP treats
-                  # them as separate schemes. The browser opens a WebSocket
-                  # to wss://hub.scanupload.net for SignalR.
-                  echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://static.cloudflareinsights.com wss://hub.scanupload.net}"
-                  echo "VITE_CLIENT_ID=$(VITE_CLIENT_ID)"
-                  echo "VITE_SESSION_URL=$(VITE_SESSION_URL)"
-              } > "$outdir/.env"
-            displayName: "Generate .env file scanupload.svelte.client.example"
+    # ────────────────────────────────────────────────────────────────────
+    # Stage 2 — Deploy (self-hosted "ScanUpload QA New" agent pool)
+    # ────────────────────────────────────────────────────────────────────
+    - stage: Deploy
+      displayName: 'Deploy demo images to QA'
+      dependsOn: Build
+      pool:
+          name: 'ScanUpload QA New'
+      jobs:
+          - job: DeployExamples
+            displayName: 'Deploy React, Vanilla JS, Angular, Vue, and Svelte demos'
+            steps:
+                - task: Docker@2
+                  displayName: Login to private registry
+                  inputs:
+                      command: login
+                      containerRegistry: $(dockerRegistryServiceConnection)
 
-          - script: |
-              cd /home/donald/apps/scanupload/scanupload.svelte.client.example
-              docker compose down || true   # don't fail if nothing is running
-              docker compose pull           # ensure latest image
-              docker compose up -d --remove-orphans
-            displayName: Pull and run scanupload.svelte.client.example
+                - script: |
+                      outdir=/home/donald/apps/scanupload/scanupload.angular.client.example
+                      mkdir -p "$outdir"
+                      {
+                          echo "dockerImageTag=qa"
+                          echo "containerName=angular-example.scanupload"
+                          echo "subDomain=angular-example.scanupload.net"
+                          echo "FRAME_SRC=${FRAME_SRC:-https://app.scanupload.net https://hub.scanupload.net}"
+                          # wss:// is required alongside https:// because CSP treats
+                          # them as separate schemes. The browser opens a WebSocket
+                          # to wss://hub.scanupload.net for SignalR.
+                          echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://static.cloudflareinsights.com wss://hub.scanupload.net}"
+                          echo "VITE_CLIENT_ID=$(VITE_CLIENT_ID)"
+                          echo "VITE_SESSION_URL=$(VITE_SESSION_URL)"
+                      } > "$outdir/.env"
+                  displayName: 'Generate .env file scanupload.angular.client.example'
 
-          - script: |
-              outdir=/home/donald/apps/scanupload/scanupload.react.client.example
-              mkdir -p "$outdir"
-              {
-                  echo "dockerImageTag=qa"
-                  echo "containerName=react-example.scanupload"
-                  echo "subDomain=react-example.scanupload.net"
-                  echo "FRAME_SRC=${FRAME_SRC:-https://app.scanupload.net https://hub.scanupload.net}"
-                  # wss:// is required alongside https:// because CSP treats
-                  # them as separate schemes. The browser opens a WebSocket
-                  # to wss://hub.scanupload.net for SignalR.
-                  echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://static.cloudflareinsights.com wss://hub.scanupload.net}"
-                  echo "VITE_CLIENT_ID=$(VITE_CLIENT_ID)"
-                  echo "VITE_SESSION_URL=$(VITE_SESSION_URL)"
-              } > "$outdir/.env"
-            displayName: "Generate .env file scanupload.react.client.example"
+                - script: |
+                      cd /home/donald/apps/scanupload/scanupload.angular.client.example
+                      docker compose down || true   # don't fail if nothing is running
+                      docker compose pull           # ensure latest image
+                      docker compose up -d --remove-orphans
+                  displayName: Pull and run scanupload.angular.client.example
 
-          - script: |
-              cd /home/donald/apps/scanupload/scanupload.react.client.example
-              docker compose down || true   # don't fail if nothing is running
-              docker compose pull           # ensure latest image
-              docker compose up -d --remove-orphans
-            displayName: Pull and run scanupload.react.client.example
+                - script: |
+                      outdir=/home/donald/apps/scanupload/scanupload.vue.client.example
+                      mkdir -p "$outdir"
+                      {
+                          echo "dockerImageTag=qa"
+                          echo "containerName=vue-example.scanupload"
+                          echo "subDomain=vue-example.scanupload.net"
+                          echo "FRAME_SRC=${FRAME_SRC:-https://app.scanupload.net https://hub.scanupload.net}"
+                          # wss:// is required alongside https:// because CSP treats
+                          # them as separate schemes. The browser opens a WebSocket
+                          # to wss://hub.scanupload.net for SignalR.
+                          echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://static.cloudflareinsights.com wss://hub.scanupload.net}"
+                          echo "VITE_CLIENT_ID=$(VITE_CLIENT_ID)"
+                          echo "VITE_SESSION_URL=$(VITE_SESSION_URL)"
+                      } > "$outdir/.env"
+                  displayName: 'Generate .env file scanupload.vue.client.example'
 
-          - script: |
-              outdir=/home/donald/apps/scanupload/scanupload.vanilla.client.example
-              mkdir -p "$outdir"
-              {
-                  echo "dockerImageTag=qa"
-                  echo "containerName=vanilla-example.scanupload"
-                  echo "subDomain=vanilla-example.scanupload.net"
-                  echo "FRAME_SRC=${FRAME_SRC:-https://app.scanupload.net https://hub.scanupload.net}"
-                  # wss:// is required alongside https:// because CSP treats
-                  # them as separate schemes. The browser opens a WebSocket
-                  # to wss://hub.scanupload.net for SignalR.
-                  echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://static.cloudflareinsights.com wss://hub.scanupload.net}"
-                  echo "VITE_CLIENT_ID=$(VITE_CLIENT_ID)"
-                  echo "VITE_SESSION_URL=$(VITE_SESSION_URL)"
-              } > "$outdir/.env"
-            displayName: "Generate .env file scanupload.vanilla.client.example"
+                - script: |
+                      cd /home/donald/apps/scanupload/scanupload.vue.client.example
+                      docker compose down || true   # don't fail if nothing is running
+                      docker compose pull           # ensure latest image
+                      docker compose up -d --remove-orphans
+                  displayName: Pull and run scanupload.vue.client.example
 
-          - script: |
-              cd /home/donald/apps/scanupload/scanupload.vanilla.client.example
-              docker compose down || true   # don't fail if nothing is running
-              docker compose pull           # ensure latest image
-              docker compose up -d --remove-orphans
-            displayName: Pull and run scanupload.vanilla.client.example
+                - script: |
+                      outdir=/home/donald/apps/scanupload/scanupload.svelte.client.example
+                      mkdir -p "$outdir"
+                      {
+                          echo "dockerImageTag=qa"
+                          echo "containerName=svelte-example.scanupload"
+                          echo "subDomain=svelte-example.scanupload.net"
+                          echo "FRAME_SRC=${FRAME_SRC:-https://app.scanupload.net https://hub.scanupload.net}"
+                          # wss:// is required alongside https:// because CSP treats
+                          # them as separate schemes. The browser opens a WebSocket
+                          # to wss://hub.scanupload.net for SignalR.
+                          echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://static.cloudflareinsights.com wss://hub.scanupload.net}"
+                          echo "VITE_CLIENT_ID=$(VITE_CLIENT_ID)"
+                          echo "VITE_SESSION_URL=$(VITE_SESSION_URL)"
+                      } > "$outdir/.env"
+                  displayName: 'Generate .env file scanupload.svelte.client.example'
+
+                - script: |
+                      cd /home/donald/apps/scanupload/scanupload.svelte.client.example
+                      docker compose down || true   # don't fail if nothing is running
+                      docker compose pull           # ensure latest image
+                      docker compose up -d --remove-orphans
+                  displayName: Pull and run scanupload.svelte.client.example
+
+                - script: |
+                      outdir=/home/donald/apps/scanupload/scanupload.react.client.example
+                      mkdir -p "$outdir"
+                      {
+                          echo "dockerImageTag=qa"
+                          echo "containerName=react-example.scanupload"
+                          echo "subDomain=react-example.scanupload.net"
+                          echo "FRAME_SRC=${FRAME_SRC:-https://app.scanupload.net https://hub.scanupload.net}"
+                          # wss:// is required alongside https:// because CSP treats
+                          # them as separate schemes. The browser opens a WebSocket
+                          # to wss://hub.scanupload.net for SignalR.
+                          echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://static.cloudflareinsights.com wss://hub.scanupload.net}"
+                          echo "VITE_CLIENT_ID=$(VITE_CLIENT_ID)"
+                          echo "VITE_SESSION_URL=$(VITE_SESSION_URL)"
+                      } > "$outdir/.env"
+                  displayName: 'Generate .env file scanupload.react.client.example'
+
+                - script: |
+                      cd /home/donald/apps/scanupload/scanupload.react.client.example
+                      docker compose down || true   # don't fail if nothing is running
+                      docker compose pull           # ensure latest image
+                      docker compose up -d --remove-orphans
+                  displayName: Pull and run scanupload.react.client.example
+
+                - script: |
+                      outdir=/home/donald/apps/scanupload/scanupload.vanilla.client.example
+                      mkdir -p "$outdir"
+                      {
+                          echo "dockerImageTag=qa"
+                          echo "containerName=vanilla-example.scanupload"
+                          echo "subDomain=vanilla-example.scanupload.net"
+                          echo "FRAME_SRC=${FRAME_SRC:-https://app.scanupload.net https://hub.scanupload.net}"
+                          # wss:// is required alongside https:// because CSP treats
+                          # them as separate schemes. The browser opens a WebSocket
+                          # to wss://hub.scanupload.net for SignalR.
+                          echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://static.cloudflareinsights.com wss://hub.scanupload.net}"
+                          echo "VITE_CLIENT_ID=$(VITE_CLIENT_ID)"
+                          echo "VITE_SESSION_URL=$(VITE_SESSION_URL)"
+                      } > "$outdir/.env"
+                  displayName: 'Generate .env file scanupload.vanilla.client.example'
+
+                - script: |
+                      cd /home/donald/apps/scanupload/scanupload.vanilla.client.example
+                      docker compose down || true   # don't fail if nothing is running
+                      docker compose pull           # ensure latest image
+                      docker compose up -d --remove-orphans
+                  displayName: Pull and run scanupload.vanilla.client.example
