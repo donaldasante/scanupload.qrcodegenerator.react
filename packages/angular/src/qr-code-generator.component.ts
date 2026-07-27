@@ -101,6 +101,8 @@ export class QrCodeGeneratorComponent implements OnInit, OnChanges, OnDestroy {
     @Input() clickQrCodeToReload = false;
     @Input() filePreviewMode: FilePreviewMode = 'grid';
     @Input() size: QrCodeSize = 'large';
+    /** Automatically replace an expired session. Default: false. */
+    @Input() autoResession = false;
     @Input() showDownloadButton = false;
 
     protected controller?: QrCodeCoreController;
@@ -117,7 +119,8 @@ export class QrCodeGeneratorComponent implements OnInit, OnChanges, OnDestroy {
     ngOnInit(): void {
         this.controller = useQrCodeCore({
             sessionUrl: this.sessionUrl,
-            clientId: this.clientId
+            clientId: this.clientId,
+            autoResession: this.autoResession
         });
         this.controller.start();
 
@@ -134,10 +137,7 @@ export class QrCodeGeneratorComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (
-            this.controller &&
-            (changes['sessionUrl'] || changes['clientId'])
-        ) {
+        if (this.controller && (changes['sessionUrl'] || changes['clientId'])) {
             void this.controller.setOptions({
                 sessionUrl: this.sessionUrl,
                 clientId: this.clientId
@@ -155,7 +155,7 @@ export class QrCodeGeneratorComponent implements OnInit, OnChanges, OnDestroy {
 
     protected onQrClick(): void {
         if (this.clickQrCodeToReload) {
-              void this.controller?.retrySession();
+            void this.controller?.retrySession();
         }
     }
 }

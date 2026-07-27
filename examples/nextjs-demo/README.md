@@ -42,6 +42,18 @@ NEXT_PUBLIC_CLIENT_ID=your-tenant-id
 
 The client secret is only used by server-side integrations — leave it out of any client-side env file. The browser only needs the client ID.
 
+## Local development and allowed origins
+
+When testing on `localhost`, open the client configuration in the [ScanUpload Dashboard](https://app.scanupload.net/dashboard) and enable **Test Mode**. Test Mode bypasses origin validation so the local HTTPS development server can create a session.
+
+Without it, the session request can fail with an error like:
+
+```text
+The origin 'https://localhost:3000' is not in the AllowedOrigins list for tenant '...'.
+```
+
+Before deploying, disable **Test Mode** and add the exact public site origin to **Allowed Origins**, for example `https://your-site.example`. Origins are scheme, host, and port specific; add each environment separately. Do not leave Test Mode enabled in production.
+
 ## Production troubleshooting
 
 The session API request is same-origin when you use the supplied `/hub-api` rewrite, but the widget still uses SignalR and can receive an absolute hub URL. Test the API request and SignalR negotiation separately in DevTools.

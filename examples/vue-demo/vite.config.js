@@ -9,7 +9,7 @@ export default defineConfig(() => {
     return {
         plugins: [vue(), mkcert()],
         server: {
-            port: 5174,
+            port: 5173,
             open: true,
             strictPort: true,
         },

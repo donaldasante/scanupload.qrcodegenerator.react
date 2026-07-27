@@ -30,6 +30,18 @@ The browser calls `VITE_SESSION_URL` directly; no client-side proxy is involved.
 
 The client secret is only used by server-side integrations — leave it out of any client-side env file. The browser only needs the client ID.
 
+## Local development and allowed origins
+
+When testing on `localhost`, open the client configuration in the [ScanUpload Dashboard](https://app.scanupload.net/dashboard) and enable **Test Mode**. Test Mode bypasses origin validation so the local HTTPS development server can create a session.
+
+Without it, the session request can fail with an error like:
+
+```text
+The origin 'https://localhost:5175' is not in the AllowedOrigins list for tenant '...'.
+```
+
+Before deploying, disable **Test Mode** and add the exact public site origin to **Allowed Origins**, for example `https://your-site.example`. Origins are scheme, host, and port specific; add each environment separately. Do not leave Test Mode enabled in production.
+
 ## Production troubleshooting
 
 The browser creates the ScanUpload session with an HTTPS request, then uses SignalR over a secure WebSocket. Most production connection failures are caused by browser security policy or an origin mismatch rather than the Angular integration.

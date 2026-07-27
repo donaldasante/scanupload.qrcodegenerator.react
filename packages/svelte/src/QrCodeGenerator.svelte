@@ -13,6 +13,8 @@
         clickQrCodeToReload?: boolean;
         filePreviewMode?: 'list' | 'grid';
         size?: 'small' | 'medium' | 'large' | 'xlarge';
+        /** Automatically replace an expired session. Default: false. */
+        autoResession?: boolean;
         /**
          * Show a "Download all files" button beneath the file previews. When
          * clicked, it fetches every `UploadedFile.url` the SignalR hub has
@@ -40,6 +42,7 @@
         clickQrCodeToReload = false,
         filePreviewMode = 'grid',
         size = 'large',
+        autoResession = false,
         showDownloadButton = false
     }: QrCodeGeneratorProps = $props();
 
@@ -48,7 +51,7 @@
     // changes into the controller via `setOptions`, so subsequent changes
     // to these props take effect — see `QrCodeCoreController.setOptions`.
     // svelte-ignore state_referenced_locally
-    const controller = createQrCodeController({ sessionUrl, clientId });
+    const controller = createQrCodeController({ sessionUrl, clientId, autoResession });
     const coreState = controller.state;
 
     // Push runtime endpoint changes into the core, mirroring the React/Vue adapters.

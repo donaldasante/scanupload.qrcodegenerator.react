@@ -514,3 +514,9 @@
     box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
     transition: width 0.3s ease-out;
 }
+
+/* File previews must not depend on the host providing a fixed height. */
+.sqg-root { max-height: none; overflow: visible; }
+.sqg-root:has(.sqg-file-container:not(:empty)) .sqg-content { flex: 0 0 auto; overflow: visible; }
+.sqg-file-container { flex: 0 0 auto; max-height: min(22rem, 45vh); min-height: 6rem; align-content: flex-start; overflow-y: auto; }
+.sqg-file-list { flex: 0 0 auto; max-height: min(22rem, 45vh); overflow-y: auto; }

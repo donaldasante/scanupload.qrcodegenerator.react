@@ -22,6 +22,11 @@ export interface QrCodeGeneratorProps {
   filePreviewMode: "list" | "grid";
   size: "small" | "medium" | "large" | "xlarge";
   /**
+   * Create a fresh session automatically when the current one expires.
+   * Default: false, so the disconnected logo and Reload action remain visible.
+   */
+  autoResession?: boolean;
+  /**
    * Show a "Download all files" button beneath the file previews. When
    * clicked, it fetches every `UploadedFile.url` the SignalR hub has
    * surfaced and triggers a browser save for each. Default: false.
@@ -38,11 +43,13 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
   clickQrCodeToReload = false,
   size = "large",
   filePreviewMode = "grid",
+  autoResession = false,
   showDownloadButton = false,
 }) => {
   const { state, retrySession, core } = useQrCodeCore({
     sessionUrl,
     clientId,
+    autoResession,
   });
 
   return (

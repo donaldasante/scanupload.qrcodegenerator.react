@@ -5,6 +5,7 @@ import type { QrCodeGeneratorState, StorageAdapter } from '@scanupload/qr-code-g
 export interface UseQrCodeCoreOptions {
     sessionUrl: string;
     clientId?: string;
+    autoResession?: boolean;
     storage?: StorageAdapter;
 }
 
@@ -18,10 +19,7 @@ export interface QrCodeCoreController {
     /** Tear down the current session and create a new one. */
     retrySession(): Promise<void>;
     /** Update the API endpoint at runtime (mirrors the core `setOptions`). */
-    setOptions(opts: {
-        sessionUrl?: string;
-        clientId?: string;
-    }): Promise<void>;
+    setOptions(opts: { sessionUrl?: string; clientId?: string }): Promise<void>;
     /** Unsubscribe and dispose the underlying core. */
     dispose(): void;
 }
@@ -37,6 +35,7 @@ export function useQrCodeCore(options: UseQrCodeCoreOptions): QrCodeCoreControll
     const core = new QrCodeGeneratorCore({
         sessionUrl: options.sessionUrl,
         clientId: options.clientId,
+        autoResession: options.autoResession,
         storage: options.storage
     });
 

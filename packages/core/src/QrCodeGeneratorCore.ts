@@ -1,9 +1,4 @@
-import {
-    HubConnection,
-    HubConnectionBuilder,
-    HttpTransportType,
-    LogLevel
-} from '@microsoft/signalr';
+import { HubConnection, HubConnectionBuilder, HttpTransportType, LogLevel } from '@microsoft/signalr';
 import { ApiError, postData } from './apiClient';
 import { isNullOrEmpty } from './utilities';
 import { StorageAdapter, browserStorageAdapter } from './storage';
@@ -54,9 +49,7 @@ export interface QrCodeGeneratorCoreOptions {
     autoResession?: boolean;
 }
 
-export type QrCodeGeneratorCoreSetOptions = Partial<
-    Pick<QrCodeGeneratorCoreOptions, 'sessionUrl' | 'clientId'>
->;
+export type QrCodeGeneratorCoreSetOptions = Partial<Pick<QrCodeGeneratorCoreOptions, 'sessionUrl' | 'clientId'>>;
 
 export class QrCodeGeneratorCore {
     private _state: QrCodeGeneratorState = { ...INITIAL_STATE };
@@ -104,6 +97,9 @@ export class QrCodeGeneratorCore {
     }
 
     async start(): Promise<void> {
+        // Framework development modes can dispose and immediately remount the
+        // same core instance. Clear the latch so its countdown is active again.
+        this._disposed = false;
         this._hasStarted = true;
         if (isNullOrEmpty(this.sessionUrl)) return;
 
@@ -112,6 +108,13 @@ export class QrCodeGeneratorCore {
 
         const hubUrl = await this._getHubUrlAsync();
         if (signal.aborted) return;
+
+        // `dispose()` stops the timer to avoid retaining an unmounted widget.
+        // Resume it from the absolute expiry when the cached session is reused
+        // during a remount instead of fetching a new one.
+        if (this._session && this._state.expiresAt && !this._countdownTimer) {
+            this._startCountdown((this._state.expiresAt - Date.now()) / 1000);
+        }
 
         const connection = await this._createHubConnectionAsync(hubUrl);
         if (!connection) return;
@@ -137,6 +140,7 @@ export class QrCodeGeneratorCore {
 
     dispose(): void {
         this._disposed = true;
+        this._stopCountdown();
         this._abortController?.abort();
         this._abortController = null;
 
@@ -176,9 +180,7 @@ export class QrCodeGeneratorCore {
         const sessionUrl = options.sessionUrl ?? this.sessionUrl;
         const clientId = options.clientId ?? this.clientId;
 
-        const didChange =
-            sessionUrl !== this.sessionUrl ||
-            clientId !== this.clientId;
+        const didChange = sessionUrl !== this.sessionUrl || clientId !== this.clientId;
         if (!didChange) return;
 
         this.sessionUrl = sessionUrl;
@@ -301,8 +303,8 @@ export class QrCodeGeneratorCore {
                     this._hasWarnedHttpsUpgrade = true;
                     console.warn(
                         '[QrCodeGeneratorCore] Hub URL was returned as http:// but the page is https://. ' +
-                        'Auto-upgrading to https:// to avoid a mixed-content block. ' +
-                        'For a permanent fix, set the hub\'s PublicBaseUrl (or ScanUploadAppSettings.PublicBaseUrl) to https://...'
+                            'Auto-upgrading to https:// to avoid a mixed-content block. ' +
+                            "For a permanent fix, set the hub's PublicBaseUrl (or ScanUploadAppSettings.PublicBaseUrl) to https://..."
                     );
                 }
                 return parsed.toString();
@@ -313,7 +315,7 @@ export class QrCodeGeneratorCore {
                     this._hasWarnedHttpsUpgrade = true;
                     console.warn(
                         '[QrCodeGeneratorCore] Hub URL was returned as ws:// but the page is https://. ' +
-                        'Auto-upgrading to wss:// to avoid a mixed-content block.'
+                            'Auto-upgrading to wss:// to avoid a mixed-content block.'
                     );
                 }
                 return parsed.toString();
@@ -520,15 +522,13 @@ export class QrCodeGeneratorCore {
                     // exposes both transports; allowing the fallback keeps
                     // the connection alive when the WS upgrade is blocked
                     // by a proxy.
-                    transport:
-                        HttpTransportType.WebSockets |
-                        HttpTransportType.LongPolling,
+                    transport: HttpTransportType.WebSockets | HttpTransportType.LongPolling,
                     // Negotiation must run so the hub can validate the
                     // `Origin` header against `session.Dns` in
                     // `FrontEndSessionAuthorizationHandler`. The browser
                     // automatically sets `Origin` on cross-origin requests,
                     // which is what the hub relies on for auth.
-                    skipNegotiation: false,
+                    skipNegotiation: false
                 })
                 .configureLogging(LogLevel.Information)
                 .withAutomaticReconnect({

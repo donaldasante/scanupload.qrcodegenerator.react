@@ -21,6 +21,8 @@ export interface QrCodeGeneratorProps {
     clickQrCodeToReload?: boolean;
     filePreviewMode?: 'list' | 'grid';
     size?: 'small' | 'medium' | 'large' | 'xlarge';
+    /** Automatically replace an expired session. Default: false. */
+    autoResession?: boolean;
     /**
      * Show a "Download all files" button beneath the file previews. When
      * clicked, it fetches every `UploadedFile.url` the SignalR hub has
@@ -36,12 +38,14 @@ const props = withDefaults(defineProps<QrCodeGeneratorProps>(), {
     clickQrCodeToReload: false,
     filePreviewMode: 'grid',
     size: 'large',
+    autoResession: false,
     showDownloadButton: false
 });
 
 const { state, retrySession, core } = useQrCodeCore({
     sessionUrl: () => props.sessionUrl,
-    clientId: () => props.clientId
+    clientId: () => props.clientId,
+    autoResession: () => props.autoResession
 });
 
 const onQrClick = () => {

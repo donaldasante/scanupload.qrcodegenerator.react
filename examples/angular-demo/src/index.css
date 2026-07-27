@@ -230,3 +230,12 @@ input[type="radio"] {
 }
 
 .underline { text-decoration: underline; }
+
+/* Uploaded files use the widget's bounded preview region; never clip it at
+    the demo card or viewport level. */
+body { height: auto; min-height: 100vh; overflow-y: auto; }
+app-root { flex: 0 0 auto; min-height: 100vh; }
+.demo-card,
+.demo-card:has(.sqg-file-card, .sqg-file-row) { flex: 0 0 auto; overflow: visible; }
+.demo-card > .mb-6:last-of-type,
+.demo-card > .mb-6:last-of-type .sqg-root { flex: 0 0 auto; }
