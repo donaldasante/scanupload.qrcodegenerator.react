@@ -19,3 +19,4 @@ dist-ssr
 # per-developer overrides stay out of git.
 .env
 .env.*.local
+.env.qa
