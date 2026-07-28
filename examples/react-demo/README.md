@@ -4,10 +4,16 @@ A minimal Vite + React app that integrates [`@scanupload/qr-code-generator-react
 
 ## Run
 
+From the monorepo root:
+
 ```bash
 npm install
-npm run dev
+npm run build:react
+npm run dev:react
 ```
+
+`build:react` builds the core dependency and the React package before starting
+this linked-workspace demo.
 
 The app starts on https://localhost:5173 (HTTPS is required for the hub's `Origin` checks).
 

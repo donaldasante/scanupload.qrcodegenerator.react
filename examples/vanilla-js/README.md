@@ -4,10 +4,16 @@ A minimal Vite + Vanilla TS app that integrates [`@scanupload/qr-code-generator-
 
 ## Run
 
+From the monorepo root:
+
 ```bash
 npm install
-npm run dev
+npm run build:vanilla
+npm run dev:vanilla
 ```
+
+`build:vanilla` builds the core dependency and the Vanilla package before
+starting this linked-workspace demo.
 
 The app starts on https://localhost:5177 (HTTPS is required for the hub's `Origin` checks).
 

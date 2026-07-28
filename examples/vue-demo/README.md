@@ -4,10 +4,16 @@ A minimal Vite + Vue 3 app that integrates [`@scanupload/qr-code-generator-vue`]
 
 ## Run
 
+From the monorepo root:
+
 ```bash
 npm install
-npm run dev
+npm run build:vue
+npm run dev:vue
 ```
+
+`build:vue` builds the core dependency and the Vue package, including the
+stylesheet imported by this demo. Re-run it after changing either package.
 
 The app starts on https://localhost:5174 (HTTPS is required for the hub's `Origin` checks).
 

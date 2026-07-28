@@ -4,10 +4,16 @@ A minimal Vite + Angular app that integrates [`@scanupload/qr-code-generator-ang
 
 ## Run
 
+From the monorepo root:
+
 ```bash
 npm install
-npm run dev
+npm run build:angular
+npm run dev:angular
 ```
+
+`build:angular` builds the core dependency and the Angular package before
+starting this linked-workspace demo.
 
 The app starts on https://localhost:5175 (HTTPS is required for the hub's `Origin` checks).
 

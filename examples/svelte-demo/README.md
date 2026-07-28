@@ -4,10 +4,16 @@ A minimal Vite + Svelte 5 app that integrates [`@scanupload/qr-code-generator-sv
 
 ## Run
 
+From the monorepo root:
+
 ```bash
 npm install
-npm run dev
+npm run build:svelte
+npm run dev:svelte
 ```
+
+`build:svelte` builds the core dependency and the Svelte package before
+starting this linked-workspace demo.
 
 The app starts on https://localhost:5176 (HTTPS is required for the hub's `Origin` checks).
 

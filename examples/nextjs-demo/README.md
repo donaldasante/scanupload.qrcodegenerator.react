@@ -4,10 +4,16 @@ A minimal Next.js (App Router) app that integrates [`@scanupload/qr-code-generat
 
 ## Run
 
+From the monorepo root:
+
 ```bash
 npm install
-npm run dev
+npm run build:react
+npm run dev:nextjs
 ```
+
+`build:react` builds the core dependency and the React package consumed by this
+linked-workspace demo.
 
 The app starts on **https**://localhost:3000 (HTTPS is required — see below).
 
