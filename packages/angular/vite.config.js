@@ -1,9 +1,21 @@
-import { defineConfig } from "vite";
+import { createLogger, defineConfig } from "vite";
 import angular from "@analogjs/vite-plugin-angular";
 import dts from "vite-plugin-dts";
 import { resolve } from "path";
 
+const logger = createLogger();
+const angularUnusedImportWarning =
+  /(?:is|are) imported from external module "@angular\/(core|platform-browser)" but never used/;
+
 export default defineConfig({
+  customLogger: {
+    ...logger,
+    warn(message, options) {
+      if (!angularUnusedImportWarning.test(message)) {
+        logger.warn(message, options);
+      }
+    },
+  },
   plugins: [
     angular({
       tsconfig: resolve(__dirname, "tsconfig.json"),
