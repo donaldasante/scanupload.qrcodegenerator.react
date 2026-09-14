@@ -59,6 +59,15 @@ export type ScanUploadMetaBuilder<M extends Meta> = (file: UploadedFile, state: 
  */
 export type ScanUploadFileBuilder = (blob: Blob, file: UploadedFile, state: QrCodeGeneratorState) => Blob | File;
 
+export interface ScanUploadRetryInfo {
+    /** The attempt that just failed (1-based). */
+    attempt: number;
+    /** Total attempts allowed for this file. */
+    maxAttempts: number;
+    /** The error that attempt failed with. */
+    error: Error;
+}
+
 export interface ScanUploadPluginOpts<M extends Meta = Meta> extends PluginOpts {
     /**
      * Endpoint that creates a ScanUpload session. The browser `POST`s here and
@@ -114,6 +123,36 @@ export interface ScanUploadPluginOpts<M extends Meta = Meta> extends PluginOpts 
     mirrorRemovals?: boolean;
     /** Maximum number of simultaneous file downloads. Default: `4`. */
     maxConcurrentDownloads?: number;
+    /**
+     * How many times to attempt downloading a single file before giving up.
+     * Default: `6`.
+     *
+     * Retries cover the case where the hub publishes a file's URL over SignalR
+     * before the blob is readable, in which case the first GET answers
+     * `404 FileUpload.FileNotFound`. Retries use exponential backoff and run
+     * only for transient statuses (`404`, `408`, `423`, `425`, `429`, `5xx`) and
+     * network errors — never for `400`/`401`/`403`, which retrying cannot fix.
+     *
+     * Files uploaded from a phone reach the hub faster than it can serve them,
+     * so a tight budget here drops files the hub would have served a moment
+     * later; see `downloadRetryDelayMs` for the total window.
+     */
+    maxDownloadAttempts?: number;
+    /**
+     * Delay before the first retry in ms, doubling each attempt and capped at
+     * 4 s. Default: `500`, giving roughly 11.5 s of patience across the default
+     * six attempts.
+     */
+    downloadRetryDelayMs?: number;
+    /**
+     * Called just before each download retry.
+     *
+     * The hub publishes a file's URL in `FileAdded` a moment before the blob is
+     * readable, so the first GET typically answers `404 FileUpload.FileNotFound`
+     * and the retry then succeeds. That transient 404 is only visible in the
+     * browser's network panel unless you surface it here.
+     */
+    onDownloadRetry?: (info: ScanUploadRetryInfo, file: UploadedFile) => void;
 
     /** Called after a file has been successfully added to Uppy. */
     onForwarded?: (file: UploadedFile, uppyFileId: string) => void;

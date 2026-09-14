@@ -16,7 +16,22 @@ async function until(predicate, label, timeoutMs = 3000) {
   throw new Error(`Timed out waiting for: ${label}`);
 }
 
+let flakyRequests = 0;
+
 const server = http.createServer((req, res) => {
+  if (req.url.startsWith('/flaky')) {
+    flakyRequests += 1;
+    // The hub announces a file over SignalR slightly before the blob is
+    // readable, so the first GET legitimately 404s.
+    if (flakyRequests === 1) {
+      res.writeHead(404, { 'content-type': 'application/problem+json' });
+      res.end(JSON.stringify({ title: 'FileUpload.FileNotFound' }));
+      return;
+    }
+    res.writeHead(200, { 'content-type': 'image/jpeg' });
+    res.end(Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00]));
+    return;
+  }
   if (req.url.startsWith('/photo')) {
     res.writeHead(200, { 'content-type': 'image/jpeg' });
     res.end(Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00]));
@@ -40,6 +55,14 @@ uppy.use(ScanUploadPlugin, { sessionUrl: `${base}/session`, clientId: 'smoke' })
 const plugin = uppy.getPlugin('ScanUpload');
 assert.ok(plugin instanceof ScanUploadPlugin, 'registered under id "ScanUpload"');
 assert.ok(plugin.getCore(), 'exposes a core');
+
+// Regression guard: @uppy/dashboard auto-mounts every plugin typed 'acquirer'
+// or 'editor', which crashes a headless BasePlugin with "plugin.mount is not a
+// function". The plugin type must stay out of that list.
+assert.ok(
+  !['acquirer', 'editor'].includes(plugin.type),
+  `plugin.type must not be mountable by the Dashboard (got "${plugin.type}")`,
+);
 
 const core = plugin.getCore();
 const file = (extra) => ({
@@ -96,6 +119,17 @@ core._setState({
 });
 await until(() => plugin.getForwardedFiles().size === 1, 'deferred file forwarded once its URL arrives');
 assert.ok(uppy.getFile(plugin.getUppyFileId('f2')));
+
+// A file whose URL 404s on the first attempt must be retried, not reported as
+// a terminal failure: the hub can announce a file before its blob is readable.
+core._setState({
+  uploadedFiles: [
+    { id: 'f3', name: 'flaky.jpg', size: 5, type: 'image/jpeg', progress: 100, status: 'success', url: `${base}/flaky.jpg` },
+  ],
+});
+await until(() => plugin.getUppyFileId('f3') !== undefined, 'file forwarded after retrying a 404');
+assert.equal(flakyRequests, 2, 'first attempt 404ed, retry succeeded');
+assert.ok(uppy.getFile(plugin.getUppyFileId('f3')), 'retried file is in Uppy');
 
 // Teardown is safe and leaves Uppy usable.
 uppy.destroy();

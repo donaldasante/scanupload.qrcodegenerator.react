@@ -3,7 +3,27 @@ import type { Body, Meta, Uppy } from '@uppy/core';
 import { QrCodeGeneratorCore } from '@scanupload/qr-code-generator-core';
 import type { QrCodeGeneratorState, UploadedFile } from '@scanupload/qr-code-generator-core';
 import type { ScanUploadPluginOpts } from './types';
-import { SCAN_UPLOAD_PLUGIN_ID, SCAN_UPLOAD_SOURCE, asUppyMeta, deriveFilename, isAbortError, toBrowserFile, toError } from './utils';
+import {
+    DEFAULT_DOWNLOAD_RETRY_DELAY_MS,
+    DEFAULT_MAX_DOWNLOAD_ATTEMPTS,
+    SCAN_UPLOAD_PLUGIN_ID,
+    SCAN_UPLOAD_PLUGIN_TYPE,
+    SCAN_UPLOAD_SOURCE,
+    asUppyMeta,
+    backoffDelayMs,
+    delay,
+    deriveFilename,
+    isAbortError,
+    isRetryableStatus,
+    toBrowserFile,
+    toError
+} from './utils';
+
+/** Result of a single download attempt for one hub file. */
+type DownloadOutcome =
+    | { kind: 'ok'; blob: Blob; url: string; state: QrCodeGeneratorState }
+    | { kind: 'deferred' }
+    | { kind: 'failed'; retryable: boolean; error: Error };
 
 /**
  * Uppy plugin that bridges a ScanUpload session into an Uppy instance.
@@ -55,7 +75,9 @@ export class ScanUploadPlugin<M extends Meta = Meta, B extends Body = Record<str
         // `BasePlugin` does not assign `id` itself, and it uses `id` as the key
         // in Uppy's `plugins` state slice — so it must be set first.
         this.id = opts.id ?? SCAN_UPLOAD_PLUGIN_ID;
-        this.type = 'acquirer';
+        // See `SCAN_UPLOAD_PLUGIN_TYPE`: this must stay out of the types
+        // `@uppy/dashboard` auto-mounts, because this plugin has no UI.
+        this.type = SCAN_UPLOAD_PLUGIN_TYPE;
 
         // Constructing the core performs no I/O; `install()` starts it. Doing it
         // here means `getCore()` is never null, so UI can bind before `use()`.
@@ -218,6 +240,16 @@ export class ScanUploadPlugin<M extends Meta = Meta, B extends Body = Record<str
         return Number.isFinite(configured) && configured > 0 ? Math.floor(configured) : 4;
     }
 
+    private get _maxDownloadAttempts(): number {
+        const configured = this.opts.maxDownloadAttempts ?? DEFAULT_MAX_DOWNLOAD_ATTEMPTS;
+        return Number.isFinite(configured) && configured > 0 ? Math.max(1, Math.floor(configured)) : DEFAULT_MAX_DOWNLOAD_ATTEMPTS;
+    }
+
+    private get _downloadRetryDelayMs(): number {
+        const configured = this.opts.downloadRetryDelayMs ?? DEFAULT_DOWNLOAD_RETRY_DELAY_MS;
+        return Number.isFinite(configured) && configured >= 0 ? configured : DEFAULT_DOWNLOAD_RETRY_DELAY_MS;
+    }
+
     /** Starts downloads until the concurrency limit is reached. */
     private _drain(): void {
         if (this._uninstalled) return;
@@ -232,12 +264,17 @@ export class ScanUploadPlugin<M extends Meta = Meta, B extends Body = Record<str
         }
     }
 
+    /** Removes and returns the oldest queued file. */
     private _takeQueued(): [string, UploadedFile] | undefined {
-        for (const [scanFileId, file] of this._queue) {
-            this._queue.delete(scanFileId);
-            return [scanFileId, file];
-        }
-        return undefined;
+        // A `Map` iterates in insertion order, so the first key is the oldest.
+        const scanFileId = this._queue.keys().next().value;
+        if (scanFileId === undefined) return undefined;
+
+        const file = this._queue.get(scanFileId);
+        if (!file) return undefined;
+
+        this._queue.delete(scanFileId);
+        return [scanFileId, file];
     }
 
     /**
@@ -251,29 +288,36 @@ export class ScanUploadPlugin<M extends Meta = Meta, B extends Body = Record<str
         try {
             if (this._uninstalled) return;
 
-            const state = this._core.getState();
-            const url = await this._resolveUrl(file, state);
-            if (!url) {
-                // The hub has not published a download URL yet. Because the file
-                // is no longer tracked, the next state change queues it again.
-                return;
+            const maxAttempts = this._maxDownloadAttempts;
+
+            for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+                const outcome = await this._attemptDownload(file, controller.signal);
+
+                if (this._uninstalled || controller.signal.aborted) return;
+
+                if (outcome.kind === 'deferred') {
+                    // No URL published yet. The file is no longer tracked, so the
+                    // next state change queues it again.
+                    return;
+                }
+
+                if (outcome.kind === 'ok') {
+                    this._addToUppy(file, outcome.blob, outcome.url, outcome.state);
+                    return;
+                }
+
+                if (!outcome.retryable || attempt === maxAttempts) {
+                    this._fail(file, outcome.error);
+                    return;
+                }
+
+                this.uppy.log(
+                    `[ScanUpload] Retrying "${file.name}" (attempt ${attempt + 1}/${maxAttempts}): ${outcome.error.message}`,
+                    'warning'
+                );
+                this.opts.onDownloadRetry?.({ attempt, maxAttempts, error: outcome.error }, file);
+                await delay(backoffDelayMs(this._downloadRetryDelayMs, attempt), controller.signal);
             }
-            if (controller.signal.aborted || this._uninstalled) return;
-
-            const response = await fetch(url, {
-                credentials: 'include',
-                ...this.opts.fetchOptions,
-                signal: controller.signal
-            });
-
-            if (!response.ok) {
-                throw new Error(`The ScanUpload hub returned HTTP ${response.status} for "${file.name}".`);
-            }
-
-            const blob = await response.blob();
-            if (controller.signal.aborted || this._uninstalled) return;
-
-            this._addToUppy(file, blob, url, state);
         } catch (error) {
             if (isAbortError(error) || this._uninstalled) return;
             this._fail(file, toError(error, `Could not download "${file.name}" from ScanUpload.`));
@@ -283,6 +327,41 @@ export class ScanUploadPlugin<M extends Meta = Meta, B extends Body = Record<str
             }
             this._drain();
         }
+    }
+
+    /** One download attempt. Network failures are treated as retryable. */
+    private async _attemptDownload(file: UploadedFile, signal: AbortSignal): Promise<DownloadOutcome> {
+        const state = this._core.getState();
+        const url = await this._resolveUrl(file, state);
+        if (!url) return { kind: 'deferred' };
+
+        let response: Response;
+        try {
+            response = await fetch(url, {
+                credentials: 'include',
+                ...this.opts.fetchOptions,
+                signal
+            });
+        } catch (error) {
+            if (isAbortError(error)) throw error;
+            return {
+                kind: 'failed',
+                retryable: true,
+                error: toError(error, `Network error downloading "${file.name}".`)
+            };
+        }
+
+        if (!response.ok) {
+            // The URL is included because the usual cause of a failure here is a
+            // hub-side URL pointing at the wrong host, route, or file id.
+            return {
+                kind: 'failed',
+                retryable: isRetryableStatus(response.status),
+                error: new Error(`The ScanUpload hub returned HTTP ${response.status} for "${file.name}" (${url}).`)
+            };
+        }
+
+        return { kind: 'ok', blob: await response.blob(), url, state };
     }
 
     private async _resolveUrl(file: UploadedFile, state: QrCodeGeneratorState): Promise<string | undefined> {
@@ -306,9 +385,10 @@ export class ScanUploadPlugin<M extends Meta = Meta, B extends Body = Record<str
         const data = this.opts.buildFile ? this.opts.buildFile(blob, file, state) : toBrowserFile(blob, name, type);
 
         // Reserved ScanUpload keys are applied last so a custom `buildMeta`
-        // can never break the removal mapping.
+        // can never break the removal mapping. Spreading `undefined` is a no-op,
+        // which covers a `buildMeta` that returns nothing.
         const meta = {
-            ...(this.opts.buildMeta?.(file, state) ?? {}),
+            ...this.opts.buildMeta?.(file, state),
             scanUploadFileId: file.id,
             scanUploadSessionId: state.sessionId,
             scanUploadUrl: url

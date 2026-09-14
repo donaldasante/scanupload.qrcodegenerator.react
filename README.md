@@ -116,14 +116,15 @@ All packages share the same `--sqg-*` token names. Override them on `:root` to t
 
 Runnable examples live in `examples/`. Each demo calls the hub directly using `VITE_SESSION_URL` (or `NEXT_PUBLIC_SESSION_URL`):
 
-| Demo                                       | Run                   |
-| ------------------------------------------ | --------------------- |
-| [React + Vite](examples/react-demo)        | `npm run dev:react`   |
-| [Vue 3 + Vite](examples/vue-demo)          | `npm run dev:vue`     |
-| [Angular + Vite](examples/angular-demo)    | `npm run dev:angular` |
-| [Svelte 5 + Vite](examples/svelte-demo)    | `npm run dev:svelte`  |
-| [Vanilla JS + Vite](examples/vanilla-js)   | `npm run dev:vanilla` |
-| [Next.js App Router](examples/nextjs-demo) | `npm run dev:nextjs`  |
+| Demo                                       | Run                    |
+| ------------------------------------------ | ---------------------- |
+| [React + Vite](examples/react-demo)        | `npm run dev:react`    |
+| [Vue 3 + Vite](examples/vue-demo)          | `npm run dev:vue`      |
+| [Angular + Vite](examples/angular-demo)    | `npm run dev:angular`  |
+| [Svelte 5 + Vite](examples/svelte-demo)    | `npm run dev:svelte`   |
+| [Vanilla JS + Vite](examples/vanilla-js)   | `npm run dev:vanilla`  |
+| [Next.js App Router](examples/nextjs-demo) | `npm run dev:nextjs`   |
+| [Vue 3 + Uppy](examples/vue-uppy-demo)     | `npm run dev:vue-uppy` |
 
 All demos share the same layout pattern: a fixed-height card containing a settings panel and the widget. The widget's file list is the **only** element that scrolls; the page itself never scrolls, even with many uploaded files. See each demo's CSS for the `:has()`-based pattern that drives this.
 

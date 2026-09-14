@@ -1,10 +1,11 @@
 export { default, ScanUploadPlugin } from './ScanUploadPlugin';
-export { SCAN_UPLOAD_PLUGIN_ID, SCAN_UPLOAD_SOURCE } from './utils';
+export { SCAN_UPLOAD_PLUGIN_ID, SCAN_UPLOAD_PLUGIN_TYPE, SCAN_UPLOAD_SOURCE } from './utils';
 export type {
     ScanUploadFileBuilder,
     ScanUploadFileFilter,
     ScanUploadFileMeta,
     ScanUploadMetaBuilder,
     ScanUploadPluginOpts,
+    ScanUploadRetryInfo,
     ScanUploadUrlResolver
 } from './types';

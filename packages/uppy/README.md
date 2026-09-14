@@ -73,10 +73,19 @@ Downloads are pooled (`maxConcurrentDownloads`, default `4`) so a session contai
 | `source`                 | `string`                                     | `'ScanUpload'`                     | Uppy `file.source` value.                                               |
 | `mirrorRemovals`         | `boolean`                                    | `true`                             | Remove the Uppy file when the hub drops it.                             |
 | `maxConcurrentDownloads` | `number`                                     | `4`                                | Simultaneous file downloads.                                            |
+| `maxDownloadAttempts`    | `number`                                     | `6`                                | Download attempts per file before reporting a failure.                  |
+| `downloadRetryDelayMs`   | `number`                                     | `500` (backoff capped at 4 s)      | Wait before the first retry; doubles each attempt.                      |
 | `onForwarded`            | `(file, uppyFileId) => void`                 | —                                  | Called after a file lands in Uppy.                                      |
 | `onForwardError`         | `(error, file) => void`                      | Uppy Informer message              | Called when a file cannot be downloaded or added.                       |
+| `onDownloadRetry`        | `(info, file) => void`                       | —                                  | Called before each download retry.                                      |
 
 Any other Uppy plugin option (`id`, `locale`) is accepted as usual.
+
+### Transient 404s are expected
+
+The hub publishes a file's URL in `FileAdded` slightly _before_ the blob is readable, so the first `GET` commonly answers `404 FileUpload.FileNotFound` and the next attempt succeeds. The plugin retries transient statuses (`404`, `408`, `423`, `425`, `429`, `5xx`) and network errors with exponential backoff — six attempts over roughly 11.5 s by default — and never retries `400`/`401`/`403`, which retrying cannot fix.
+
+A tight retry budget silently drops files the hub would have served a moment later, so prefer widening `maxDownloadAttempts` over removing the retries. Use `onDownloadRetry` to surface the attempts in your own UI; otherwise they are visible only as 404s in the browser's network panel. Files that still fail are recorded and can be re-queued with [`retryFailed()`](#api).
 
 ## Metadata
 
