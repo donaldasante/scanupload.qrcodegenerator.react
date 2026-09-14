@@ -7,10 +7,20 @@ export interface UseQrCodeCoreOptions {
     clientId?: MaybeRefOrGetter<string | undefined>;
     autoResession?: MaybeRefOrGetter<boolean>;
     storage?: StorageAdapter;
+    /**
+     * Bind to an existing core instead of creating one. The injected core is
+     * owned by whoever supplied it — most commonly the ScanUpload Uppy plugin —
+     * so this composable will neither start nor dispose it, and will not push
+     * `sessionUrl` / `clientId` changes into it.
+     */
+    core?: QrCodeGeneratorCore | null;
 }
 
 export function useQrCodeCore(options: UseQrCodeCoreOptions) {
-    const core = new QrCodeGeneratorCore({
+    const injected = options.core ?? null;
+    const ownsCore = injected === null;
+
+    const core = injected ?? new QrCodeGeneratorCore({
         sessionUrl: toValue(options.sessionUrl),
         clientId: toValue(options.clientId),
         autoResession: toValue(options.autoResession),
@@ -25,13 +35,14 @@ export function useQrCodeCore(options: UseQrCodeCoreOptions) {
         unsubscribe = core.subscribe(() => {
             state.value = core.getState();
         });
-        core.start();
+        if (ownsCore) core.start();
     });
 
     // React to runtime endpoint changes, mirroring the React hook's setOptions effect.
     watch(
         () => [toValue(options.sessionUrl), toValue(options.clientId)] as const,
         ([sessionUrl, clientId]) => {
+            if (!ownsCore) return;
             void core.setOptions({ sessionUrl, clientId });
         }
     );
@@ -39,7 +50,7 @@ export function useQrCodeCore(options: UseQrCodeCoreOptions) {
     onUnmounted(() => {
         unsubscribe?.();
         unsubscribe = null;
-        core.dispose();
+        if (ownsCore) core.dispose();
     });
 
     return {

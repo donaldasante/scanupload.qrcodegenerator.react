@@ -14,6 +14,7 @@ This is a **monorepo** with a framework-agnostic core and dedicated adapter pack
 | [`@scanupload/qr-code-generator-angular`](packages/angular) | Angular `<sqg-qr-code-generator>` standalone component |
 | [`@scanupload/qr-code-generator-svelte`](packages/svelte) | Svelte 5 `<QrCodeGenerator>` component |
 | [`@scanupload/qr-code-generator-vanilla`](packages/vanilla) | `QrCodeGeneratorElement` — framework-free DOM renderer |
+| [`@scanupload/qr-code-generator-uppy`](packages/uppy) | Headless [Uppy](https://uppy.io/) plugin that pipes phone uploads straight into an Uppy instance |
 
 See each package's README for full details and a quick-start snippet.
 
@@ -57,6 +58,31 @@ All framework adapters share the same prop names. (Vue uses kebab-case in templa
 | `filePreviewMode` | `"grid" \| "list"` | `"grid"` | Display uploaded files as tiles or a compact list. |
 | `size` | `"small" \| "medium" \| "large" \| "xlarge"` | `"large"` | Overall size of the QR code container. |
 | `showDownloadButton` | `boolean` | `false` | Show a "Download all files" button beneath the previews. When clicked, the component fetches every `UploadedFile.url` the SignalR hub has surfaced and triggers a browser save for each. |
+| `core` | `QrCodeGeneratorCore \| null` | `undefined` | Bind to an existing core instead of creating one, so the widget shares a single session with another owner (typically the Uppy plugin). While set, `sessionUrl`, `clientId` and `autoResession` are ignored. |
+
+## Uppy integration
+
+`@scanupload/qr-code-generator-uppy` is an optional, headless Uppy plugin. It is the only package that depends on Uppy — every other package here works with or without it.
+
+```ts
+import Uppy from '@uppy/core';
+import XHRUpload from '@uppy/xhr-upload';
+import ScanUpload from '@scanupload/qr-code-generator-uppy';
+
+const uppy = new Uppy({ autoProceed: true })
+  .use(ScanUpload, { sessionUrl, clientId })
+  .use(XHRUpload, { endpoint: '/api/uploads' });
+```
+
+Each photo uploaded from the phone is downloaded by the browser and added to Uppy as a normal file, so any Uppy uploader (XHR, Tus, S3) can send it on. To render the QR code, bind a ScanUpload widget to the plugin's core so both share one session:
+
+```tsx
+const plugin = uppy.getPlugin<ScanUploadPlugin>('ScanUpload');
+
+<QrCodeGenerator sessionUrl={sessionUrl} core={plugin?.getCore()} />
+```
+
+See [`packages/uppy/README.md`](packages/uppy) for the full option list and per-framework snippets.
 
 ## CSS custom properties
 

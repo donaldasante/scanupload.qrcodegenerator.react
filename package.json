@@ -7,13 +7,14 @@
     "examples/*"
   ],
   "scripts": {
-    "build": "npm run build --workspace=packages/core && npm run build --workspace=packages/react && npm run build --workspace=packages/vanilla && npm run build --workspace=packages/vue && npm run build --workspace=packages/angular && npm run build --workspace=packages/svelte",
+    "build": "npm run build --workspace=packages/core && npm run build --workspace=packages/react && npm run build --workspace=packages/vanilla && npm run build --workspace=packages/vue && npm run build --workspace=packages/angular && npm run build --workspace=packages/svelte && npm run build --workspace=packages/uppy",
     "build:core": "npm run build --workspace=packages/core",
     "build:react": "npm run build:core && npm run build --workspace=packages/react",
     "build:vanilla": "npm run build:core && npm run build --workspace=packages/vanilla",
     "build:vue": "npm run build:core && npm run build --workspace=packages/vue",
     "build:angular": "npm run build:core && npm run build --workspace=packages/angular",
     "build:svelte": "npm run build:core && npm run build --workspace=packages/svelte",
+    "build:uppy": "npm run build:core && npm run build --workspace=packages/uppy",
     "build:nextjs": "npm run build:react && npm run build --workspace=examples/nextjs-demo",
     "dev:react": "npm run dev --workspace=examples/react-demo",
     "dev:nextjs": "npm run dev --workspace=examples/nextjs-demo",

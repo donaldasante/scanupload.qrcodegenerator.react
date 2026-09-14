@@ -54,6 +54,13 @@ export interface QrCodeGeneratorElementOptions extends QrCodeGeneratorCoreOption
      * surfaced and triggers a browser save for each. Default: false.
      */
     showDownloadButton?: boolean;
+    /**
+     * Bind to an existing core instead of creating one. The injected core is
+     * owned by whoever supplied it — most commonly the ScanUpload Uppy plugin —
+     * so this element will neither start nor dispose it, and will not push
+     * `sessionUrl` / `clientId` changes into it.
+     */
+    core?: QrCodeGeneratorCore | null;
 }
 
 export type QrCodeGeneratorElementSetOptions = Partial<Omit<QrCodeGeneratorElementOptions, 'container'>>;
@@ -63,6 +70,8 @@ export type QrCodeGeneratorElementSetOptions = Partial<Omit<QrCodeGeneratorEleme
 export class QrCodeGeneratorElement {
     private readonly _core: QrCodeGeneratorCore;
     private readonly _container: HTMLElement;
+    /** `false` when the core was supplied by the caller and must not be disposed. */
+    private readonly _ownsCore: boolean;
     private _options: Required<
         Pick<
             QrCodeGeneratorElementOptions,
@@ -106,13 +115,15 @@ export class QrCodeGeneratorElement {
 
         this._container = options.container;
 
-        const { sessionUrl, clientId, storage } = options;
-        this._core = new QrCodeGeneratorCore({
-            sessionUrl,
-            clientId,
-            autoResession: options.autoResession ?? false,
-            storage
-        });
+        this._ownsCore = options.core == null;
+        this._core =
+            options.core ??
+            new QrCodeGeneratorCore({
+                sessionUrl: options.sessionUrl,
+                clientId: options.clientId,
+                autoResession: options.autoResession ?? false,
+                storage: options.storage
+            });
     }
 
     // ── Public API ─────────────────────────────────────────────────────────
@@ -121,7 +132,8 @@ export class QrCodeGeneratorElement {
         if (this._options.injectStyles) injectStyles();
         this._buildDom();
         this._unsubscribe = this._core.subscribe(() => this._render());
-        await this._core.start();
+        // An injected core is already running, and is not ours to start.
+        if (this._ownsCore) await this._core.start();
     }
 
     dispose(): void {
@@ -131,7 +143,8 @@ export class QrCodeGeneratorElement {
             clearTimeout(this._downloadErrorTimer);
             this._downloadErrorTimer = null;
         }
-        this._core.dispose();
+        // An injected core is owned by the caller and must survive this element.
+        if (this._ownsCore) this._core.dispose();
         this._container.innerHTML = '';
         this._els = null;
         this._prevState = null;
@@ -156,7 +169,7 @@ export class QrCodeGeneratorElement {
         }
 
         const hasCoreOptionChanges = Object.keys(coreOptions).length > 0;
-        if (hasCoreOptionChanges) {
+        if (this._ownsCore && hasCoreOptionChanges) {
             await this._core.setOptions(coreOptions);
         }
 

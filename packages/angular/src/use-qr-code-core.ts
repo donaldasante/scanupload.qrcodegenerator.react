@@ -7,6 +7,13 @@ export interface UseQrCodeCoreOptions {
     clientId?: string;
     autoResession?: boolean;
     storage?: StorageAdapter;
+    /**
+     * Bind to an existing core instead of creating one. The injected core is
+     * owned by whoever supplied it — most commonly the ScanUpload Uppy plugin —
+     * so this controller will neither start nor dispose it, and will not push
+     * `sessionUrl` / `clientId` changes into it.
+     */
+    core?: QrCodeGeneratorCore | null;
 }
 
 export interface QrCodeCoreController {
@@ -32,7 +39,10 @@ export interface QrCodeCoreController {
  * call `start()`, and `dispose()` on destroy.
  */
 export function useQrCodeCore(options: UseQrCodeCoreOptions): QrCodeCoreController {
-    const core = new QrCodeGeneratorCore({
+    const injected = options.core ?? null;
+    const ownsCore = injected === null;
+
+    const core = injected ?? new QrCodeGeneratorCore({
         sessionUrl: options.sessionUrl,
         clientId: options.clientId,
         autoResession: options.autoResession,
@@ -49,14 +59,14 @@ export function useQrCodeCore(options: UseQrCodeCoreOptions): QrCodeCoreControll
         start() {
             unsubscribe = core.subscribe(() => state.set(core.getState()));
             state.set(core.getState());
-            void core.start();
+            if (ownsCore) void core.start();
         },
         retrySession: () => core.retrySession(),
-        setOptions: (opts) => core.setOptions(opts),
+        setOptions: (opts) => (ownsCore ? core.setOptions(opts) : Promise.resolve()),
         dispose() {
             unsubscribe?.();
             unsubscribe = null;
-            core.dispose();
+            if (ownsCore) core.dispose();
         }
     };
 }

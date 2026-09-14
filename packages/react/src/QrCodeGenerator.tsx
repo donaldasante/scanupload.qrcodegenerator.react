@@ -6,6 +6,7 @@ import { DocumentPreviewer } from "./components/DocumentPreviewer";
 import { FileList } from "./components/FileList";
 import { useQrCodeCore } from "./hooks/useQrCodeCore";
 import { DownloadButton } from "./DownloadButton";
+import type { QrCodeGeneratorCore } from "@scanupload/qr-code-generator-core";
 
 export interface QrCodeGeneratorProps {
   sessionUrl: string;
@@ -32,6 +33,15 @@ export interface QrCodeGeneratorProps {
    * surfaced and triggers a browser save for each. Default: false.
    */
   showDownloadButton?: boolean;
+  /**
+   * Bind to an existing core instead of creating one, so this widget shares a
+   * single ScanUpload session with whatever already owns that core — most
+   * commonly the core exposed by the ScanUpload Uppy plugin.
+   *
+   * The injected core is configured and disposed by its owner, so
+   * `sessionUrl`, `clientId` and `autoResession` are ignored while it is set.
+   */
+  core?: QrCodeGeneratorCore | null;
 }
 
 export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
@@ -45,11 +55,13 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
   filePreviewMode = "grid",
   autoResession = false,
   showDownloadButton = false,
+  core: providedCore,
 }) => {
   const { state, retrySession, core } = useQrCodeCore({
     sessionUrl,
     clientId,
     autoResession,
+    core: providedCore,
   });
 
   return (

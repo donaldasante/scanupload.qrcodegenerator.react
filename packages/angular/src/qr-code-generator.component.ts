@@ -11,6 +11,7 @@ import {
     SimpleChanges
 } from '@angular/core';
 import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
+import type { QrCodeGeneratorCore } from '@scanupload/qr-code-generator-core';
 import { LogoComponent } from './components/logo.component';
 import { DocumentPreviewerComponent } from './components/document-previewer.component';
 import { FileListComponent } from './components/file-list.component';
@@ -104,6 +105,15 @@ export class QrCodeGeneratorComponent implements OnInit, OnChanges, OnDestroy {
     /** Automatically replace an expired session. Default: false. */
     @Input() autoResession = false;
     @Input() showDownloadButton = false;
+    /**
+     * Bind to an existing core instead of creating one, so this widget shares a
+     * single ScanUpload session with whatever already owns that core — most
+     * commonly the core exposed by the ScanUpload Uppy plugin.
+     *
+     * The injected core is configured and disposed by its owner, so
+     * `sessionUrl`, `clientId` and `autoResession` are ignored while it is set.
+     */
+    @Input() core?: QrCodeGeneratorCore | null;
 
     protected controller?: QrCodeCoreController;
     protected readonly qrSvg = signal<SafeHtml>('');
@@ -120,7 +130,8 @@ export class QrCodeGeneratorComponent implements OnInit, OnChanges, OnDestroy {
         this.controller = useQrCodeCore({
             sessionUrl: this.sessionUrl,
             clientId: this.clientId,
-            autoResession: this.autoResession
+            autoResession: this.autoResession,
+            core: this.core
         });
         this.controller.start();
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import QrcodeVue from 'qrcode.vue';
 import { RotateCw } from 'lucide-vue-next';
+import type { QrCodeGeneratorCore } from '@scanupload/qr-code-generator-core';
 import Logo from './components/Logo.vue';
 import DocumentPreviewer from './components/DocumentPreviewer.vue';
 import FileList from './components/FileList.vue';
@@ -29,6 +30,15 @@ export interface QrCodeGeneratorProps {
      * surfaced and triggers a browser save for each. Default: false.
      */
     showDownloadButton?: boolean;
+    /**
+     * Bind to an existing core instead of creating one, so this widget shares a
+     * single ScanUpload session with whatever already owns that core — most
+     * commonly the core exposed by the ScanUpload Uppy plugin.
+     *
+     * The injected core is configured and disposed by its owner, so
+     * `sessionUrl`, `clientId` and `autoResession` are ignored while it is set.
+     */
+    core?: QrCodeGeneratorCore | null;
 }
 
 const props = withDefaults(defineProps<QrCodeGeneratorProps>(), {
@@ -45,7 +55,8 @@ const props = withDefaults(defineProps<QrCodeGeneratorProps>(), {
 const { state, retrySession, core } = useQrCodeCore({
     sessionUrl: () => props.sessionUrl,
     clientId: () => props.clientId,
-    autoResession: () => props.autoResession
+    autoResession: () => props.autoResession,
+    core: props.core
 });
 
 const onQrClick = () => {

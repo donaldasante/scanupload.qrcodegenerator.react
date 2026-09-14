@@ -1,4 +1,6 @@
 <script module lang="ts">
+    import type { QrCodeGeneratorCore } from '@scanupload/qr-code-generator-core';
+
     export interface QrCodeGeneratorProps {
         sessionUrl: string;
         /**
@@ -21,6 +23,15 @@
          * surfaced and triggers a browser save for each. Default: false.
          */
         showDownloadButton?: boolean;
+        /**
+         * Bind to an existing core instead of creating one, so this widget shares
+         * a single ScanUpload session with whatever already owns that core — most
+         * commonly the core exposed by the ScanUpload Uppy plugin.
+         *
+         * The injected core is configured and disposed by its owner, so
+         * `sessionUrl`, `clientId` and `autoResession` are ignored while it is set.
+         */
+        core?: QrCodeGeneratorCore | null;
     }
 </script>
 
@@ -43,7 +54,8 @@
         filePreviewMode = 'grid',
         size = 'large',
         autoResession = false,
-        showDownloadButton = false
+        showDownloadButton = false,
+        core = null
     }: QrCodeGeneratorProps = $props();
 
     // The controller is intentionally constructed once with the initial
@@ -51,7 +63,7 @@
     // changes into the controller via `setOptions`, so subsequent changes
     // to these props take effect — see `QrCodeCoreController.setOptions`.
     // svelte-ignore state_referenced_locally
-    const controller = createQrCodeController({ sessionUrl, clientId, autoResession });
+    const controller = createQrCodeController({ sessionUrl, clientId, autoResession, core });
     const coreState = controller.state;
 
     // Push runtime endpoint changes into the core, mirroring the React/Vue adapters.
