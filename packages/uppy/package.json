@@ -1,36 +1,36 @@
 {
-  "name": "@scanupload/qr-code-generator-uppy",
-  "version": "0.2.1",
-  "description": "Official Uppy plugin for the ScanUpload QR Code Generator — receive files uploaded from a phone via QR code and hand them straight to an Uppy instance.",
-  "main": "dist/index.es.js",
-  "module": "dist/index.es.js",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
-  "scripts": {
-    "build": "vite build",
-    "smoke": "node smoke.mjs"
-  },
-  "peerDependencies": {
-    "@scanupload/qr-code-generator-core": "^0.2.1",
-    "@uppy/core": "^6.0.0"
-  },
-  "devDependencies": {
-    "@scanupload/qr-code-generator-core": "^0.2.1",
-    "@uppy/core": "^6.0.1",
-    "typescript": "^5.9.3",
-    "vite": "^7.1.11",
-    "vite-plugin-dts": "^4.5.4"
-  },
-  "keywords": [
-    "scanupload",
-    "qr-code",
-    "uppy",
-    "uppy-plugin",
-    "signalr",
-    "file-upload"
-  ],
-  "author": "Donald Asante",
-  "license": "MIT"
+    "name": "@scanupload/qr-code-generator-uppy",
+    "version": "0.2.1",
+    "description": "Official Uppy plugin for the ScanUpload QR Code Generator — receive files uploaded from a phone via QR code and hand them straight to an Uppy instance.",
+    "main": "dist/index.es.js",
+    "module": "dist/index.es.js",
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "vite build",
+        "smoke": "node smoke.mjs"
+    },
+    "peerDependencies": {
+        "@scanupload/qr-code-generator-core": "^0.2.1",
+        "@uppy/core": "^6.0.0"
+    },
+    "devDependencies": {
+        "@scanupload/qr-code-generator-core": "^0.2.1",
+        "@uppy/core": "^6.0.1",
+        "typescript": "^5.9.3",
+        "vite": "^7.1.11",
+        "vite-plugin-dts": "^4.5.4"
+    },
+    "keywords": [
+        "scanupload",
+        "qr-code",
+        "uppy",
+        "uppy-plugin",
+        "signalr",
+        "file-upload"
+    ],
+    "author": "Donald Asante",
+    "license": "MIT"
 }

@@ -1,9 +1,5 @@
 import type { Meta, PluginOpts } from '@uppy/core';
-import type {
-    QrCodeGeneratorState,
-    StorageAdapter,
-    UploadedFile,
-} from '@scanupload/qr-code-generator-core';
+import type { QrCodeGeneratorState, StorageAdapter, UploadedFile } from '@scanupload/qr-code-generator-core';
 
 /**
  * Metadata this plugin attaches to every Uppy file it creates.
@@ -39,7 +35,7 @@ export interface ScanUploadFileMeta {
  */
 export type ScanUploadUrlResolver = (
     file: UploadedFile,
-    state: QrCodeGeneratorState,
+    state: QrCodeGeneratorState
 ) => string | undefined | null | Promise<string | undefined | null>;
 
 /**
@@ -47,31 +43,21 @@ export type ScanUploadUrlResolver = (
  * Returning `false` permanently ignores that file. Default: forward every
  * file that has a resolvable URL.
  */
-export type ScanUploadFileFilter = (
-    file: UploadedFile,
-    state: QrCodeGeneratorState,
-) => boolean;
+export type ScanUploadFileFilter = (file: UploadedFile, state: QrCodeGeneratorState) => boolean;
 
 /**
  * Contributes additional Uppy metadata for a forwarded file. The keys returned
  * here are merged with — and can never override — the reserved
  * {@link ScanUploadFileMeta} keys.
  */
-export type ScanUploadMetaBuilder<M extends Meta> = (
-    file: UploadedFile,
-    state: QrCodeGeneratorState,
-) => M;
+export type ScanUploadMetaBuilder<M extends Meta> = (file: UploadedFile, state: QrCodeGeneratorState) => M;
 
 /**
  * Builds the value handed to Uppy as `file.data`. Defaults to a `File` created
  * from the downloaded blob so the original filename and MIME type survive.
  * Return a `Blob` to opt out of the `File` wrapper.
  */
-export type ScanUploadFileBuilder = (
-    blob: Blob,
-    file: UploadedFile,
-    state: QrCodeGeneratorState,
-) => Blob | File;
+export type ScanUploadFileBuilder = (blob: Blob, file: UploadedFile, state: QrCodeGeneratorState) => Blob | File;
 
 export interface ScanUploadPluginOpts<M extends Meta = Meta> extends PluginOpts {
     /**

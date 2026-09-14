@@ -7,11 +7,7 @@ export const SCAN_UPLOAD_SOURCE = 'ScanUpload';
 export const SCAN_UPLOAD_PLUGIN_ID = 'ScanUpload';
 
 export function isAbortError(error: unknown): boolean {
-    return (
-        typeof error === 'object' &&
-        error !== null &&
-        (error as { name?: unknown }).name === 'AbortError'
-    );
+    return typeof error === 'object' && error !== null && (error as { name?: unknown }).name === 'AbortError';
 }
 
 export function toError(error: unknown, fallbackMessage: string): Error {

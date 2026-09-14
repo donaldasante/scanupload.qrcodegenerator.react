@@ -3,15 +3,7 @@ import type { Body, Meta, Uppy } from '@uppy/core';
 import { QrCodeGeneratorCore } from '@scanupload/qr-code-generator-core';
 import type { QrCodeGeneratorState, UploadedFile } from '@scanupload/qr-code-generator-core';
 import type { ScanUploadPluginOpts } from './types';
-import {
-    SCAN_UPLOAD_PLUGIN_ID,
-    SCAN_UPLOAD_SOURCE,
-    asUppyMeta,
-    deriveFilename,
-    isAbortError,
-    toBrowserFile,
-    toError,
-} from './utils';
+import { SCAN_UPLOAD_PLUGIN_ID, SCAN_UPLOAD_SOURCE, asUppyMeta, deriveFilename, isAbortError, toBrowserFile, toError } from './utils';
 
 /**
  * Uppy plugin that bridges a ScanUpload session into an Uppy instance.
@@ -39,10 +31,11 @@ import {
  * session by handing the framework widget `plugin.getCore()`, otherwise the
  * widget will create a second session and show a different QR code.
  */
-export class ScanUploadPlugin<
-    M extends Meta = Meta,
-    B extends Body = Record<string, never>,
-> extends BasePlugin<ScanUploadPluginOpts<M>, M, B> {
+export class ScanUploadPlugin<M extends Meta = Meta, B extends Body = Record<string, never>> extends BasePlugin<
+    ScanUploadPluginOpts<M>,
+    M,
+    B
+> {
     /** Files waiting for a free download slot, in arrival order. */
     private readonly _queue = new Map<string, UploadedFile>();
     /** In-flight downloads, keyed by ScanUpload file id. */
@@ -70,7 +63,7 @@ export class ScanUploadPlugin<
             sessionUrl: opts.sessionUrl,
             clientId: opts.clientId,
             autoResession: opts.autoResession ?? false,
-            storage: opts.storage,
+            storage: opts.storage
         });
     }
 
@@ -165,12 +158,7 @@ export class ScanUploadPlugin<
 
     /** Mirrors hub-side removals (including a session reset) into Uppy. */
     private _reconcileRemovals(state: QrCodeGeneratorState): void {
-        if (
-            this._forwarded.size === 0 &&
-            this._queue.size === 0 &&
-            this._downloading.size === 0 &&
-            this._failed.size === 0
-        ) {
+        if (this._forwarded.size === 0 && this._queue.size === 0 && this._downloading.size === 0 && this._failed.size === 0) {
             return;
         }
 
@@ -179,7 +167,7 @@ export class ScanUploadPlugin<
             ...this._forwarded.keys(),
             ...this._queue.keys(),
             ...this._downloading.keys(),
-            ...this._failed.keys(),
+            ...this._failed.keys()
         ]);
 
         for (const scanFileId of tracked) {
@@ -196,7 +184,7 @@ export class ScanUploadPlugin<
                 // installed uploader does not support individual cancellation.
                 this.uppy.log(
                     `[ScanUpload] Could not remove Uppy file ${uppyFileId}: ${toError(error, 'unknown error').message}`,
-                    'warning',
+                    'warning'
                 );
             }
         }
@@ -275,13 +263,11 @@ export class ScanUploadPlugin<
             const response = await fetch(url, {
                 credentials: 'include',
                 ...this.opts.fetchOptions,
-                signal: controller.signal,
+                signal: controller.signal
             });
 
             if (!response.ok) {
-                throw new Error(
-                    `The ScanUpload hub returned HTTP ${response.status} for "${file.name}".`,
-                );
+                throw new Error(`The ScanUpload hub returned HTTP ${response.status} for "${file.name}".`);
             }
 
             const blob = await response.blob();
@@ -299,10 +285,7 @@ export class ScanUploadPlugin<
         }
     }
 
-    private async _resolveUrl(
-        file: UploadedFile,
-        state: QrCodeGeneratorState,
-    ): Promise<string | undefined> {
+    private async _resolveUrl(file: UploadedFile, state: QrCodeGeneratorState): Promise<string | undefined> {
         const resolver = this.opts.resolveUrl;
         if (!resolver) return file.url || undefined;
 
@@ -317,17 +300,10 @@ export class ScanUploadPlugin<
 
     // ── Uppy hand-off ────────────────────────────────────────────────────────
 
-    private _addToUppy(
-        file: UploadedFile,
-        blob: Blob,
-        url: string,
-        state: QrCodeGeneratorState,
-    ): void {
+    private _addToUppy(file: UploadedFile, blob: Blob, url: string, state: QrCodeGeneratorState): void {
         const name = file.name?.trim() || deriveFilename(url);
         const type = file.type?.trim() || blob.type || 'application/octet-stream';
-        const data = this.opts.buildFile
-            ? this.opts.buildFile(blob, file, state)
-            : toBrowserFile(blob, name, type);
+        const data = this.opts.buildFile ? this.opts.buildFile(blob, file, state) : toBrowserFile(blob, name, type);
 
         // Reserved ScanUpload keys are applied last so a custom `buildMeta`
         // can never break the removal mapping.
@@ -335,7 +311,7 @@ export class ScanUploadPlugin<
             ...(this.opts.buildMeta?.(file, state) ?? {}),
             scanUploadFileId: file.id,
             scanUploadSessionId: state.sessionId,
-            scanUploadUrl: url,
+            scanUploadUrl: url
         };
 
         try {
@@ -345,7 +321,7 @@ export class ScanUploadPlugin<
                 data,
                 isRemote: false,
                 source: this.opts.source ?? SCAN_UPLOAD_SOURCE,
-                meta: asUppyMeta<M>(meta),
+                meta: asUppyMeta<M>(meta)
             });
 
             this._forwarded.set(file.id, uppyFileId);
@@ -371,9 +347,9 @@ export class ScanUploadPlugin<
         this.uppy.info(
             {
                 message: `ScanUpload could not hand over "${file.name}".`,
-                details: error.message,
+                details: error.message
             },
-            'error',
+            'error'
         );
     }
 }

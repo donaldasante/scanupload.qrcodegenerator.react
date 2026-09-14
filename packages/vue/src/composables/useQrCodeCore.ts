@@ -20,12 +20,14 @@ export function useQrCodeCore(options: UseQrCodeCoreOptions) {
     const injected = options.core ?? null;
     const ownsCore = injected === null;
 
-    const core = injected ?? new QrCodeGeneratorCore({
-        sessionUrl: toValue(options.sessionUrl),
-        clientId: toValue(options.clientId),
-        autoResession: toValue(options.autoResession),
-        storage: options.storage
-    });
+    const core =
+        injected ??
+        new QrCodeGeneratorCore({
+            sessionUrl: toValue(options.sessionUrl),
+            clientId: toValue(options.clientId),
+            autoResession: toValue(options.autoResession),
+            storage: options.storage
+        });
 
     const state = ref<QrCodeGeneratorState>(core.getState()) as Ref<QrCodeGeneratorState>;
 

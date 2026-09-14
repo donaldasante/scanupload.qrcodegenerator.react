@@ -37,12 +37,12 @@ import '@uppy/core/css/style.min.css';
 import '@uppy/dashboard/css/style.min.css';
 
 const uppy = new Uppy({ autoProceed: true })
-  .use(Dashboard, { inline: true, target: '#uppy-dashboard' })
-  .use(ScanUpload, {
-    sessionUrl: 'https://hub.scanupload.net/api/v2/front-end/session',
-    clientId: 'your-tenant-id',
-  })
-  .use(XHRUpload, { endpoint: '/api/uploads', fieldName: 'files[]' });
+    .use(Dashboard, { inline: true, target: '#uppy-dashboard' })
+    .use(ScanUpload, {
+        sessionUrl: 'https://hub.scanupload.net/api/v2/front-end/session',
+        clientId: 'your-tenant-id'
+    })
+    .use(XHRUpload, { endpoint: '/api/uploads', fieldName: 'files[]' });
 ```
 
 With `autoProceed: true`, every photo the phone uploads is downloaded and pushed to your backend without any further user interaction. Leave `autoProceed` at its default (`false`) if you would rather have the user confirm the upload in Uppy's Dashboard.
@@ -59,22 +59,22 @@ Downloads are pooled (`maxConcurrentDownloads`, default `4`) so a session contai
 
 ## Options
 
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `sessionUrl` | `string` | — (required) | Endpoint that creates a ScanUpload session. |
-| `clientId` | `string` | `undefined` | Tenant / Keycloak `client_id` sent with the session request. |
-| `autoResession` | `boolean` | `false` | Replace the session automatically when its TTL elapses. |
-| `storage` | `StorageAdapter` | browser `localStorage` | Session cache adapter supplied to the core. |
-| `fetchOptions` | `RequestInit` (without `signal`) | `{ credentials: 'include' }` | Passed to every file download. |
-| `resolveUrl` | `(file, state) => string \| Promise<string>` | `file.url` | Customise how a file's download URL is resolved (signed URLs, proxies). |
-| `shouldForward` | `(file, state) => boolean` | forward all | Skip specific hub files. |
-| `buildMeta` | `(file, state) => object` | — | Add extra Uppy metadata per file. |
-| `buildFile` | `(blob, file, state) => Blob \| File` | `new File([blob], name, { type })` | Customise what Uppy receives as `file.data`. |
-| `source` | `string` | `'ScanUpload'` | Uppy `file.source` value. |
-| `mirrorRemovals` | `boolean` | `true` | Remove the Uppy file when the hub drops it. |
-| `maxConcurrentDownloads` | `number` | `4` | Simultaneous file downloads. |
-| `onForwarded` | `(file, uppyFileId) => void` | — | Called after a file lands in Uppy. |
-| `onForwardError` | `(error, file) => void` | Uppy Informer message | Called when a file cannot be downloaded or added. |
+| Option                   | Type                                         | Default                            | Description                                                             |
+| ------------------------ | -------------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------- |
+| `sessionUrl`             | `string`                                     | — (required)                       | Endpoint that creates a ScanUpload session.                             |
+| `clientId`               | `string`                                     | `undefined`                        | Tenant / Keycloak `client_id` sent with the session request.            |
+| `autoResession`          | `boolean`                                    | `false`                            | Replace the session automatically when its TTL elapses.                 |
+| `storage`                | `StorageAdapter`                             | browser `localStorage`             | Session cache adapter supplied to the core.                             |
+| `fetchOptions`           | `RequestInit` (without `signal`)             | `{ credentials: 'include' }`       | Passed to every file download.                                          |
+| `resolveUrl`             | `(file, state) => string \| Promise<string>` | `file.url`                         | Customise how a file's download URL is resolved (signed URLs, proxies). |
+| `shouldForward`          | `(file, state) => boolean`                   | forward all                        | Skip specific hub files.                                                |
+| `buildMeta`              | `(file, state) => object`                    | —                                  | Add extra Uppy metadata per file.                                       |
+| `buildFile`              | `(blob, file, state) => Blob \| File`        | `new File([blob], name, { type })` | Customise what Uppy receives as `file.data`.                            |
+| `source`                 | `string`                                     | `'ScanUpload'`                     | Uppy `file.source` value.                                               |
+| `mirrorRemovals`         | `boolean`                                    | `true`                             | Remove the Uppy file when the hub drops it.                             |
+| `maxConcurrentDownloads` | `number`                                     | `4`                                | Simultaneous file downloads.                                            |
+| `onForwarded`            | `(file, uppyFileId) => void`                 | —                                  | Called after a file lands in Uppy.                                      |
+| `onForwardError`         | `(error, file) => void`                      | Uppy Informer message              | Called when a file cannot be downloaded or added.                       |
 
 Any other Uppy plugin option (`id`, `locale`) is accepted as usual.
 
@@ -82,11 +82,11 @@ Any other Uppy plugin option (`id`, `locale`) is accepted as usual.
 
 Every forwarded file carries these keys, in addition to whatever `buildMeta` returns (ScanUpload's own keys always win):
 
-| Key | Description |
-| --- | --- |
-| `scanUploadFileId` | The `UploadedFile.id` reported by the hub. |
+| Key                   | Description                                      |
+| --------------------- | ------------------------------------------------ |
+| `scanUploadFileId`    | The `UploadedFile.id` reported by the hub.       |
 | `scanUploadSessionId` | The ScanUpload session id, or `null` if unknown. |
-| `scanUploadUrl` | The URL the file was downloaded from. |
+| `scanUploadUrl`       | The URL the file was downloaded from.            |
 
 Because Uppy's metadata is typed per instance, widen your own meta type to keep `uppy.addFile()` type-safe:
 
@@ -95,7 +95,7 @@ import type { ScanUploadFileMeta } from '@scanupload/qr-code-generator-uppy';
 import type { Body } from '@uppy/core';
 
 interface MyMeta extends ScanUploadFileMeta {
-  projectId: string;
+    projectId: string;
 }
 
 const uppy = new Uppy<MyMeta, Body>({ meta: { projectId: 'p-42' } });
@@ -121,11 +121,11 @@ import { QrCodeGenerator } from '@scanupload/qr-code-generator-react';
 import '@scanupload/qr-code-generator-react/dist/index.css';
 
 <QrCodeGenerator
-  sessionUrl={sessionUrl}
-  core={core}      // binds to the plugin's session instead of creating one
-  showHeader
-  header="Scan to upload"
-/>
+    sessionUrl={sessionUrl}
+    core={core} // binds to the plugin's session instead of creating one
+    showHeader
+    header='Scan to upload'
+/>;
 ```
 
 ### Vue
@@ -139,7 +139,7 @@ const props = defineProps<{ core: QrCodeGeneratorCore | null }>();
 </script>
 
 <template>
-  <QrCodeGenerator :session-url="sessionUrl" :core="core" show-header header="Scan to upload" />
+    <QrCodeGenerator :session-url="sessionUrl" :core="core" show-header header="Scan to upload" />
 </template>
 ```
 
@@ -159,12 +159,7 @@ const props = defineProps<{ core: QrCodeGeneratorCore | null }>();
 ### Angular
 
 ```html
-<sqg-qr-code-generator
-  [sessionUrl]="sessionUrl"
-  [core]="core"
-  [showHeader]="true"
-  header="Scan to upload"
-></sqg-qr-code-generator>
+<sqg-qr-code-generator [sessionUrl]="sessionUrl" [core]="core" [showHeader]="true" header="Scan to upload"></sqg-qr-code-generator>
 ```
 
 ### Vanilla
@@ -173,9 +168,9 @@ const props = defineProps<{ core: QrCodeGeneratorCore | null }>();
 import { QrCodeGeneratorElement } from '@scanupload/qr-code-generator-vanilla';
 
 const widget = new QrCodeGeneratorElement({
-  container: document.getElementById('widget')!,
-  sessionUrl,
-  core, // omit to create a dedicated session
+    container: document.getElementById('widget')!,
+    sessionUrl,
+    core // omit to create a dedicated session
 });
 await widget.start();
 ```
@@ -184,15 +179,15 @@ When `core` is supplied, `sessionUrl`, `clientId` and `autoResession` on the wid
 
 ## API
 
-| Member | Description |
-| --- | --- |
-| `getCore()` | The `QrCodeGeneratorCore` this plugin drives. |
-| `getState()` | Current ScanUpload state (connection, countdown, uploaded files). |
-| `subscribe(listener)` | Subscribe to ScanUpload state changes; returns an unsubscribe function. |
-| `retrySession()` | Tear down the session and start a fresh one. |
-| `getUppyFileId(scanUploadFileId)` | Uppy file id for a hub file, once forwarded. |
-| `getForwardedFiles()` | Read-only `Map` of ScanUpload file id → Uppy file id. |
-| `retryFailed()` | Retry files that previously failed to download or be added. |
+| Member                            | Description                                                             |
+| --------------------------------- | ----------------------------------------------------------------------- |
+| `getCore()`                       | The `QrCodeGeneratorCore` this plugin drives.                           |
+| `getState()`                      | Current ScanUpload state (connection, countdown, uploaded files).       |
+| `subscribe(listener)`             | Subscribe to ScanUpload state changes; returns an unsubscribe function. |
+| `retrySession()`                  | Tear down the session and start a fresh one.                            |
+| `getUppyFileId(scanUploadFileId)` | Uppy file id for a hub file, once forwarded.                            |
+| `getForwardedFiles()`             | Read-only `Map` of ScanUpload file id → Uppy file id.                   |
+| `retryFailed()`                   | Retry files that previously failed to download or be added.             |
 
 Failures are not retried automatically, so a permanently broken URL cannot re-fetch on every state change.
 

@@ -42,12 +42,14 @@ export function useQrCodeCore(options: UseQrCodeCoreOptions): QrCodeCoreControll
     const injected = options.core ?? null;
     const ownsCore = injected === null;
 
-    const core = injected ?? new QrCodeGeneratorCore({
-        sessionUrl: options.sessionUrl,
-        clientId: options.clientId,
-        autoResession: options.autoResession,
-        storage: options.storage
-    });
+    const core =
+        injected ??
+        new QrCodeGeneratorCore({
+            sessionUrl: options.sessionUrl,
+            clientId: options.clientId,
+            autoResession: options.autoResession,
+            storage: options.storage
+        });
 
     const state = signal<QrCodeGeneratorState>(core.getState());
 
