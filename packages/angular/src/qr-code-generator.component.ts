@@ -77,15 +77,17 @@ export type QrCodeSize = 'small' | 'medium' | 'large' | 'xlarge';
                         <p class="sqg-hint-text">Click QR code to reload</p>
                     </div>
                 }
-                <div class="sqg-file-container">
-                    @if (filePreviewMode === 'grid') {
-                        @for (file of controller?.state()?.uploadedFiles ?? []; track file.id) {
-                            <sqg-document-previewer [file]="file"></sqg-document-previewer>
+                @if (showFilePreviews) {
+                    <div class="sqg-file-container">
+                        @if (filePreviewMode === 'grid') {
+                            @for (file of controller?.state()?.uploadedFiles ?? []; track file.id) {
+                                <sqg-document-previewer [file]="file"></sqg-document-previewer>
+                            }
+                        } @else {
+                            <sqg-file-list [files]="controller?.state()?.uploadedFiles ?? []"></sqg-file-list>
                         }
-                    } @else {
-                        <sqg-file-list [files]="controller?.state()?.uploadedFiles ?? []"></sqg-file-list>
-                    }
-                </div>
+                    </div>
+                }
                 @if (showDownloadButton) {
                     <sqg-download-button [core]="controller?.core"></sqg-download-button>
                 }
@@ -105,6 +107,15 @@ export class QrCodeGeneratorComponent implements OnInit, OnChanges, OnDestroy {
     /** Automatically replace an expired session. Default: false. */
     @Input() autoResession = false;
     @Input() showDownloadButton = false;
+    /**
+     * Render the list of files received from the phone inside the widget.
+     *
+     * Set to `false` when something else already renders them — most commonly an
+     * Uppy Dashboard fed by `@scanupload/qr-code-generator-uppy` — so the same
+     * files are not shown twice. `filePreviewMode` and `showDownloadButton` are
+     * independent of this. Default: `true`.
+     */
+    @Input() showFilePreviews = true;
     /**
      * Bind to an existing core instead of creating one, so this widget shares a
      * single ScanUpload session with whatever already owns that core — most

@@ -43,6 +43,7 @@ Peer dependency: `svelte >= 5`.
 | `showDownloadButton`  | `boolean`                                    | `false`      | Show a "Download all files" button that fetches every `UploadedFile.url` and triggers a browser save.                                   |
 
 `sessionUrl` is reactive — changing it at runtime updates the live session via the core `setOptions` API.
+| `showFilePreviews` | `boolean` | `true` | Render files received from the phone in the widget. Set to `false` when something else renders them. |
 
 ## Downloads
 

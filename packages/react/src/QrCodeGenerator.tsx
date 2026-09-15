@@ -34,6 +34,15 @@ export interface QrCodeGeneratorProps {
    */
   showDownloadButton?: boolean;
   /**
+   * Render the list of files received from the phone inside the widget.
+   *
+   * Set to `false` when something else already renders them — most commonly an
+   * Uppy Dashboard fed by `@scanupload/qr-code-generator-uppy` — so the same
+   * files are not shown twice. `filePreviewMode` and `showDownloadButton` are
+   * independent of this. Default: `true`.
+   */
+  showFilePreviews?: boolean;
+  /**
    * Bind to an existing core instead of creating one, so this widget shares a
    * single ScanUpload session with whatever already owns that core — most
    * commonly the core exposed by the ScanUpload Uppy plugin.
@@ -55,6 +64,7 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
   filePreviewMode = "grid",
   autoResession = false,
   showDownloadButton = false,
+  showFilePreviews = true,
   core: providedCore,
 }) => {
   const { state, retrySession, core } = useQrCodeCore({
@@ -137,15 +147,17 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
             <p className="sqg-hint-text">Click QR code to reload</p>
           </div>
         )}
-        <div className="sqg-file-container">
-          {filePreviewMode === "grid" ? (
-            state.uploadedFiles.map((file, index) => (
-              <DocumentPreviewer key={index} file={file} />
-            ))
-          ) : (
-            <FileList files={state.uploadedFiles} />
-          )}
-        </div>
+        {showFilePreviews && (
+          <div className="sqg-file-container">
+            {filePreviewMode === "grid" ? (
+              state.uploadedFiles.map((file, index) => (
+                <DocumentPreviewer key={index} file={file} />
+              ))
+            ) : (
+              <FileList files={state.uploadedFiles} />
+            )}
+          </div>
+        )}
         {showDownloadButton ? <DownloadButton core={core} /> : null}
       </div>
     </section>

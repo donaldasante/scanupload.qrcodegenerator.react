@@ -24,6 +24,15 @@
          */
         showDownloadButton?: boolean;
         /**
+         * Render the list of files received from the phone inside the widget.
+         *
+         * Set to `false` when something else already renders them — most commonly
+         * an Uppy Dashboard fed by `@scanupload/qr-code-generator-uppy` — so the
+         * same files are not shown twice. `filePreviewMode` and
+         * `showDownloadButton` are independent of this. Default: `true`.
+         */
+        showFilePreviews?: boolean;
+        /**
          * Bind to an existing core instead of creating one, so this widget shares
          * a single ScanUpload session with whatever already owns that core — most
          * commonly the core exposed by the ScanUpload Uppy plugin.
@@ -55,6 +64,7 @@
         size = 'large',
         autoResession = false,
         showDownloadButton = false,
+        showFilePreviews = true,
         core = null
     }: QrCodeGeneratorProps = $props();
 
@@ -143,15 +153,17 @@
                 <p class="sqg-hint-text">Click QR code to reload</p>
             </div>
         {/if}
-        <div class="sqg-file-container">
-            {#if filePreviewMode === 'grid'}
-                {#each $coreState.uploadedFiles as file (file.id)}
-                    <DocumentPreviewer {file} />
-                {/each}
-            {:else}
-                <FileList files={$coreState.uploadedFiles} />
-            {/if}
-        </div>
+        {#if showFilePreviews}
+            <div class="sqg-file-container">
+                {#if filePreviewMode === 'grid'}
+                    {#each $coreState.uploadedFiles as file (file.id)}
+                        <DocumentPreviewer {file} />
+                    {/each}
+                {:else}
+                    <FileList files={$coreState.uploadedFiles} />
+                {/if}
+            </div>
+        {/if}
         {#if showDownloadButton}
             <DownloadButton core={controller.core} />
         {/if}

@@ -31,6 +31,15 @@ export interface QrCodeGeneratorProps {
      */
     showDownloadButton?: boolean;
     /**
+     * Render the list of files received from the phone inside the widget.
+     *
+     * Set to `false` when something else already renders them — most commonly an
+     * Uppy Dashboard fed by `@scanupload/qr-code-generator-uppy` — so the same
+     * files are not shown twice. `filePreviewMode` and `showDownloadButton` are
+     * independent of this. Default: `true`.
+     */
+    showFilePreviews?: boolean;
+    /**
      * Bind to an existing core instead of creating one, so this widget shares a
      * single ScanUpload session with whatever already owns that core — most
      * commonly the core exposed by the ScanUpload Uppy plugin.
@@ -49,7 +58,8 @@ const props = withDefaults(defineProps<QrCodeGeneratorProps>(), {
     filePreviewMode: 'grid',
     size: 'large',
     autoResession: false,
-    showDownloadButton: false
+    showDownloadButton: false,
+    showFilePreviews: true
 });
 
 const { state, retrySession, core } = useQrCodeCore({
@@ -106,7 +116,7 @@ const onQrClick = () => {
             <div v-else class="sqg-reload-section">
                 <p class="sqg-hint-text">Click QR code to reload</p>
             </div>
-            <div class="sqg-file-container">
+            <div v-if="showFilePreviews" class="sqg-file-container">
                 <template v-if="filePreviewMode === 'grid'">
                     <DocumentPreviewer v-for="(file, index) in state.uploadedFiles" :key="index" :file="file" />
                 </template>

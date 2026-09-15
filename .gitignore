@@ -15,6 +15,9 @@ dist-ssr
 .env
 .env.qa
 
+# Screenshots and traces written by the Playwright browser tools.
+.playwright-mcp
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

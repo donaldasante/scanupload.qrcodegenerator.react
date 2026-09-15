@@ -45,6 +45,8 @@ The browser `POST`s to `sessionUrl` directly. The ScanUpload hub authenticates t
 
 ## Common props
 
+| `showFilePreviews` | `boolean` | `true` | Render the files received from the phone inside the widget. Set to `false` when something else already renders them — typically an Uppy Dashboard — so they are not shown twice. |
+
 All framework adapters share the same prop names. (Vue uses kebab-case in templates; Angular binds booleans with `[propName]`.) See each package's README for adapter-specific syntax.
 
 | Prop                  | Type                                         | Default      | Description                                                                                                                                                                                                  |

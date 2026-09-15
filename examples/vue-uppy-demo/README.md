@@ -48,30 +48,27 @@ VITE_UPLOAD_ENDPOINT=https://your-backend.example.com/api/uploads
 
 ## What to look for
 
-| Panel                      | Shows                                                                                                                                                        |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **1 · ScanUpload session** | The QR widget, SignalR state, session TTL, and an expandable list of every file the hub published with its download URL.                                     |
-| **2 · Uppy**               | The Uppy Dashboard, `autoProceed`, counters, and a timestamped event log (`forwarded`, `file-added`, `upload-success`, `complete`, `upload-error`, retries). |
+The page is one upload box split into two halves, plus a single status line:
 
-Two controls exist purely to exercise the integration:
+| Half                 | Shows                                                                                                          |
+| -------------------- | -------------------------------------------------------------------------------------------------------------- |
+| **From your phone**  | The ScanUpload QR code for the session the plugin owns. Set `showFilePreviews` to `false` so it lists nothing. |
+| **From this device** | The Uppy Dashboard drop zone — drop or browse for local files.                                                 |
+| **Status line**      | `phone connected` / `phone offline`, how many files came from the phone, and how many have been uploaded.      |
 
-- **Share the plugin's core with the widget** — on (default) hands `plugin.getCore()` to the widget so the QR code and the plugin watch the _same_ session. Turn it off and the widget opens its own session, producing a second QR code whose uploads the plugin never sees. That is the whole reason the `core` prop exists.
-- **Retry failed downloads** → `plugin.retryFailed()`, for files whose download gave up after exhausting its attempts.
+Both halves feed the same Uppy instance, so phone files and dropped files end up in one list and are uploaded to the same endpoint.
+
+The widget renders with `showFilePreviews: false` because Uppy already lists everything that arrived — showing the same files twice added nothing. The flag exists on every adapter; set it back to `true` to get the widget's own preview list.
+
+```vue
+<QrCodeGenerator :session-url="sessionUrl" :client-id="clientId" :core="core" :show-file-previews="false" />
+```
+
+`core` is what makes the halves share a session: `plugin.getCore()` is handed to the widget, so the QR code the phone scans is the session the plugin watches. Without it the widget would open a second session and the plugin would never see those uploads.
 
 ### Transient 404s are expected
 
-The hub publishes a file's URL in `FileAdded` slightly before the blob is readable, so the first `GET` typically answers `404 FileUpload.FileNotFound` and the retry succeeds. You will see those 404s in the browser's network panel, and matching `retry n/6 · …` lines in the demo log (wired through `onDownloadRetry`). They are not failures.
-
-Tuning lives in the plugin, e.g.:
-
-```ts
-instance.use(ScanUploadPlugin, {
-    sessionUrl,
-    clientId,
-    maxDownloadAttempts: 6, // default
-    downloadRetryDelayMs: 500 // default; doubles per attempt, capped at 4 s
-});
-```
+The hub publishes a file's URL in `FileAdded` slightly before the blob is readable, so the first `GET` typically answers `404 FileUpload.FileNotFound` and the retry succeeds. Those 404s appear in the browser's network panel but are not failures — the plugin retries them automatically (six attempts, roughly 11.5 s of patience). Files that still fail can be re-queued with `plugin.retryFailed()`.
 
 ## Verify without a phone
 

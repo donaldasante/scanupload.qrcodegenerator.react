@@ -55,6 +55,15 @@ export interface QrCodeGeneratorElementOptions extends QrCodeGeneratorCoreOption
      */
     showDownloadButton?: boolean;
     /**
+     * Render the list of files received from the phone inside the widget.
+     *
+     * Set to `false` when something else already renders them — most commonly an
+     * Uppy Dashboard fed by `@scanupload/qr-code-generator-uppy` — so the same
+     * files are not shown twice. `filePreviewMode` and `showDownloadButton` are
+     * independent of this. Default: `true`.
+     */
+    showFilePreviews?: boolean;
+    /**
      * Bind to an existing core instead of creating one. The injected core is
      * owned by whoever supplied it — most commonly the ScanUpload Uppy plugin —
      * so this element will neither start nor dispose it, and will not push
@@ -75,7 +84,14 @@ export class QrCodeGeneratorElement {
     private _options: Required<
         Pick<
             QrCodeGeneratorElementOptions,
-            'showHeader' | 'showLogo' | 'clickQrCodeToReload' | 'filePreviewMode' | 'size' | 'injectStyles' | 'showDownloadButton'
+            | 'showHeader'
+            | 'showLogo'
+            | 'clickQrCodeToReload'
+            | 'filePreviewMode'
+            | 'size'
+            | 'injectStyles'
+            | 'showDownloadButton'
+            | 'showFilePreviews'
         >
     > &
         QrCodeGeneratorElementOptions;
@@ -110,6 +126,7 @@ export class QrCodeGeneratorElement {
             size: 'large',
             injectStyles: true,
             showDownloadButton: false,
+            showFilePreviews: true,
             ...options
         };
 
@@ -273,6 +290,11 @@ export class QrCodeGeneratorElement {
 
         // File container
         const fileContainer = el('div');
+        // Hidden rather than omitted so `_render` can keep skipping work without
+        // special-casing a missing element.
+        if (!this._options.showFilePreviews) {
+            fileContainer.style.display = 'none';
+        }
         content.appendChild(fileContainer);
 
         // Optional download section (rendered only when showDownloadButton is true)
@@ -359,7 +381,7 @@ export class QrCodeGeneratorElement {
         }
 
         // Files
-        if (!prev || prev.uploadedFiles !== state.uploadedFiles) {
+        if (this._options.showFilePreviews && (!prev || prev.uploadedFiles !== state.uploadedFiles)) {
             this._renderFiles(state.uploadedFiles);
         }
 

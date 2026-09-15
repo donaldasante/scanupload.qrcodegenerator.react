@@ -47,6 +47,7 @@ By default the built-in stylesheet is injected into `<head>`. Set `injectStyles:
 | `autoResession`       | `boolean`                                    | `false`      | Create a fresh session automatically when the current one expires. By default, the disconnected state and Reload action remain visible. |
 | `injectStyles`        | `boolean`                                    | `true`       | Auto-inject the built-in stylesheet into `<head>`.                                                                                      |
 | `showDownloadButton`  | `boolean`                                    | `false`      | Render a "Download all files" button beneath the previews.                                                                              |
+| `showFilePreviews`    | `boolean`                                    | `true`       | Render files received from the phone in the widget. Set to `false` when something else renders them.                                    |
 
 ## Downloads
 
