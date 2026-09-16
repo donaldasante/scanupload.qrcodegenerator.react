@@ -186,6 +186,16 @@ const props = defineProps<{ core: QrCodeGeneratorCore | null }>();
 <sqg-qr-code-generator [sessionUrl]="sessionUrl" [core]="core" [showHeader]="true" header="Scan to upload"></sqg-qr-code-generator>
 ```
 
+The component reads `core` when it is created, so render it only once the plugin
+has produced one — otherwise the widget starts a session of its own and shows a
+different QR code:
+
+```html
+@if (core(); as widgetCore) {
+<sqg-qr-code-generator [sessionUrl]="sessionUrl" [core]="widgetCore" [showHeader]="true" header="Scan to upload"></sqg-qr-code-generator>
+}
+```
+
 ### Vanilla
 
 ```ts

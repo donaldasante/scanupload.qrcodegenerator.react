@@ -15,6 +15,16 @@
  * other four demos render.
  */
 
+/*
+ * This sheet is layered. The first block is the demo's original fixed-viewport
+ * layout: `body` locked, the card claiming the viewport, and the widget's file
+ * list as the only thing that scrolled. The override block further down (from
+ * `body { height: auto; ... }`) replaced that with what the demo actually uses —
+ * the page scrolls, the card holds the controls, and the QR code and the Uppy
+ * Dashboard share one two-panel card. Later rules win, so read the overrides as
+ * the behaviour and the earlier rules as history.
+ */
+
 *,
 *::before,
 *::after {
@@ -261,7 +271,7 @@ body {
     margin-top: 0.25rem;
 }
 
-/* ── Upload box: QR code and Uppy stacked vertically ───────────────────── */
+/* ── Upload box: the QR code and the Uppy Dashboard in one card ───────────────────── */
 
 .upload-box {
     display: flex;

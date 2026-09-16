@@ -19,8 +19,9 @@ The app starts on https://localhost:5177 (HTTPS is required for the hub's `Origi
 
 ## What the demo shows
 
-The settings panel at the top drives the widget's props. Below it are the two
-ways into the same Uppy instance, stacked vertically:
+The settings panel drives the widget's props. Beneath it sits one card holding
+the two ways into the same Uppy instance — side by side on wide screens, stacked
+on narrow ones:
 
 - **From your phone** — the ScanUpload QR code. The widget is bound to the
   plugin's core, so it renders the QR code for the session Uppy is listening on
