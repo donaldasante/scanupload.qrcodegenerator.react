@@ -160,6 +160,45 @@ stages:
               fi
             displayName: "Publish uppy package"
 
+          # npm publishes are not immediately visible from every registry edge.
+          # Do not start a Docker build until each package version resolves from
+          # the public registry; the demo build contexts install from npm rather
+          # than from the monorepo workspace.
+          - script: |
+              set -eu
+
+              packages="core react vanilla vue angular svelte uppy"
+              max_attempts=12
+
+              for attempt in $(seq 1 "$max_attempts"); do
+                unavailable=""
+
+                for package in $packages; do
+                  name="@scanupload/qr-code-generator-$package"
+                  version=$(node -p "require('./packages/$package/package.json').version")
+
+                  if npm view "$name@$version" version > /dev/null 2>&1; then
+                    echo "$name@$version is available"
+                  else
+                    unavailable="$unavailable $name@$version"
+                  fi
+                done
+
+                if [ -z "$unavailable" ]; then
+                  echo "All published packages are available from npm."
+                  exit 0
+                fi
+
+                if [ "$attempt" -eq "$max_attempts" ]; then
+                  echo "##[error]Timed out waiting for npm package availability:$unavailable"
+                  exit 1
+                fi
+
+                echo "Waiting for npm registry propagation (attempt $attempt/$max_attempts):$unavailable"
+                sleep 10
+              done
+            displayName: "Wait for npm package availability"
+
           - task: Bash@3
             displayName: "Set Docker Tag Variable"
             inputs:

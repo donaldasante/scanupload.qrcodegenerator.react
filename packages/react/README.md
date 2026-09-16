@@ -1,6 +1,7 @@
 # @scanupload/qr-code-generator-react
 
-React component wrapper for the ScanUpload QR Code Generator. Renders a QR code, manages the live upload session over SignalR, and shows uploaded-file previews.
+React component wrapper for the ScanUpload QR Code Generator. Renders a QR code,
+manages the live upload session over SignalR, and shows uploaded-file previews.
 
 ## Install
 
@@ -13,21 +14,34 @@ Peer dependencies: `react >= 19`, `react-dom >= 19`.
 ## Quick start
 
 ```tsx
-import { QrCodeGenerator } from '@scanupload/qr-code-generator-react';
-import '@scanupload/qr-code-generator-react/dist/index.css';
+import { QrCodeGenerator } from "@scanupload/qr-code-generator-react";
+import "@scanupload/qr-code-generator-react/dist/index.css";
 
 export function UploadWidget() {
-    return (
-        <QrCodeGenerator
-            sessionUrl='/api/front-end/session'
-            clientId='your-tenant-id'
-            header='Upload files from your phone'
-            showHeader
-            showDownloadButton
-        />
-    );
+  return (
+    <QrCodeGenerator
+      sessionUrl="/api/front-end/session"
+      clientId="your-client-id"
+      header="Upload files from your phone"
+      showHeader
+      showDownloadButton
+    />
+  );
 }
 ```
+
+## Get a client ID
+
+The `clientId` prop identifies your tenant. Create it in the ScanUpload
+Dashboard:
+
+1. Log in or sign up to the
+   [ScanUpload Dashboard](https://app.scanupload.net/dashboard).
+2. Enter your company name and website URL, then click **Save**.
+3. Navigate to the **Client Credentials** section to generate your client ID.
+
+The client secret is only used by server-side integrations — leave it out of any
+client-side env file. The browser only needs the client ID.
 
 ## Props
 
@@ -47,68 +61,64 @@ export function UploadWidget() {
 
 ## Downloads
 
-When `showDownloadButton` is `true`, a button appears beneath the file previews. Clicking it iterates the live `state.uploadedFiles` and fetches each `url`, triggering a browser save for every file the hub has surfaced. A single bad URL doesn't abort the rest — a per-batch error toast is shown if any file fails.
+Set `showDownloadButton` to render a "Download all files" button beneath the
+previews. It fetches every `UploadedFile.url` the hub has surfaced and saves
+each file, showing an error toast if any fail.
 
-You can also render `<DownloadButton>` on its own:
-
-```tsx
-import { DownloadButton } from '@scanupload/qr-code-generator-react';
-
-<DownloadButton core={core} label='Save all' />;
-```
-
-## Styling
-
-The package ships `dist/index.css`. Import your overrides **after** it so same-specificity rules win via cascade.
+`DownloadButton` is exported separately if you want it on its own:
 
 ```tsx
-import '@scanupload/qr-code-generator-react/dist/index.css';
-import './my-overrides.css';
+import { DownloadButton } from "@scanupload/qr-code-generator-react";
+
+<DownloadButton core={core} label="Save all" />;
 ```
 
-```css
-:root {
-    --sqg-primary: #6366f1;
-    --sqg-radius: 1rem;
-}
-```
+## Handling files elsewhere
 
-See the [root README](../../README.md#css-custom-properties) for the full list of `--sqg-*` tokens.
-
-## Related exports
-
-- `useQrCodeCore` — hook returning `{ state, core, retrySession }`
-- `usePersistentState` — read/write helpers backed by the configured `StorageAdapter`
-- `DownloadButton` — the same button the component renders when `showDownloadButton` is `true`
-- `QrCodeGeneratorProps`, `DownloadButtonProps`
-
-## File lifecycle callbacks
-
-Hand every file the widget receives to your own code — an uploader, an
-application-owned list, or analytics. Pair them with `showFilePreviews={false}`
-when something else renders the files.
+Set `showFilePreviews={false}` and use the lifecycle callbacks when something
+else renders the files — an uploader, your own list, or analytics:
 
 ```tsx
 <QrCodeGenerator
-    sessionUrl={sessionUrl}
-    showFilePreviews={false}
-    onFileAvailable={(file, origin) => add(file)}
-    onFileRemoved={(file) => drop(file.id)}
-    onFilesCleared={() => dropAll()}
+  sessionUrl={sessionUrl}
+  showFilePreviews={false}
+  onFileAvailable={(file, origin) => add(file)}
+  onFileRemoved={(file) => drop(file.id)}
+  onFilesCleared={() => dropAll()}
 />
 ```
 
-| Prop              | Type                     | Default     | Description                                                              |
-| ----------------- | ------------------------ | ----------- | ------------------------------------------------------------------------ |
-| `onFileAvailable` | `(file, origin) => void` | `undefined` | Every file the hub is holding. `origin` is `'live'` or `'restored'`.     |
-| `onFileRemoved`   | `(file) => void`         | `undefined` | The hub dropped a single file. Not called for a full clear.              |
-| `onFilesCleared`  | `(files) => void`        | `undefined` | Every file was cleared at once — a session reset, or the session ending. |
+| Prop              | Type                     | Description                                                          |
+| ----------------- | ------------------------ | -------------------------------------------------------------------- |
+| `onFileAvailable` | `(file, origin) => void` | Every file the hub is holding. `origin` is `'live'` or `'restored'`. |
+| `onFileRemoved`   | `(file) => void`         | The hub dropped a single file. Not called for a full clear.          |
+| `onFilesCleared`  | `(files) => void`        | Every file was cleared at once.                                      |
 
-Events are not replayed: a file that arrived before the widget mounted will not
-fire `onFileAvailable`. Reach for `connectScanUploadFiles` from
-`@scanupload/qr-code-generator-core` when you need a guaranteed one-shot pass
-over the session — that is also the tool for feeding an uploader that has no
-bespoke adapter.
+Events are not replayed, so a file that arrived before the widget mounted will
+not fire `onFileAvailable`. For a guaranteed one-shot pass over the session — or
+to feed an uploader with no bespoke adapter — use `connectScanUploadFiles` from
+[`@scanupload/qr-code-generator-core`](../core#feeding-another-uploader).
+
+## Styling
+
+The package ships `dist/index.css`. Import your overrides **after** it so
+same-specificity rules win via cascade.
+
+```tsx
+import "@scanupload/qr-code-generator-react/dist/index.css";
+import "./my-overrides.css";
+```
+
+See the [root README](../../README.md#css-custom-properties) for the full list
+of `--sqg-*` tokens.
+
+## Other exports
+
+- `useQrCodeCore` — hook returning `{ state, core, retrySession }`
+- `usePersistentState` — read/write helpers backed by the configured
+  `StorageAdapter`
+- `DownloadButton` — the button `showDownloadButton` renders
+- `QrCodeGeneratorProps`, `DownloadButtonProps`
 
 ## License
 

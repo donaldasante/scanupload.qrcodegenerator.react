@@ -1,8 +1,13 @@
 # @scanupload/qr-code-generator
 
-A multi-framework QR code generator for the [ScanUpload](https://app.scanupload.net) backend. A mobile device scans the QR code, uploads files to a ScanUpload session, and the desktop component receives real-time status updates over SignalR — rendering a live preview of every uploaded file.
+A multi-framework QR code generator for the
+[ScanUpload](https://app.scanupload.net) backend. A mobile device scans the QR
+code, uploads files to a ScanUpload session, and the desktop component receives
+real-time status updates over SignalR — rendering a live preview of every
+uploaded file.
 
-This is a **monorepo** with a framework-agnostic core and dedicated adapter packages for React, Vue, Angular, Svelte, and Vanilla JS/TS.
+This is a **monorepo** with a framework-agnostic core and dedicated adapter
+packages for React, Vue, Angular, Svelte, and Vanilla JS/TS.
 
 ## Packages
 
@@ -25,23 +30,38 @@ npm install @scanupload/qr-code-generator-react
 ```
 
 ```tsx
-import { QrCodeGenerator } from '@scanupload/qr-code-generator-react';
-import '@scanupload/qr-code-generator-react/dist/index.css';
+import { QrCodeGenerator } from "@scanupload/qr-code-generator-react";
+import "@scanupload/qr-code-generator-react/dist/index.css";
 
 export function UploadWidget() {
-    return (
-        <QrCodeGenerator
-            sessionUrl='https://hub.scanupload.net/api/v2/front-end/session'
-            clientId='your-tenant-id'
-            header='Upload files from your phone'
-            showHeader
-            showDownloadButton
-        />
-    );
+  return (
+    <QrCodeGenerator
+      sessionUrl="https://hub.scanupload.net/api/v2/front-end/session"
+      clientId="your-client-id"
+      header="Upload files from your phone"
+      showHeader
+      showDownloadButton
+    />
+  );
 }
 ```
 
-The browser `POST`s to `sessionUrl` directly. The ScanUpload hub authenticates the request from the browser's `Origin` header — no API token, no client-side proxy.
+The browser `POST`s to `sessionUrl` directly. The ScanUpload hub authenticates
+the request from the browser's `Origin` header — no API token, no client-side
+proxy.
+
+## Get a client ID
+
+The `clientId` prop identifies your tenant. Create it in the ScanUpload
+Dashboard:
+
+1. Log in or sign up to the
+   [ScanUpload Dashboard](https://app.scanupload.net/dashboard).
+2. Enter your company name and website URL, then click **Save**.
+3. Navigate to the **Client Credentials** section to generate your client ID.
+
+The client secret is only used by server-side integrations — leave it out of any
+client-side env file. The browser only needs the client ID.
 
 ## Common props
 
@@ -63,7 +83,9 @@ The browser `POST`s to `sessionUrl` directly. The ScanUpload hub authenticates t
 | `onFileRemoved`       | `(file) => void`                             | `undefined`  | Called when the hub drops a single file. Not called for a full clear.                                                                                                                                        |
 | `onFilesCleared`      | `(files) => void`                            | `undefined`  | Called when every file is cleared at once — a session reset, or the session ending.                                                                                                                          |
 
-All framework adapters share the same prop names. (Vue uses kebab-case in templates; Angular binds booleans with `[propName]`.) See each package's README for adapter-specific syntax.
+All framework adapters share the same prop names. (Vue uses kebab-case in
+templates; Angular binds booleans with `[propName]`.) See each package's README
+for adapter-specific syntax.
 
 ### Routing files somewhere else
 
@@ -75,11 +97,13 @@ once, in the place you chose:
 const [received, setReceived] = useState<UploadedFile[]>([]);
 
 <QrCodeGenerator
-    sessionUrl={sessionUrl}
-    showFilePreviews={false}
-    onFileAvailable={(file) => setReceived((prev) => [...prev, file])}
-    onFileRemoved={(file) => setReceived((prev) => prev.filter((f) => f.id !== file.id))}
-    onFilesCleared={() => setReceived([])}
+  sessionUrl={sessionUrl}
+  showFilePreviews={false}
+  onFileAvailable={(file) => setReceived((prev) => [...prev, file])}
+  onFileRemoved={(file) =>
+    setReceived((prev) => prev.filter((f) => f.id !== file.id))
+  }
+  onFilesCleared={() => setReceived([])}
 />;
 ```
 
@@ -89,11 +113,11 @@ transient-404 retry, de-duplication, concurrency and removal mirroring, so your
 integration is only a "given a file, put it here" sink:
 
 ```ts
-import { connectScanUploadFiles } from '@scanupload/qr-code-generator-core';
+import { connectScanUploadFiles } from "@scanupload/qr-code-generator-core";
 
 const connection = connectScanUploadFiles({
-    core: plugin.getCore(),
-    sink: { add: (file) => myUploader.attach(file) }
+  core: plugin.getCore(),
+  sink: { add: (file) => myUploader.attach(file) },
 });
 ```
 
@@ -104,34 +128,43 @@ and therefore need an application-owned list instead.
 
 ## Uppy integration
 
-`@scanupload/qr-code-generator-uppy` is an optional, headless Uppy plugin. It is the only package that depends on Uppy — every other package here works with or without it.
+`@scanupload/qr-code-generator-uppy` is an optional, headless Uppy plugin. It is
+the only package that depends on Uppy — every other package here works with or
+without it.
 
 ```ts
-import Uppy from '@uppy/core';
-import XHRUpload from '@uppy/xhr-upload';
-import ScanUpload from '@scanupload/qr-code-generator-uppy';
+import Uppy from "@uppy/core";
+import XHRUpload from "@uppy/xhr-upload";
+import ScanUpload from "@scanupload/qr-code-generator-uppy";
 
-const uppy = new Uppy({ autoProceed: true }).use(ScanUpload, { sessionUrl, clientId }).use(XHRUpload, { endpoint: '/api/uploads' });
+const uppy = new Uppy({ autoProceed: true })
+  .use(ScanUpload, { sessionUrl, clientId })
+  .use(XHRUpload, { endpoint: "/api/uploads" });
 ```
 
-Each photo uploaded from the phone is downloaded by the browser and added to Uppy as a normal file, so any Uppy uploader (XHR, Tus, S3) can send it on. To render the QR code, bind a ScanUpload widget to the plugin's core so both share one session:
+Each photo uploaded from the phone is downloaded by the browser and added to
+Uppy as a normal file, so any Uppy uploader (XHR, Tus, S3) can send it on. To
+render the QR code, bind a ScanUpload widget to the plugin's core so both share
+one session:
 
 ```tsx
-const plugin = uppy.getPlugin<ScanUploadPlugin>('ScanUpload');
+const plugin = uppy.getPlugin<ScanUploadPlugin>("ScanUpload");
 
 <QrCodeGenerator sessionUrl={sessionUrl} core={plugin?.getCore()} />;
 ```
 
-See [`packages/uppy/README.md`](packages/uppy) for the full option list and per-framework snippets.
+See [`packages/uppy/README.md`](packages/uppy) for the full option list and
+per-framework snippets.
 
 ## CSS custom properties
 
-All packages share the same `--sqg-*` token names. Override them on `:root` to theme every widget at once.
+All packages share the same `--sqg-*` token names. Override them on `:root` to
+theme every widget at once.
 
 ```css
 :root {
-    --sqg-primary: #6366f1;
-    --sqg-radius: 1rem;
+  --sqg-primary: #6366f1;
+  --sqg-radius: 1rem;
 }
 ```
 
@@ -156,7 +189,8 @@ All packages share the same `--sqg-*` token names. Override them on `:root` to t
 
 ## Demos
 
-Runnable examples live in `examples/`. Each demo calls the hub directly using `VITE_SESSION_URL` (or `NEXT_PUBLIC_SESSION_URL`):
+Runnable examples live in `examples/`. Each demo calls the hub directly using
+`VITE_SESSION_URL` (or `NEXT_PUBLIC_SESSION_URL`):
 
 | Demo                                       | Run                   |
 | ------------------------------------------ | --------------------- |
@@ -168,19 +202,10 @@ Runnable examples live in `examples/`. Each demo calls the hub directly using `V
 | [Next.js App Router](examples/nextjs-demo) | `npm run dev:nextjs`  |
 
 All six demos run the same layout and the same Uppy integration, so any of them
-can be used as the reference:
-
-- One card holds two panels — **From your phone** (the ScanUpload widget) and
-  **From this device** (an Uppy Dashboard). Both feed a single `Uppy` instance,
-  so a file that arrives from the phone and one dropped locally are uploaded the
-  same way, through `@uppy/xhr-upload`.
-- The drop zone mirrors the QR square. The square's measured rect is published on
-  the card as `--scan-height` / `--scan-offset`, so the two panels start on the
-  same line; once files arrive the drop zone grows into the card's spare height
-  and only then scrolls, so added files stay readable.
-- Below `66rem` everything stacks and the page scrolls normally. At or above
-  `66rem` the settings card sits beside the widget card and the two panels sit
-  side by side.
+can be used as the reference. One card holds two panels — **From your phone**
+(the ScanUpload widget) and **From this device** (an Uppy Dashboard) — both
+feeding a single `Uppy` instance, so a file that arrives from the phone and one
+dropped locally are uploaded the same way, through `@uppy/xhr-upload`.
 
 Files go to `/demo-upload`, a mock endpoint each demo's server answers — the
 `mockUploadEndpoint()` plugin in the Vite demos' `vite.config.js`, and
@@ -188,45 +213,73 @@ Files go to `/demo-upload`, a mock endpoint each demo's server answers — the
 `VITE_UPLOAD_ENDPOINT` — or `NEXT_PUBLIC_UPLOAD_ENDPOINT` — to upload somewhere
 real instead.
 
-## Architecture
+## Deploying
 
-The package READMEs cover each adapter; the sections below cover what they share.
+The browser creates the ScanUpload session with an HTTPS request, then uses
+SignalR over a secure WebSocket. Most connection failures in production come
+from browser security policy or an origin mismatch, not from the integration.
 
-### Layout & sizing
+### Allowed origins
 
-Every package emits the same DOM around the component for predictable styling:
+Register the exact public application origin in the
+[ScanUpload Dashboard](https://app.scanupload.net/dashboard): scheme, hostname
+and port must all match. `https://app.example.com` and
+`https://app.example.com:443` are not interchangeable in every CORS
+configuration. Add each environment separately.
 
-| Element               | Class                                     | Notes                                                                                                                                                                                                                                                                                                                        |
-| --------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Root                  | `.sqg-root`                               | `data-size="small\|medium\|large\|xlarge"` is set on the root, and `[data-size="..."]` rules in each package's CSS drive the QR container width/height (80, 120, 160, 192 px). The QR `<svg>` from `qrcode` always bakes `width="200"` so the inner SVG needs explicit `width: 100%; height: 100%` to scale.                 |
-| Content               | `.sqg-content`                            | A flex column. When the file container has actual file elements (`.sqg-file-card` or `.sqg-file-row`), `.sqg-content` grows to fill the widget via `:has()`.                                                                                                                                                                 |
-| File container (grid) | `.sqg-file-grid`                          | Direct child of `.sqg-content`. Flex row, wraps, scrolls vertically on overflow.                                                                                                                                                                                                                                             |
-| File container (list) | `.sqg-file-list` + `.sqg-file-list-inner` | The scrolling context is the **inner** element — putting `overflow: hidden` on the inner element while `overflow-y: auto` lives on the outer list causes the browser to measure scrollHeight as the outer height (clipped), so no scrollbar appears. The inner element must carry `overflow-y: auto` for the list to scroll. |
+For local development, enable **Test Mode** on the client configuration to
+bypass origin validation, so the local HTTPS dev server can create a session.
+Without it the request fails with:
 
-### Demo layout
+```text
+The origin 'https://localhost:5173' is not in the AllowedOrigins list for tenant '...'.
+```
 
-All six demos share one stylesheet and one DOM shape, so a change to the pattern
-applies everywhere:
+Disable Test Mode before deploying.
 
-| Element       | Class / attribute | Notes                                                                                                                                                      |
-| ------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Settings card | `.demo-card`      | Holds the form controls only, and is content-sized — the widget no longer lives inside it, so nothing in it scrolls.                                       |
-| Upload card   | `.upload-box`     | One card, two `.half` panels — the QR widget and the Uppy Dashboard. Stacked below `66rem`, side by side at or above it.                                   |
-| Widget slot   | `.scan-widget`    | Centres the widget and lets it shrink (`min-width: 0`). Vanilla mounts into `<div id="widget-container" class="scan-widget">`; same role on every adapter. |
-| Uppy slot     | `.uppy-shell`     | Positioned wrapper for `.uppy-host`, the element the Dashboard mounts into. Carries `has-files` while Uppy holds files.                                    |
-| Drop badge    | `.drop-icon`      | Decorative upload glyph over the empty drop zone; hidden by `has-files` as soon as a file arrives.                                                         |
+### CSP
 
-Two custom properties, published on `.upload-box` by each demo's entry file,
-keep the two panels level:
+If your site sends a Content Security Policy, allow the hub in `connect-src` for
+**both** protocols:
 
-| Property        | Measured from                             | Effect                                                                    |
-| --------------- | ----------------------------------------- | ------------------------------------------------------------------------- |
-| `--scan-height` | the `.sqg-qr-wrapper` square's height     | The drop zone is never shorter than the QR square.                        |
-| `--scan-offset` | the square's top, relative to its wrapper | Pushes the drop zone down to the square's line, clearing the panel title. |
+```text
+connect-src 'self' https://hub.scanupload.net wss://hub.scanupload.net;
+```
 
-The dashed square is measured rather than the whole widget, because the drop
-zone lines up with the code, not with the header above it or the hint below.
-`has-files` growth is capped at `min(60svh, 26rem)` below `66rem`.
+`https://` permits the session API request; `wss://` permits the SignalR
+negotiate and WebSocket traffic. CSP does not infer `wss://` permission from an
+`https://` entry. The included Nginx configuration receives these sources
+through `CONNECT_SRC`; use the equivalent `connect-src` directive in Apache,
+IIS, a CDN, or your application server.
+
+Inspect the **document** response in browser DevTools, not just a JavaScript
+asset. Multiple CSP headers are all enforced, and
+`Content-Security-Policy-Report-Only` logs a warning without blocking — so check
+whether an extension, CDN, or reverse proxy adds a second policy.
+
+### CORS, SignalR, and proxies
+
+- Serve the application over HTTPS. An HTTPS page can use `wss://`; an HTTP page
+  is blocked from connecting to the secure hub by mixed-content rules.
+- These examples connect directly to the hub, so a reverse proxy is not
+  required. If you introduce one, forward the browser `Origin` header and enable
+  WebSocket upgrade forwarding for the SignalR route (`Upgrade` and `Connection`
+  headers).
+- A session API success followed by a failed SignalR negotiation usually means
+  `wss://hub.scanupload.net` is missing from CSP, the allowed origin list, or
+  proxy WebSocket support.
+
+### Configuration and diagnostics
+
+Vite replaces `VITE_*` values when it builds the JavaScript bundle, so changing
+container runtime environment variables after the image is built does not change
+the deployed app — rebuild the image with the new values. Never expose a client
+secret through a `VITE_*` or `NEXT_PUBLIC_*` variable.
+
+In DevTools, check the Console for CSP and mixed-content errors, then check
+Network for the session request and the SignalR `negotiate` request. The
+response headers and the request's `Origin` value identify the policy or CORS
+layer that must be updated.
 
 ## Development
 
@@ -236,12 +289,13 @@ npm run build            # build all packages in dependency order
 npm run dev:react        # run the React demo (rebuild packages first)
 ```
 
-> The demos resolve packages from their local `dist/` folder. Always rebuild after changing any package source.
+> The demos resolve packages from their local `dist/` folder. Always rebuild
+> after changing any package source.
 
 ### Releases
 
-Every workspace shares one version — the seven packages and the six private demos
-— and they are bumped together. The `version` fields and the internal
+Every workspace shares one version — the seven packages and the six private
+demos — and they are bumped together. The `version` fields and the internal
 `"@scanupload/*": "^0.2.x"` dependency ranges move in the same pass (the demos
 and the packages both pin their siblings explicitly), and `npm install` then
 refreshes `package-lock.json`.
