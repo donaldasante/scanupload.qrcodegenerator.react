@@ -22,7 +22,6 @@
     "dev:vue": "npm run dev --workspace=examples/vue-demo",
     "dev:angular": "npm run dev --workspace=examples/angular-demo",
     "dev:svelte": "npm run dev --workspace=examples/svelte-demo",
-    "dev:vue-uppy": "npm run dev --workspace=examples/vue-uppy-demo",
     "lint": "eslint packages --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "devDependencies": {

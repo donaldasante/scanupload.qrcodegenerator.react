@@ -61,6 +61,46 @@ All framework adapters share the same prop names. (Vue uses kebab-case in templa
 | `size`                | `"small" \| "medium" \| "large" \| "xlarge"` | `"large"`    | Overall size of the QR code container.                                                                                                                                                                       |
 | `showDownloadButton`  | `boolean`                                    | `false`      | Show a "Download all files" button beneath the previews. When clicked, the component fetches every `UploadedFile.url` the SignalR hub has surfaced and triggers a browser save for each.                     |
 | `core`                | `QrCodeGeneratorCore \| null`                | `undefined`  | Bind to an existing core instead of creating one, so the widget shares a single session with another owner (typically the Uppy plugin). While set, `sessionUrl`, `clientId` and `autoResession` are ignored. |
+| `onFileAvailable`     | `(file, origin) => void`                     | `undefined`  | Called for every file the hub is holding, including files that were already there when this client connected. `origin` is `'live'` or `'restored'`.                                                          |
+| `onFileRemoved`       | `(file) => void`                             | `undefined`  | Called when the hub drops a single file. Not called for a full clear.                                                                                                                                        |
+| `onFilesCleared`      | `(files) => void`                            | `undefined`  | Called when every file is cleared at once — a session reset, or the session ending.                                                                                                                          |
+
+### Routing files somewhere else
+
+The three callbacks above let a widget hand its files to something that is not
+this widget. Pair them with `showFilePreviews={false}` so the files are rendered
+once, in the place you chose:
+
+```tsx
+const [received, setReceived] = useState<UploadedFile[]>([]);
+
+<QrCodeGenerator
+    sessionUrl={sessionUrl}
+    showFilePreviews={false}
+    onFileAvailable={(file) => setReceived((prev) => [...prev, file])}
+    onFileRemoved={(file) => setReceived((prev) => prev.filter((f) => f.id !== file.id))}
+    onFilesCleared={() => setReceived([])}
+/>;
+```
+
+For an uploader you do not have a bespoke adapter for, the core exposes the same
+machinery vendor-neutrally — `connectScanUploadFiles` handles the download, the
+transient-404 retry, de-duplication, concurrency and removal mirroring, so your
+integration is only a "given a file, put it here" sink:
+
+```ts
+import { connectScanUploadFiles } from '@scanupload/qr-code-generator-core';
+
+const connection = connectScanUploadFiles({
+    core: plugin.getCore(),
+    sink: { add: (file) => myUploader.attach(file) }
+});
+```
+
+See [`packages/core/README.md`](packages/core#feeding-another-uploader) for the
+sink contract and for the caveat about **closed widgets** (react-uploader, the
+Bytescale Upload Widget), which expose no way to insert files you already hold
+and therefore need an application-owned list instead.
 
 ## Uppy integration
 
@@ -118,17 +158,18 @@ All packages share the same `--sqg-*` token names. Override them on `:root` to t
 
 Runnable examples live in `examples/`. Each demo calls the hub directly using `VITE_SESSION_URL` (or `NEXT_PUBLIC_SESSION_URL`):
 
-| Demo                                       | Run                    |
-| ------------------------------------------ | ---------------------- |
-| [React + Vite](examples/react-demo)        | `npm run dev:react`    |
-| [Vue 3 + Vite](examples/vue-demo)          | `npm run dev:vue`      |
-| [Angular + Vite](examples/angular-demo)    | `npm run dev:angular`  |
-| [Svelte 5 + Vite](examples/svelte-demo)    | `npm run dev:svelte`   |
-| [Vanilla JS + Vite](examples/vanilla-js)   | `npm run dev:vanilla`  |
-| [Next.js App Router](examples/nextjs-demo) | `npm run dev:nextjs`   |
-| [Vue 3 + Uppy](examples/vue-uppy-demo)     | `npm run dev:vue-uppy` |
+| Demo                                       | Run                   |
+| ------------------------------------------ | --------------------- |
+| [React + Vite](examples/react-demo)        | `npm run dev:react`   |
+| [Vue 3 + Vite](examples/vue-demo)          | `npm run dev:vue`     |
+| [Angular + Vite](examples/angular-demo)    | `npm run dev:angular` |
+| [Svelte 5 + Vite](examples/svelte-demo)    | `npm run dev:svelte`  |
+| [Vanilla JS + Vite](examples/vanilla-js)   | `npm run dev:vanilla` |
+| [Next.js App Router](examples/nextjs-demo) | `npm run dev:nextjs`  |
 
-All demos share the same layout pattern: a fixed-height card containing a settings panel and the widget. The widget's file list is the **only** element that scrolls; the page itself never scrolls, even with many uploaded files. See each demo's CSS for the `:has()`-based pattern that drives this.
+Most demos share the same layout pattern: a fixed-height card containing a settings panel and the widget. The widget's file list is the **only** element that scrolls; the page itself never scrolls, even with many uploaded files. See each demo's CSS for the `:has()`-based pattern that drives this.
+
+[`examples/vue-demo`](examples/vue-demo) is the exception, and the reference for the Uppy integration. Below the settings panel it stacks the QR code and an Uppy Dashboard vertically, so both the phone and the device feed one Uppy instance and the page scrolls normally. The other demos are expected to follow.
 
 ## Architecture
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import QrcodeVue from 'qrcode.vue';
 import { RotateCw } from 'lucide-vue-next';
-import type { QrCodeGeneratorCore } from '@scanupload/qr-code-generator-core';
+import type { QrCodeGeneratorCore, ScanUploadFileOrigin, UploadedFile } from '@scanupload/qr-code-generator-core';
 import Logo from './components/Logo.vue';
 import DocumentPreviewer from './components/DocumentPreviewer.vue';
 import FileList from './components/FileList.vue';
@@ -48,6 +48,20 @@ export interface QrCodeGeneratorProps {
      * `sessionUrl`, `clientId` and `autoResession` are ignored while it is set.
      */
     core?: QrCodeGeneratorCore | null;
+    /**
+     * Called for every file the hub is holding for this session — including
+     * files that were already there when this client connected.
+     *
+     * Useful for routing files somewhere other than this widget: an uploader, an
+     * application-owned list, or analytics. Pair it with `showFilePreviews` set
+     * to `false` to render them elsewhere. `origin` is `'restored'` when the file
+     * was found during a reconnect resync rather than pushed live.
+     */
+    onFileAvailable?: (file: UploadedFile, origin: ScanUploadFileOrigin) => void;
+    /** Called when the hub drops a single file. Not called for a full clear. */
+    onFileRemoved?: (file: UploadedFile) => void;
+    /** Called when every file is cleared at once: a session reset, or the session ending. */
+    onFilesCleared?: (files: readonly UploadedFile[]) => void;
 }
 
 const props = withDefaults(defineProps<QrCodeGeneratorProps>(), {
@@ -66,7 +80,12 @@ const { state, retrySession, core } = useQrCodeCore({
     sessionUrl: () => props.sessionUrl,
     clientId: () => props.clientId,
     autoResession: () => props.autoResession,
-    core: props.core
+    core: props.core,
+    // Routed through `props` rather than captured once, so a parent that swaps
+    // the handler later still reaches the live one.
+    onFileAvailable: (file, origin) => props.onFileAvailable?.(file, origin),
+    onFileRemoved: (file) => props.onFileRemoved?.(file),
+    onFilesCleared: (files) => props.onFilesCleared?.(files)
 });
 
 const onQrClick = () => {

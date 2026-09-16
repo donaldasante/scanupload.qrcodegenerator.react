@@ -2,7 +2,15 @@ import { HubConnection, HubConnectionBuilder, HttpTransportType, LogLevel } from
 import { ApiError, postData } from './apiClient';
 import { isNullOrEmpty } from './utilities';
 import { StorageAdapter, browserStorageAdapter } from './storage';
-import { QrCodeGeneratorState, SessionResponse, UploadedFile } from './types';
+import {
+    QrCodeGeneratorState,
+    ScanUploadEventMap,
+    ScanUploadEventListener,
+    ScanUploadEventName,
+    ScanUploadUnsubscribe,
+    SessionResponse,
+    UploadedFile
+} from './types';
 
 const INITIAL_STATE: QrCodeGeneratorState = {
     loading: true,
@@ -54,6 +62,18 @@ export type QrCodeGeneratorCoreSetOptions = Partial<Pick<QrCodeGeneratorCoreOpti
 export class QrCodeGeneratorCore {
     private _state: QrCodeGeneratorState = { ...INITIAL_STATE };
     private readonly _listeners = new Set<() => void>();
+    /**
+     * Typed lifecycle listeners. Every mutation of `uploadedFiles` is diffed in
+     * `_setState`, so a subscriber sees the same events no matter which path
+     * produced the change — a SignalR push, a reconnect resync, or a session
+     * teardown.
+     */
+    private readonly _eventListeners = new Map<ScanUploadEventName, Set<(event: never) => void>>();
+    /**
+     * Marks the next file diff as `restored` rather than `live`. Set by the
+     * reconnect resync, which re-discovers files the client did not see arrive.
+     */
+    private _restoring = false;
     private _session: SessionResponse | null = null;
     private _sessionPromise: Promise<void> | null = null;
     private _connection: HubConnection | null = null;
@@ -94,6 +114,35 @@ export class QrCodeGeneratorCore {
     subscribe(listener: () => void): () => void {
         this._listeners.add(listener);
         return () => this._listeners.delete(listener);
+    }
+
+    /**
+     * Subscribes to a file lifecycle event. Returns the unsubscribe function.
+     *
+     * ```ts
+     * const off = core.on('file-added', ({ file, origin }) => {
+     *     if (origin === 'restored') return; // already handled before the blip
+     *     console.log(file.name);
+     * });
+     * ```
+     */
+    on<K extends ScanUploadEventName>(name: K, listener: ScanUploadEventListener<K>): ScanUploadUnsubscribe {
+        let listeners = this._eventListeners.get(name);
+        if (!listeners) {
+            listeners = new Set();
+            this._eventListeners.set(name, listeners);
+        }
+
+        const stored = listener as unknown as (event: never) => void;
+        listeners.add(stored);
+        return () => {
+            listeners.delete(stored);
+        };
+    }
+
+    /** Removes a listener previously registered with `on`. */
+    off<K extends ScanUploadEventName>(name: K, listener: ScanUploadEventListener<K>): void {
+        this._eventListeners.get(name)?.delete(listener as unknown as (event: never) => void);
     }
 
     async start(): Promise<void> {
@@ -195,8 +244,75 @@ export class QrCodeGeneratorCore {
     // ─── Private helpers ────────────────────────────────────────────────────────
 
     private _setState(partial: Partial<QrCodeGeneratorState>): void {
+        const previousFiles = this._state.uploadedFiles;
         this._state = { ...this._state, ...partial };
+
+        // Events are emitted before the generic listeners so a subscriber that
+        // reacts to both sees a consistent order: the specific event first
+        // (carrying the origin), then the coarse "something changed" signal.
+        // The order matters to `connectScanUploadFiles`, which records a file's
+        // origin on `file-added` and then sweeps on the state change — reversed,
+        // it would queue a restored file as live.
+        this._emitFileEvents(previousFiles);
         this._listeners.forEach((l) => l());
+    }
+
+    /**
+     * Diffs the previous and current file lists into lifecycle events.
+     *
+     * Centralising this here — rather than emitting from each SignalR handler —
+     * means a listener cannot miss a change because one code path forgot to
+     * announce it. It also gives the hub's `FilesCleared`, `sessionReset`, the
+     * teardown patch, and the reconnect resync identical semantics.
+     */
+    private _emitFileEvents(previousFiles: readonly UploadedFile[]): void {
+        const origin = this._restoring ? 'restored' : 'live';
+        this._restoring = false;
+
+        const currentFiles = this._state.uploadedFiles;
+        // Reference equality is exact here: a patch that does not carry an
+        // `uploadedFiles` array leaves the previous reference in place.
+        if (currentFiles === previousFiles || this._eventListeners.size === 0) return;
+
+        const previousIds = new Set(previousFiles.map((file) => file.id));
+        for (const file of currentFiles) {
+            if (!previousIds.has(file.id)) {
+                this._emitEvent('file-added', { file, origin });
+            }
+        }
+
+        // Emptying the list is one occurrence, so it is reported as
+        // `files-cleared` rather than as N separate `file-removed` events.
+        if (previousFiles.length > 0 && currentFiles.length === 0) {
+            this._emitEvent('files-cleared', { files: previousFiles });
+            return;
+        }
+
+        if (currentFiles.length === 0) return;
+
+        const currentIds = new Set(currentFiles.map((file) => file.id));
+        for (const file of previousFiles) {
+            if (!currentIds.has(file.id)) {
+                this._emitEvent('file-removed', { file });
+            }
+        }
+    }
+
+    private _emitEvent<K extends ScanUploadEventName>(name: K, event: ScanUploadEventMap[K]): void {
+        const listeners = this._eventListeners.get(name);
+        if (!listeners) return;
+
+        // Iterating the Set directly is safe: a listener that unsubscribes
+        // itself is simply not visited again.
+        for (const listener of listeners) {
+            try {
+                listener(event as never);
+            } catch (error) {
+                // One bad listener must not abort the state update that is
+                // already applied.
+                console.error(`[QrCodeGeneratorCore] A "${name}" listener threw:`, error);
+            }
+        }
     }
 
     private async _getSessionInformationAsync(): Promise<void> {
@@ -611,6 +727,10 @@ export class QrCodeGeneratorCore {
                               }
                             : serverFile;
                     });
+                    // Files that appear here were not pushed to this client, so
+                    // they are reported as `restored` — a consumer forwarding to
+                    // an uploader can choose to skip them.
+                    this._restoring = true;
                     this._setState({ uploadedFiles: merged });
                 } catch (err) {
                     console.error('Failed to resync files after reconnect:', err);

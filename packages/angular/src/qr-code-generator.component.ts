@@ -11,7 +11,7 @@ import {
     SimpleChanges
 } from '@angular/core';
 import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
-import type { QrCodeGeneratorCore } from '@scanupload/qr-code-generator-core';
+import type { QrCodeGeneratorCore, ScanUploadFileOrigin, UploadedFile } from '@scanupload/qr-code-generator-core';
 import { LogoComponent } from './components/logo.component';
 import { DocumentPreviewerComponent } from './components/document-previewer.component';
 import { FileListComponent } from './components/file-list.component';
@@ -125,6 +125,20 @@ export class QrCodeGeneratorComponent implements OnInit, OnChanges, OnDestroy {
      * `sessionUrl`, `clientId` and `autoResession` are ignored while it is set.
      */
     @Input() core?: QrCodeGeneratorCore | null;
+    /**
+     * Called for every file the hub is holding for this session — including
+     * files that were already there when this client connected.
+     *
+     * Useful for routing files somewhere other than this widget: an uploader, an
+     * application-owned list, or analytics. Pair it with `showFilePreviews` set
+     * to `false` to render them elsewhere. `origin` is `'restored'` when the file
+     * was found during a reconnect resync rather than pushed live.
+     */
+    @Input() onFileAvailable?: (file: UploadedFile, origin: ScanUploadFileOrigin) => void;
+    /** Called when the hub drops a single file. Not called for a full clear. */
+    @Input() onFileRemoved?: (file: UploadedFile) => void;
+    /** Called when every file is cleared at once: a session reset, or the session ending. */
+    @Input() onFilesCleared?: (files: readonly UploadedFile[]) => void;
 
     protected controller?: QrCodeCoreController;
     protected readonly qrSvg = signal<SafeHtml>('');
@@ -142,7 +156,12 @@ export class QrCodeGeneratorComponent implements OnInit, OnChanges, OnDestroy {
             sessionUrl: this.sessionUrl,
             clientId: this.clientId,
             autoResession: this.autoResession,
-            core: this.core
+            core: this.core,
+            // Routed through `this` so an input bound after `ngOnInit` still
+            // reaches the live handler.
+            onFileAvailable: (file, origin) => this.onFileAvailable?.(file, origin),
+            onFileRemoved: (file) => this.onFileRemoved?.(file),
+            onFilesCleared: (files) => this.onFilesCleared?.(files)
         });
         this.controller.start();
 

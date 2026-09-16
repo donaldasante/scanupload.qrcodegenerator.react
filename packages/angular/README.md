@@ -93,6 +93,34 @@ See the [root README](../../README.md#css-custom-properties) for the full list o
 - `DownloadButtonComponent` — the same button the main component renders when `showDownloadButton` is `true`
 - `LogoComponent`, `ProgressBarComponent`, `FileListComponent`, `DocumentPreviewerComponent`
 
+## File lifecycle callbacks
+
+Hand every file the widget receives to your own code — an uploader, an
+application-owned list, or analytics. Pair them with `[showFilePreviews]="false"`
+when something else renders the files.
+
+```html
+<sqg-qr-code-generator
+    [sessionUrl]="sessionUrl"
+    [showFilePreviews]="false"
+    [onFileAvailable]="add"
+    [onFileRemoved]="drop"
+    [onFilesCleared]="dropAll"
+/>
+```
+
+| Input             | Type                     | Default     | Description                                                              |
+| ----------------- | ------------------------ | ----------- | ------------------------------------------------------------------------ |
+| `onFileAvailable` | `(file, origin) => void` | `undefined` | Every file the hub is holding. `origin` is `'live'` or `'restored'`.     |
+| `onFileRemoved`   | `(file) => void`         | `undefined` | The hub dropped a single file. Not called for a full clear.              |
+| `onFilesCleared`  | `(files) => void`        | `undefined` | Every file was cleared at once — a session reset, or the session ending. |
+
+Events are not replayed: a file that arrived before the widget mounted will not
+fire `onFileAvailable`. Reach for `connectScanUploadFiles` from
+`@scanupload/qr-code-generator-core` when you need a guaranteed one-shot pass
+over the session — that is also the tool for feeding an uploader that has no
+bespoke adapter.
+
 ## License
 
 MIT © Donald Asante

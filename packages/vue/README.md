@@ -84,6 +84,34 @@ See the [root README](../../README.md#css-custom-properties) for the full list o
 - `usePersistentState` — read/write helpers backed by the configured `StorageAdapter`
 - `DownloadButton` — the same button the component renders when `showDownloadButton` is `true`
 
+## File lifecycle callbacks
+
+Hand every file the widget receives to your own code — an uploader, an
+application-owned list, or analytics. Pair them with `:show-file-previews="false"`
+when something else renders the files.
+
+```vue
+<QrCodeGenerator
+    :session-url="sessionUrl"
+    :show-file-previews="false"
+    :on-file-available="(file, origin) => add(file)"
+    :on-file-removed="(file) => drop(file.id)"
+    :on-files-cleared="() => dropAll()"
+/>
+```
+
+| Prop              | Type                     | Default     | Description                                                              |
+| ----------------- | ------------------------ | ----------- | ------------------------------------------------------------------------ |
+| `onFileAvailable` | `(file, origin) => void` | `undefined` | Every file the hub is holding. `origin` is `'live'` or `'restored'`.     |
+| `onFileRemoved`   | `(file) => void`         | `undefined` | The hub dropped a single file. Not called for a full clear.              |
+| `onFilesCleared`  | `(files) => void`        | `undefined` | Every file was cleared at once — a session reset, or the session ending. |
+
+Events are not replayed: a file that arrived before the widget mounted will not
+fire `onFileAvailable`. Reach for `connectScanUploadFiles` from
+`@scanupload/qr-code-generator-core` when you need a guaranteed one-shot pass
+over the session — that is also the tool for feeding an uploader that has no
+bespoke adapter.
+
 ## License
 
 MIT © Donald Asante

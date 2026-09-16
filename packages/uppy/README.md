@@ -49,13 +49,28 @@ With `autoProceed: true`, every photo the phone uploads is downloaded and pushed
 
 ## How it works
 
-1. `install()` constructs and starts a `QrCodeGeneratorCore` — the same runtime the ScanUpload framework widgets use — and subscribes to its state.
-2. When the hub reports a file (`FileAdded`) the plugin queues it and downloads `UploadedFile.url` with `fetch()`.
+1. `install()` constructs and starts a `QrCodeGeneratorCore` — the same runtime the ScanUpload framework widgets use — and wires it to Uppy through `connectScanUploadFiles()` from the core package.
+2. When the hub reports a file, the core bridge downloads `UploadedFile.url` with `fetch()`, retrying transient failures on a backoff schedule.
 3. The response blob is wrapped in a `File` (preserving the original name and content type) and passed to `uppy.addFile()` together with ScanUpload metadata.
 4. Hub-side removals, including a session reset, are mirrored into Uppy via `uppy.removeFile()`.
 5. `uninstall()` aborts in-flight downloads and disposes the core.
 
 Downloads are pooled (`maxConcurrentDownloads`, default `4`) so a session containing dozens of phone photos does not open dozens of parallel requests.
+
+### The hard parts live in core
+
+Downloading, retrying, de-duplicating, bounding concurrency and mirroring removals
+are **not** implemented here — they live in
+[`connectScanUploadFiles()`](../core#feeding-another-uploader), because every
+adapter needs exactly the same behaviour. This plugin supplies only a sink:
+"given a downloaded file, `uppy.addFile()` it", plus the option mapping.
+
+The practical consequences:
+
+- Every integration built on the bridge shares one retry policy, so a fix or a
+  tuning change applies everywhere — including your own sinks.
+- A custom loader for an uploader with no adapter is about ten lines — pass your
+  own sink to `connectScanUploadFiles`.
 
 ## Options
 
@@ -207,6 +222,8 @@ Failures are not retried automatically, so a permanently broken URL cannot re-fe
 - **Uppy restrictions apply.** If the consumer's Uppy instance sets `restrictions` (max file size, allowed types, file count), a rejected file is reported through the Informer and via `onForwardError`, and is not retried unless you call `retryFailed()`.
 - **`mirrorRemovals`.** With the default `true`, a hub session reset clears the matching files from Uppy too. Uppy refuses to drop a file from an in-flight upload when the installed uploader does not support individual cancellation; the plugin logs that case instead of throwing.
 
+- **Transient 404s are expected.** The hub publishes a file's URL when it emits `FileAdded`, which precedes the blob becoming readable by up to about a second, so an immediate `GET` can legitimately return `404 FileUpload.FileNotFound`. The core retries `404`, `408`, `423`, `425`, `429` and `5xx` on a 500 ms → 4 s backoff (about 11.5 s of patience). It never retries `400`, `401` or `403` — those are configuration problems. See [`onDownloadRetry`](#options) to observe retries.
+
 ## Development
 
 ```bash
@@ -214,7 +231,7 @@ npm run build --workspace=packages/uppy   # or: npm run build:uppy (from the rep
 npm run smoke --workspace=packages/uppy   # verify against a real Uppy instance
 ```
 
-The smoke test drives the compiled plugin with a real `Uppy` instance and a local HTTP server standing in for the hub's file URLs. It covers forwarding, duplicate suppression, deferred URLs, removal mirroring and teardown, and needs no ScanUpload backend.
+The smoke test drives the compiled plugin with a real `Uppy` instance and a local HTTP server standing in for the hub's file URLs. It covers forwarding, duplicate suppression, deferred URLs, a transient 404 that must be retried, removal mirroring and teardown, and needs no ScanUpload backend.
 
 ## License
 

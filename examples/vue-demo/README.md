@@ -1,6 +1,6 @@
 # Vue 3 + Vite demo
 
-A minimal Vite + Vue 3 app that integrates [`@scanupload/qr-code-generator-vue`](../../packages/vue).
+A minimal Vite + Vue 3 app that integrates [`@scanupload/qr-code-generator-vue`](../../packages/vue) and [`@scanupload/qr-code-generator-uppy`](../../packages/uppy).
 
 ## Run
 
@@ -15,7 +15,28 @@ npm run dev:vue
 `build:vue` builds the core dependency and the Vue package, including the
 stylesheet imported by this demo. Re-run it after changing either package.
 
-The app starts on https://localhost:5174 (HTTPS is required for the hub's `Origin` checks).
+The app starts on https://localhost:5177 (HTTPS is required for the hub's `Origin` checks).
+
+## What the demo shows
+
+The settings panel at the top drives the widget's props. Below it are the two
+ways into the same Uppy instance, stacked vertically:
+
+- **From your phone** — the ScanUpload QR code. The widget is bound to the
+  plugin's core, so it renders the QR code for the session Uppy is listening on
+  instead of opening a second one.
+- **From this device** — the Uppy Dashboard. Files dropped here upload exactly
+  like the ones that arrive from the phone.
+
+Both halves feed one `Uppy` instance and one `@uppy/xhr-upload` plugin, so
+swapping the destination (Tus, S3) applies to both. By default files go to
+`/demo-upload`, a mock endpoint served by `vite.config.js` that counts the bytes
+and answers. Point `VITE_UPLOAD_ENDPOINT` at a real URL to upload elsewhere.
+
+`Show file previews` is off by default, because Uppy already renders everything
+the phone sends and the widget's own list would show the same files twice.
+Turning it on exercises the `File preview mode` and `Show download button`
+controls too.
 
 ## Configure
 
@@ -24,6 +45,9 @@ Copy `.env.example` to `.env` and fill in:
 ```env
 VITE_SESSION_URL=https://hub.scanupload.net/api/v2/front-end/session
 VITE_CLIENT_ID=your-tenant-id
+
+# Optional — defaults to the mock endpoint in `vite.config.js`.
+VITE_UPLOAD_ENDPOINT=https://your-api.example/uploads
 ```
 
 The browser calls `VITE_SESSION_URL` directly; no client-side proxy is involved.
@@ -43,7 +67,7 @@ When testing on `localhost`, open the client configuration in the [ScanUpload Da
 Without it, the session request can fail with an error like:
 
 ```text
-The origin 'https://localhost:5174' is not in the AllowedOrigins list for tenant '...'.
+The origin 'https://localhost:5177' is not in the AllowedOrigins list for tenant '...'.
 ```
 
 Before deploying, disable **Test Mode** and add the exact public site origin to **Allowed Origins**, for example `https://your-site.example`. Origins are scheme, host, and port specific; add each environment separately. Do not leave Test Mode enabled in production.

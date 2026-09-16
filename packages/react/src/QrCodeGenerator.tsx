@@ -6,7 +6,7 @@ import { DocumentPreviewer } from "./components/DocumentPreviewer";
 import { FileList } from "./components/FileList";
 import { useQrCodeCore } from "./hooks/useQrCodeCore";
 import { DownloadButton } from "./DownloadButton";
-import type { QrCodeGeneratorCore } from "@scanupload/qr-code-generator-core";
+import type { QrCodeGeneratorCore, ScanUploadFileOrigin, UploadedFile } from "@scanupload/qr-code-generator-core";
 
 export interface QrCodeGeneratorProps {
   sessionUrl: string;
@@ -51,6 +51,20 @@ export interface QrCodeGeneratorProps {
    * `sessionUrl`, `clientId` and `autoResession` are ignored while it is set.
    */
   core?: QrCodeGeneratorCore | null;
+  /**
+   * Called for every file the hub is holding for this session — including
+   * files that were already there when this client connected.
+   *
+   * Useful for routing files somewhere other than this widget: an uploader, an
+   * application-owned list, or analytics. Pair it with `showFilePreviews={false}`
+   * to render them elsewhere. `origin` is `'restored'` when the file was found
+   * during a reconnect resync rather than pushed live.
+   */
+  onFileAvailable?: (file: UploadedFile, origin: ScanUploadFileOrigin) => void;
+  /** Called when the hub drops a single file. Not called for a full clear. */
+  onFileRemoved?: (file: UploadedFile) => void;
+  /** Called when every file is cleared at once: a session reset, or the session ending. */
+  onFilesCleared?: (files: readonly UploadedFile[]) => void;
 }
 
 export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
@@ -66,12 +80,18 @@ export const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({
   showDownloadButton = false,
   showFilePreviews = true,
   core: providedCore,
+  onFileAvailable,
+  onFileRemoved,
+  onFilesCleared,
 }) => {
   const { state, retrySession, core } = useQrCodeCore({
     sessionUrl,
     clientId,
     autoResession,
     core: providedCore,
+    onFileAvailable,
+    onFileRemoved,
+    onFilesCleared,
   });
 
   return (

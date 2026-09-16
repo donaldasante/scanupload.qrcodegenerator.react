@@ -4,6 +4,7 @@ import {
     type QrCodeGeneratorCoreOptions,
     type QrCodeGeneratorCoreSetOptions,
     type QrCodeGeneratorState,
+    type ScanUploadFileOrigin,
     type UploadedFile
 } from '@scanupload/qr-code-generator-core';
 import { generateQrSvg } from './qrcode';
@@ -70,6 +71,20 @@ export interface QrCodeGeneratorElementOptions extends QrCodeGeneratorCoreOption
      * `sessionUrl` / `clientId` changes into it.
      */
     core?: QrCodeGeneratorCore | null;
+    /**
+     * Called for every file the hub is holding for this session — including
+     * files that were already there when this client connected.
+     *
+     * Useful for routing files somewhere other than this widget: an uploader, an
+     * application-owned list, or analytics. Pair it with `showFilePreviews: false`
+     * to render them elsewhere. `origin` is `'restored'` when the file was found
+     * during a reconnect resync rather than pushed live.
+     */
+    onFileAvailable?: (file: UploadedFile, origin: ScanUploadFileOrigin) => void;
+    /** Called when the hub drops a single file. Not called for a full clear. */
+    onFileRemoved?: (file: UploadedFile) => void;
+    /** Called when every file is cleared at once: a session reset, or the session ending. */
+    onFilesCleared?: (files: readonly UploadedFile[]) => void;
 }
 
 export type QrCodeGeneratorElementSetOptions = Partial<Omit<QrCodeGeneratorElementOptions, 'container'>>;
@@ -97,6 +112,7 @@ export class QrCodeGeneratorElement {
         QrCodeGeneratorElementOptions;
 
     private _unsubscribe: (() => void) | null = null;
+    private _eventUnsubscribes: Array<() => void> = [];
     private _prevState: QrCodeGeneratorState | null = null;
     private _downloadInFlight = false;
     private _downloadErrorTimer: ReturnType<typeof setTimeout> | null = null;
@@ -149,6 +165,11 @@ export class QrCodeGeneratorElement {
         if (this._options.injectStyles) injectStyles();
         this._buildDom();
         this._unsubscribe = this._core.subscribe(() => this._render());
+        this._eventUnsubscribes = [
+            this._core.on('file-added', ({ file, origin }) => this._options.onFileAvailable?.(file, origin)),
+            this._core.on('file-removed', ({ file }) => this._options.onFileRemoved?.(file)),
+            this._core.on('files-cleared', ({ files }) => this._options.onFilesCleared?.(files))
+        ];
         // An injected core is already running, and is not ours to start.
         if (this._ownsCore) await this._core.start();
     }
@@ -156,6 +177,8 @@ export class QrCodeGeneratorElement {
     dispose(): void {
         this._unsubscribe?.();
         this._unsubscribe = null;
+        for (const off of this._eventUnsubscribes) off();
+        this._eventUnsubscribes = [];
         if (this._downloadErrorTimer) {
             clearTimeout(this._downloadErrorTimer);
             this._downloadErrorTimer = null;

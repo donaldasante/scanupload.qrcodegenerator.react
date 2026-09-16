@@ -19,76 +19,10 @@ export const SCAN_UPLOAD_PLUGIN_ID = 'ScanUpload';
  */
 export const SCAN_UPLOAD_PLUGIN_TYPE = 'source';
 
-export function isAbortError(error: unknown): boolean {
-    return typeof error === 'object' && error !== null && (error as { name?: unknown }).name === 'AbortError';
-}
-
-/** Default number of download attempts per file before reporting a failure. */
-export const DEFAULT_MAX_DOWNLOAD_ATTEMPTS = 6;
-
-/** Default delay before the first retry; doubles for each subsequent attempt. */
-export const DEFAULT_DOWNLOAD_RETRY_DELAY_MS = 500;
-
-/** Upper bound on a single backoff wait, so the schedule stays predictable. */
-export const MAX_DOWNLOAD_RETRY_DELAY_MS = 4000;
-
-/**
- * Backoff before the next attempt.
- *
- * With the defaults this is 500, 1000, 2000, 4000, 4000 ms — roughly 11.5 s of
- * patience in total. That window matters: the hub publishes a file's URL when it
- * emits `FileAdded`, which measurably precedes the blob becoming readable by up
- * to about a second, so a tight retry budget gives up on files the hub would
- * have served a moment later.
- */
-export function backoffDelayMs(baseDelayMs: number, attempt: number): number {
-    return Math.min(baseDelayMs * 2 ** (attempt - 1), MAX_DOWNLOAD_RETRY_DELAY_MS);
-}
-
-/**
- * HTTP statuses worth retrying.
- *
- * `404` is the important one: the hub can announce a file over SignalR a
- * moment before the blob is readable, so an immediate GET legitimately comes
- * back `FileUpload.FileNotFound`. `423`/`425` mean "not yet", `408`/`429` are
- * transient, and `5xx` may clear on its own. Anything else `4xx` (bad request,
- * auth, forbidden) is a configuration problem that retrying cannot fix.
- */
-const RETRYABLE_HTTP_STATUSES = new Set([404, 408, 423, 425, 429, 500, 502, 503, 504]);
-
-export function isRetryableStatus(status: number): boolean {
-    return RETRYABLE_HTTP_STATUSES.has(status);
-}
-
-function createAbortError(): Error {
-    const error = new Error('Aborted');
-    error.name = 'AbortError';
-    return error;
-}
-
-/** `setTimeout` that rejects with an abort error if `signal` fires first. */
-export function delay(ms: number, signal?: AbortSignal): Promise<void> {
-    return new Promise((resolve, reject) => {
-        if (signal?.aborted) {
-            reject(createAbortError());
-            return;
-        }
-
-        let timer: ReturnType<typeof setTimeout> | null = null;
-
-        const onAbort = () => {
-            if (timer !== null) clearTimeout(timer);
-            reject(createAbortError());
-        };
-
-        timer = setTimeout(() => {
-            signal?.removeEventListener('abort', onAbort);
-            resolve();
-        }, ms);
-
-        signal?.addEventListener('abort', onAbort, { once: true });
-    });
-}
+// The download/retry helpers that used to live here — `isAbortError`, `delay`,
+// `backoffDelayMs`, `isRetryableStatus` and the `DEFAULT_*_DOWNLOAD_*`
+// constants — now live in `@scanupload/qr-code-generator-core` (`toFile.ts`),
+// because every vendor adapter needs the same behaviour. See `materializeFile`.
 
 export function toError(error: unknown, fallbackMessage: string): Error {
     if (error instanceof Error) return error;
@@ -105,15 +39,6 @@ export function deriveFilename(url: string): string {
     } catch {
         return 'scanupload-file';
     }
-}
-
-/**
- * Wraps the downloaded blob in a `File` so Uppy keeps the original name and
- * MIME type. Falls back to the raw blob in environments without `File`.
- */
-export function toBrowserFile(blob: Blob, name: string, type: string): Blob | File {
-    if (typeof File === 'undefined') return blob;
-    return new File([blob], name, { type });
 }
 
 /**
