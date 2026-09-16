@@ -53,7 +53,33 @@ stages:
                       svelte)'
 
                 - script: |
-                      echo "//registry.npmjs.org/:_authToken=$(NPM_TOKEN)" > .npmrc
+                      set -e
+
+                      if [ -z "${NPM_TOKEN}" ]; then
+                        echo "##[error]NPM_TOKEN is empty - the npm token is missing from the variable group."
+                        exit 1
+                      fi
+                      echo "NPM_TOKEN length = ${#NPM_TOKEN}"
+
+                      # npm resolves the project prefix to the workspace root, so this
+                      # root .npmrc is the config the `cd packages/<name>` publish steps
+                      # below still read.
+                      echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
+
+                      # Fail here with the real reason rather than letting the publish
+                      # steps report it: npm answers an unauthorised write to a scoped
+                      # package with a misleading 404 "Not Found", which reads like the
+                      # package is missing instead of the token being wrong.
+                      WHOAMI=$(npm whoami 2>/dev/null || true)
+                      if [ -z "$WHOAMI" ]; then
+                        echo "##[error]NPM_TOKEN is set but npm rejected it. Regenerate the token as either:"
+                        echo "##[error]  - a Classic token with type Automation, or"
+                        echo "##[error]  - a Granular token with Packages and scopes: Read and write for the 'scanupload' org, and 2FA bypass enabled."
+                        exit 1
+                      fi
+
+                      echo "Authenticated to npm as $WHOAMI"
+                      echo "Publisher(s) of @scanupload/qr-code-generator-core: $(npm owner ls @scanupload/qr-code-generator-core | tr '\n' ' ')"
                   displayName: 'Configure npm auth'
 
                 - script: |

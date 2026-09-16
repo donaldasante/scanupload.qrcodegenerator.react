@@ -15,6 +15,9 @@ dist-ssr
 .env
 .env.qa
 
+# Written by the publish step with the npm token in it - never commit.
+.npmrc
+
 # Screenshots and traces written by the Playwright browser tools.
 .playwright-mcp
 
