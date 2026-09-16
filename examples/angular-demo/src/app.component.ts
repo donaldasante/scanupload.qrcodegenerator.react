@@ -1,13 +1,4 @@
-import {
-    AfterViewChecked,
-    AfterViewInit,
-    ChangeDetectorRef,
-    Component,
-    ElementRef,
-    OnDestroy,
-    inject,
-    signal
-} from '@angular/core';
+import { AfterViewChecked, AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import Uppy from '@uppy/core';
