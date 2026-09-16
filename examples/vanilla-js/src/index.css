@@ -1,4 +1,6 @@
-*, *::before, *::after {
+*,
+*::before,
+*::after {
     box-sizing: border-box;
 }
 
@@ -6,7 +8,7 @@ body {
     margin: 0;
     height: 100vh;
     /* Lock the page so the only scrollbar the user sees is the one
-       inside the widget's file grid. The browser viewport itself
+       inside the widget's file container. The browser viewport itself
        never scrolls — even when many files have been uploaded. */
     overflow: hidden;
     display: flex;
@@ -14,6 +16,19 @@ body {
     align-items: center;
     background: #f3f4f6;
     font-family: system-ui, sans-serif;
+}
+
+/* The demo's root wrapper is what holds the demo card + title +
+   back-link. It must fill the body vertically so the card can claim
+   the full viewport height between the page title and the back-link. */
+#app {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    max-width: 36rem;
 }
 
 .demo-title {
@@ -29,18 +44,18 @@ body {
 
 .demo-card {
     background: white;
-    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     border-radius: 0.5rem;
     /* Generous breathing room top and bottom per the user's request.
        Horizontal stays at 2rem so the QR + form feel roomy.
        Reduced bottom padding to 1rem so the download button sits
        closer to the card edge when no files have been uploaded. */
     padding: 1.5rem 2rem 1rem;
-    max-width: 28rem;
+    max-width: 32rem;
     width: 100%;
     /* Card is content-sized by default — it does NOT stretch to
        fill the viewport. Combined with the `:has()` rules below
-       and `.sqg-file-grid:empty { display: none }` in the
+       and `.sqg-file-container:empty { display: none }` in the
        package CSS, this means there is no empty band anywhere
        inside the card when no files have been uploaded. */
     flex: 0 1 auto;
@@ -48,7 +63,7 @@ body {
     box-sizing: border-box;
     /* Card itself never scrolls. The form panel below is rendered
        without overflow so it never grows its own scrollbar; the
-       widget's file grid handles file-list overflow. */
+       widget's file container handles file-list overflow. */
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -56,13 +71,8 @@ body {
 }
 
 /* When files are uploaded, grow the card to fill the available
-   viewport height between the page title and the back-link. We
-   match actual file cards (`.sqg-file-card`) instead of the file
-   grid container's emptiness, because the vanilla renderer keeps
-   the file grid/list element in the DOM (and clears it via
-   `innerHTML = ''`) so `:not(:empty)` would still match a
-   list-mode container with one wrapping `<div>` child. */
-.demo-card:has(.sqg-file-card) {
+   viewport height between the page title and the back-link. */
+.demo-card:has(.sqg-file-container:not(:empty)) {
     flex: 1 1 auto;
 }
 
@@ -71,7 +81,7 @@ body {
        scrolls internally. Card has `overflow: hidden`, so any tiny
        overflow is silently clipped — but more importantly the form
        NEVER grows its own scrollbar. The only scrollbar in this UI
-       is the one inside the widget's file grid. */
+       is the one inside the widget's file container. */
     flex: 0 0 auto;
     margin-bottom: 0 !important;
 }
@@ -80,7 +90,7 @@ body {
     /* Widget wrapper: claim the remaining vertical space inside the
        card. Even when the widget itself is content-sized (so the
        card stays compact when no files have been uploaded — the
-       file grid collapses via `:empty { display: none }` and
+       file container collapses via `:empty { display: none }` and
        the surrounding controls pack at the top), the wrapper
        still expands so the layout doesn't collapse. */
     flex: 0 1 auto;
@@ -92,40 +102,25 @@ body {
 
 /* When the widget has uploaded files, grow the wrapper to fill
    the remaining card space. This propagates the height down to
-   the file grid so it can show its rows without scrolling. */
-.demo-card:has(.sqg-file-card) > .mb-6:last-of-type {
+   the file container so it can show its rows without scrolling. */
+.demo-card:has(.sqg-file-container:not(:empty)) > .mb-6:last-of-type {
     flex: 1 1 auto;
 }
 
-/* The vanilla JS demo wraps the widget in a `<div id="widget-container">`
-   (see `index.html`). That DIV has no styles of its own — by default
-   it's `display: block` with no `min-height: 0` or `flex` sizing —
-   so it claims its own natural height (~ content size) and the
-   widget below it overflows the card vertically. Force this DIV to
-   participate in the flex chain so the widget can shrink to fit.
-   The selector is `> *` (any immediate child) so it survives
-   future markup changes. */
-.demo-card > .mb-6:last-of-type > * {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-    min-height: 0;
-}
-
-/* Use a descendant combinator (space) so the selector works
-   regardless of whether the vanilla element wraps `.sqg-root`
-   inside another element. */
+/* Use a descendant combinator (space) instead of `>` so the
+   selector still matches when frameworks wrap `.sqg-root` in a
+   component host element. */
 .demo-card > .mb-6:last-of-type .sqg-root {
     /* Content-sized — the widget itself doesn't grow to fill its
        wrapper. The card and wrapper still expand when files are
        uploaded because `.sqg-content` is `flex: 1 1 auto`, so the
-       file grid inside has the vertical space it needs to
+       file container inside has the vertical space it needs to
        show the first row of cards without scrolling. */
     flex: 0 1 auto;
     min-height: 0;
 }
 
-.demo-card:has(.sqg-file-card) > .mb-6:last-of-type .sqg-root {
+.demo-card:has(.sqg-file-card, .sqg-file-row) > .mb-6:last-of-type .sqg-root {
     flex: 1 1 auto;
 }
 
@@ -199,6 +194,8 @@ body {
 input[type="checkbox"],
 input[type="radio"] {
     accent-color: #4f46e5;
+    /* Pin the visual centre of the input to the line baseline so rows
+       with different-length labels still line up visually. */
     vertical-align: middle;
     align-self: center;
     margin-top: 1px;
@@ -213,12 +210,440 @@ input[type="radio"] {
 
 .underline { text-decoration: underline; }
 
-/* Uploaded files use the widget's bounded preview region; never clip it at
-    the demo card or viewport level. */
-body { height: auto; min-height: 100vh; overflow-y: auto; }
-#app { flex: 0 0 auto; min-height: 100vh; }
-.demo-card,
-.demo-card:has(.sqg-file-card) { flex: 0 0 auto; overflow: visible; }
-.demo-card > .mb-6:last-of-type,
-.demo-card > .mb-6:last-of-type .sqg-root { flex: 0 0 auto; }
+/* The page scrolls now: the controls panel, the QR code and the Uppy
+   dashboard all live in one column, which is taller than most viewports. */
+body {
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
+    /* Keeps the cards off the screen edges on narrow viewports. */
+    padding: 0 clamp(0.75rem, 3vw, 1.5rem) 1.5rem;
+}
+#app {
+    flex: 0 0 auto;
+    min-height: 100vh;
+}
+/* The card holds only the controls, so it is always content-sized and never
+   clips — the widget's own list no longer lives inside it. */
+.demo-card {
+    flex: 0 0 auto;
+    overflow: visible;
+}
 
+/* ── Controls panel spacing ────────────────────────────────────────────── */
+
+/* `.mt-2` is used throughout the template but was never defined in the utility
+   set above (only `.mt-3` and `.mt-4` were), so every one of them was a no-op
+   and the option groups sat flush against each other. */
+.mt-2 {
+    margin-top: 0.75rem;
+}
+
+/* The checkbox rows carry no margin of their own either, so they were touching. */
+.checkbox-row + .checkbox-row {
+    margin-top: 0.25rem;
+}
+
+/* ── Upload box: QR code and Uppy stacked vertically ───────────────────── */
+
+.upload-box {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 32rem;
+    /* Without this the two cards sit flush, and their rounded corners pinch
+       inward on both sides — a visible notch at the left and right edges. */
+    margin-top: 1rem;
+    overflow: hidden;
+    border-radius: 0.5rem;
+    background: #ffffff;
+    box-shadow:
+        0 10px 15px -3px rgba(0, 0, 0, 0.08),
+        0 4px 6px -4px rgba(0, 0, 0, 0.06);
+}
+
+.half {
+    min-width: 0;
+    padding: 1.25rem;
+}
+
+.half + .half {
+    border-top: 1px solid #e5e7eb;
+}
+
+/* ── Side by side, once there is room ──────────────────────────────────── */
+
+/*
+ * Wide screens put the options card next to the widget card, centred as a pair.
+ * Inside the widget card the two panels sit side by side, divided by the same
+ * hairline the stacked layout uses — one card, not two. The column floors are
+ * the widths at which the form controls still lay out without squeezing, so the
+ * breakpoint sits just above their sum plus the page padding; below it
+ * everything stacks exactly as before.
+ */
+@media (min-width: 66rem) {
+    #app {
+        display: grid;
+        grid-template-columns: minmax(25rem, 32rem) minmax(35rem, 48rem);
+        justify-content: center;
+        /* Stretch, so the two cards end on the same line instead of each
+           stopping at its own content height. */
+        align-items: stretch;
+        /* `start` is essential: `#app` fills the viewport, and grid's default
+           `align-content: stretch` hands the leftover height to the auto rows —
+           which inflated both cards far past their content. */
+        align-content: start;
+        gap: 1rem;
+        max-width: none;
+    }
+
+    /* The heading and the back link span the row; the options card and the
+       widget card take one column each. */
+    .demo-title,
+    .demo-back-link {
+        grid-column: 1 / -1;
+        justify-self: center;
+    }
+
+    /* One card, two panels across. `align-items: stretch` keeps them level so
+       the divider runs the full height. */
+    .upload-box {
+        flex-direction: row;
+        align-items: stretch;
+        max-width: none;
+        margin-top: 0;
+    }
+
+    /* The QR panel stays the narrower of the two — it is capped at 20rem
+       anyway, so extra width there would only add empty space. */
+    .half:first-child {
+        flex: 0 1 20rem;
+    }
+
+    /* Deliberately not stretched. The widget card is as tall as the options
+       card, which is far taller than an uploader needs, so the drop zone keeps
+       its own height and the spare space sits below it — the same shape the QR
+       panel already has. Stretching it here is what made the drop zone fill the
+       whole panel. */
+    .half:last-child {
+        /* A column, so the uploader panel below can take the spare height once
+           files arrive. */
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 24rem;
+        min-height: 0;
+    }
+
+    /* Siblings in a column do not collapse their margins, so the title's bottom
+       margin and this one would add up. The offset alone is the gap here; the
+       title supplies the rest. */
+    .half:last-child .uppy-shell {
+        margin-top: var(--scan-offset, 0px);
+    }
+
+    /* `flex-basis: 0`, not `auto`: the panel must not contribute its own
+       content height to the card, or the card would grow with the file list and
+       the list would never reach the point of scrolling. A zero basis means it
+       simply takes whatever height the card already has going spare. */
+    .uppy-shell.has-files {
+        flex: 1 1 0;
+        min-height: 0;
+    }
+
+    .half + .half {
+        border-top: 0;
+        border-left: 1px solid #e5e7eb;
+    }
+}
+
+.half-title {
+    margin: 0 0 0.875rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6b7280;
+}
+
+/* ── Scan half ─────────────────────────────────────────────────────────── */
+
+.scan-widget {
+    display: flex;
+    justify-content: center;
+    min-width: 0;
+}
+
+.scan-widget .sqg-root {
+    width: 100%;
+    max-width: 20rem;
+}
+
+.scan-pending {
+    margin: 0;
+    padding: 2rem 0;
+    font-size: 0.8rem;
+    text-align: center;
+    color: #9ca3af;
+}
+
+/* ── Uppy Dashboard ─────────────────────────────────────────────────────── */
+
+/* `position: relative` anchors the absolutely-positioned drop badge below.
+   `margin-top` shifts the whole shell — host and badge together — down to the
+   line the QR square starts on, so the two panels read as level. The title
+   above already contributes its own 0.875rem bottom margin, and adjacent
+   sibling margins collapse to the larger of the two, so that amount is added
+   back to make the shift land exactly on `--scan-offset`. */
+.uppy-shell {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    margin-top: calc(0.875rem + var(--scan-offset, 0px));
+}
+
+/* The drop zone mirrors the QR square's measured height so the two sit level.
+   The `.upload-box` scope is deliberate: it also lifts this above the base
+   `.uppy-host` rule, which would otherwise win on source order. */
+.upload-box .uppy-host {
+    display: flex;
+    flex-direction: column;
+    /* Fills the shell. Empty that is no change — the shell is already exactly
+       this tall — and with files it is what lets the panel take the card's
+       spare height instead of stopping at its own content. */
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    /* Fallback for the first paint, before the QR square has been measured.
+       Matches the "Large" square, so there is no visible jump once it lands. */
+    height: var(--scan-height, 10rem);
+}
+
+/*
+ * Empty, the drop zone is exactly the QR square's height. Once files arrive it
+ * stops being pinned to that and grows into the room the card has going spare,
+ * so the list is readable instead of scrolling one row at a time. It grows no
+ * further than that: past the card's spare height Uppy's own file list scrolls,
+ * so a long list never pushes the card taller or spills out of it.
+ */
+.upload-box .uppy-shell.has-files .uppy-host {
+    height: auto;
+    min-height: var(--scan-height, 10rem);
+}
+
+/* Uppy sizes itself from the `height` option it writes inline on
+   `.uppy-Dashboard-inner`, which pins the panel to one fixed box. Letting each
+   level of its chain be content-driven is what lets the panel grow with the
+   file list; the `!important` is needed to beat that inline style. Each level
+   is a column so the height still passes all the way down. */
+.uppy-shell.has-files .uppy-Root,
+.uppy-shell.has-files .uppy-Dashboard,
+.uppy-shell.has-files .uppy-Dashboard-inner,
+.uppy-shell.has-files .uppy-Dashboard-innerWrap {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    height: auto !important;
+    min-height: 0;
+}
+
+/* Uppy sizes the list from `flex-basis: 0`, which would collapse it to nothing
+   once the wrapper above it is content-sized rather than a fixed height. */
+.uppy-shell.has-files .uppy-Dashboard-files {
+    flex-basis: auto;
+}
+
+/* Stacked, the card is free to grow with the list, so the panel needs a ceiling
+   of its own — otherwise a long list makes the page arbitrarily tall. Wide, the
+   card's own height already supplies the ceiling and this would only fight it. */
+@media (max-width: 65.999rem) {
+    .upload-box .uppy-shell.has-files .uppy-host {
+        max-height: min(60svh, 26rem);
+    }
+}
+
+/*
+ * Uppy's stock styling is functional but dated: a grey panel with a dashed
+ * inner border, and a "browse files" control that has no rules applied to it at
+ * all — it renders as a *native* browser button (`border: outset`, buttonface
+ * background, 13px system font). These overrides give it the soft surface and
+ * real call-to-action a modern uploader uses.
+ */
+
+.uppy-host .uppy-Dashboard-inner {
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    background: #f9fafb;
+}
+
+.uppy-host .uppy-Dashboard-innerWrap {
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+
+/* The dashed border is replaced by the outer panel's soft frame. Top padding
+   reserves the badge's footprint; the text block is then centred in what is
+   left, and the small bottom padding keeps the badge + text + button reading as
+   one balanced group rather than sitting against the top edge. */
+.uppy-host .uppy-Dashboard-AddFiles {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    padding: 4.5rem 1.25rem 0.5rem;
+    border: 0;
+    border-radius: 0.75rem;
+}
+
+.uppy-host .uppy-Dashboard-AddFiles-title {
+    padding: 0;
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: #6b7280;
+}
+
+/* The call to action. */
+.uppy-host .uppy-Dashboard-browse {
+    display: inline-block;
+    margin-left: 0.4rem;
+    padding: 0.5rem 1rem;
+    border: 0;
+    border-radius: 0.5rem;
+    background: #4f46e5;
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+    cursor: pointer;
+    transition:
+        background-color 150ms ease,
+        box-shadow 150ms ease;
+}
+
+.uppy-host .uppy-Dashboard-browse:hover {
+    background: #4338ca;
+}
+
+.uppy-host .uppy-Dashboard-browse:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.45);
+}
+
+/* Uppy's button reset does not reach its toolbar buttons either — the status
+   bar's "Done" renders with native `outset` chrome and a 10px system font.
+   Normalise the lot, then theme the ones that are real actions. */
+.uppy-host button {
+    border: 0;
+    border-radius: 0.5rem;
+    background: transparent;
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.2;
+    cursor: pointer;
+}
+
+/* Status-bar actions: Done, Cancel, Retry. */
+.uppy-host .uppy-StatusBar-actionBtn {
+    padding: 0.4rem 0.9rem;
+    background: #4f46e5;
+    color: #ffffff;
+}
+
+.uppy-host .uppy-StatusBar-actionBtn:hover {
+    background: #4338ca;
+}
+
+.uppy-host .uppy-StatusBar-actionBtn:focus-visible,
+.uppy-host .uppy-DashboardContent-addMore:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.45);
+}
+
+/* The "+" in the file-list header. */
+.uppy-host .uppy-DashboardContent-addMore {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border-radius: 0.5rem;
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+.uppy-host .uppy-DashboardContent-addMore:hover {
+    background: #e0e7ff;
+}
+
+/* Uppy nests `.uppy-Root > .uppy-Dashboard > .uppy-Dashboard-inner`, and each
+   link needs its own height for the next one's 100% to resolve — `.uppy-host`
+   carries the real height, these just pass it down. */
+.uppy-host .uppy-Root,
+.uppy-host .uppy-Dashboard,
+.uppy-host .uppy-Dashboard-inner {
+    height: 100%;
+    min-height: 0;
+}
+
+.uppy-host .uppy-Dashboard {
+    width: 100% !important;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.uppy-host .uppy-Dashboard-inner {
+    width: 100% !important;
+    max-width: 100%;
+    min-width: 0;
+}
+
+/* ── Drop badge ────────────────────────────────────────────────────────── */
+
+/* Sits in the space reserved by `.uppy-Dashboard-AddFiles`'s top padding, and
+   is hidden as soon as a file arrives. Positioned from the top rather than a
+   percentage, so it stays put as the panel's height changes. */
+.drop-icon {
+    position: absolute;
+    z-index: 2;
+    top: 1.6rem;
+    left: 50%;
+    width: 3rem;
+    height: 3rem;
+    padding: 0.7rem;
+    border-radius: 9999px;
+    background: #eef2ff;
+    color: #4f46e5;
+    pointer-events: none;
+    transform: translateX(-50%);
+}
+
+/* The list has replaced the drop zone, so the badge has nothing to point at.
+   Driven from the same class that sizes the panel, so the two never disagree. */
+.uppy-shell.has-files .drop-icon {
+    display: none;
+}
+
+/* ── Narrow screens ────────────────────────────────────────────────────── */
+
+/* The size row carries four options plus labels. Letting it wrap moves
+   "X-Large" onto the next line instead of squeezing it onto two. Swapping
+   `space-x-4`'s left margin for a column gap keeps a wrapped item aligned with
+   the first instead of inheriting an indent. */
+.flex-row {
+    flex-wrap: wrap;
+    column-gap: 1rem;
+    row-gap: 0.4rem;
+}
+
+.flex-row.space-x-4 > * + * {
+    margin-left: 0;
+}
+
+@media (max-width: 30rem) {
+    .half {
+        padding: 1rem;
+    }
+}

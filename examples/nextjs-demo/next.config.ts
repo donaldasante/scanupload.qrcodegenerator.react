@@ -3,10 +3,7 @@ import type { NextConfig } from 'next';
 const hubApiTarget = process.env.NEXT_PUBLIC_HUB_API_TARGET ?? 'https://hub.scanupload.net';
 
 const nextConfig: NextConfig = {
-    transpilePackages: [
-        '@scanupload/qr-code-generator-react',
-        '@scanupload/qr-code-generator-core'
-    ],
+    transpilePackages: ['@scanupload/qr-code-generator-react', '@scanupload/qr-code-generator-core', '@scanupload/qr-code-generator-uppy'],
     // Proxy same-origin /hub-api/* requests to the ScanUpload hub. The app's
     // `NEXT_PUBLIC_SESSION_URL` points at /hub-api/..., so the browser sees
     // a same-origin POST/WS (no CORS, simple CSP) and Next.js forwards the
@@ -32,7 +29,7 @@ const nextConfig: NextConfig = {
     // must be allowed for `next/image` / fetch() from server components.
     allowedDevOrigins: [
         'localhost',
-        '127.0.0.1',
+        '127.0.0.1'
         // `next dev --hostname 0.0.0.0` exposes the server on the LAN; the
         // hub receives the LAN IP as Origin, which Next blocks by default.
         // Add your LAN IP range here if your QA hub allows it.

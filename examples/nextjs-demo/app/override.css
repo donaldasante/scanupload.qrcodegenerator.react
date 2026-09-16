@@ -1,12 +1,17 @@
 /*
- * override.css — example overrides for @scanupload/qr-code-generator-vue
+ * override.css — example overrides for @scanupload/qr-code-generator-react
  *
- * Import this file AFTER the package CSS so the cascade picks up these rules:
+ * The same file as `examples/react-demo/src/override.css`. It lives apart from
+ * `globals.css` because of *when* it has to be applied: the root layout's CSS
+ * lands before the component's, so overrides written there lose every tie
+ * against the package stylesheet, and a tie is exactly what they are —
+ * `.sqg-qr-wrapper` here against `.sqg-qr-wrapper` from the package.
  *
- *   import "@scanupload/qr-code-generator-vue/dist/index.css";
- *   import './override.css';
+ * `GeneralForm.tsx` therefore imports this file directly after the package CSS,
+ * which puts it last in the cascade and matches the order the Vite demos use:
+ * Uppy → package → demo → overrides.
  *
- * Every class below matches a real .sqg-* class from dist/index.css.
+ * Every class below matches a real .sqg-* class from the package stylesheet.
  * Uncomment whichever sections you want to customise.
  */
 

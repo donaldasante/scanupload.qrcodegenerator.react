@@ -139,12 +139,12 @@
     gap: 0.375rem;
 }
 
-.sqg-file-list-item {
+.sqg-file-row {
     border-color: #e5e7eb;
     border-radius: 0.375rem;
 }
 
-.sqg-file-list-name {
+.sqg-list-name {
     font-size: 0.8rem;
     color: #111827;
 }

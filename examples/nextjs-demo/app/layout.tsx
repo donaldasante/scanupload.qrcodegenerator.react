@@ -14,7 +14,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      {/* `#app` is the wrapper the demo stylesheet lays out — the grid of two
+          cards on wide screens, one column below 66rem. */}
+      <body>
+        <div id="app">{children}</div>
+      </body>
     </html>
   );
 }

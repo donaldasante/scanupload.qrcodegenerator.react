@@ -5,87 +5,133 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ScanUpload QR Code Generator — Vanilla JS Demo</title>
-    <link rel="stylesheet" href="/src/index.css" />
   </head>
   <body>
-    <h2 class="demo-title">Example Form</h2>
-    <div class="demo-card">
-      <div class="mb-6">
-        <div class="flex flex-col items-left space-x-1">
-          <div class="checkbox-row">
-            <input id="checkQrCodeLogo" type="checkbox" checked class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 mr-2" />
-            <label for="checkQrCodeLogo" class="text-sm font-medium text-gray-700 select-none cursor-pointer w-40 text-left">Show Logo</label>
-          </div>
+    <div id="app">
+      <h2 class="demo-title">Example Form</h2>
 
-          <div class="checkbox-row">
-            <input id="checkClickReload" type="checkbox" checked class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 mr-2" />
-            <label for="checkClickReload" class="text-sm font-medium text-gray-700 select-none cursor-pointer w-40 text-left">Click QR code to reload</label>
-          </div>
-
-          <div class="checkbox-row">
-            <input id="checkHeader" type="checkbox" checked class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 mr-2" />
-            <label for="checkHeader" class="text-sm font-medium text-gray-700 select-none cursor-pointer w-40 text-left">Show header</label>
-          </div>
-
-          <div class="checkbox-row">
-            <input id="checkDownloadButton" type="checkbox" checked class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 mr-2" />
-            <label for="checkDownloadButton" class="text-sm font-medium text-gray-700 select-none cursor-pointer w-40 text-left">Show download button</label>
-          </div>
-
-          <div class="flex items-center mt-2">
-            <label for="headerText" class="text-sm font-medium text-gray-700 select-none cursor-pointer w-25 text-left">Header text</label>
-            <input id="headerText" type="text" value="Scan to upload" class="w-60 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-400" placeholder="Enter header text" />
-          </div>
-
-          <div class="flex flex-col gap-0 mt-2">
-            <div class="text-sm font-medium text-gray-700 select-none cursor-pointer text-left">File preview mode</div>
-            <div class="flex flex-row items-start mt-2 space-x-4">
-              <label class="flex items-center cursor-pointer group">
-                <input type="radio" name="file-preview-mode" value="list" checked class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600" />
-                <span class="ml-3 text-sm font-medium text-gray-700 group-hover:text-indigo-600 transition-colors">List</span>
-              </label>
-              <label class="flex items-center cursor-pointer group">
-                <input type="radio" name="file-preview-mode" value="grid" class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600" />
-                <span class="ml-3 text-sm font-medium text-gray-700 group-hover:text-indigo-600 transition-colors">Grid</span>
-              </label>
+      <div class="demo-card">
+        <div class="mb-6">
+          <div class="flex flex-col">
+            <div class="checkbox-row">
+              <input id="checkQrCodeLogo" type="checkbox" checked class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 mr-2" />
+              <label for="checkQrCodeLogo" class="text-sm font-medium text-gray-700 select-none cursor-pointer w-40 text-left">Show Logo</label>
             </div>
-          </div>
 
-          <div class="flex flex-col gap-0 mt-2">
-            <div class="text-sm font-medium text-gray-700 select-none cursor-pointer text-left">Qr Code size</div>
-            <div class="flex flex-row items-start mt-2 space-x-4">
-              <!-- items-start (not items-center) so the radio
-                   stays aligned at the top of the label, even when
-                   the label text wraps to two lines like
-                   "Extra Large". -->
-              <label class="flex items-start cursor-pointer group">
-                <input type="radio" name="qr-code-size" value="small" class="h-4 w-4 mt-1 border-gray-300 text-indigo-600 focus:ring-indigo-600" />
-                <span class="ml-3 text-sm font-medium text-gray-700 group-hover:text-indigo-600 transition-colors">Small</span>
-              </label>
-              <label class="flex items-start cursor-pointer group">
-                <input type="radio" name="qr-code-size" value="medium" class="h-4 w-4 mt-1 border-gray-300 text-indigo-600 focus:ring-indigo-600" />
-                <span class="ml-3 text-sm font-medium text-gray-700 group-hover:text-indigo-600 transition-colors">Medium</span>
-              </label>
-              <label class="flex items-start cursor-pointer group">
-                <input type="radio" name="qr-code-size" value="large" checked class="h-4 w-4 mt-1 border-gray-300 text-indigo-600 focus:ring-indigo-600" />
-                <span class="ml-3 text-sm font-medium text-gray-700 group-hover:text-indigo-600 transition-colors">Large</span>
-              </label>
-              <label class="flex items-start cursor-pointer group">
-                <input type="radio" name="qr-code-size" value="xlarge" class="h-4 w-4 mt-1 border-gray-300 text-indigo-600 focus:ring-indigo-600" />
-                <span class="ml-3 text-sm font-medium text-gray-700 group-hover:text-indigo-600 transition-colors">X-Large</span>
-              </label>
+            <div class="checkbox-row">
+              <input id="checkClickReload" type="checkbox" checked class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 mr-2" />
+              <label for="checkClickReload" class="text-sm font-medium text-gray-700 select-none cursor-pointer w-40 text-left">Click QR code to reload</label>
+            </div>
+
+            <div class="checkbox-row">
+              <input id="checkHeader" type="checkbox" checked class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 mr-2" />
+              <label for="checkHeader" class="text-sm font-medium text-gray-700 select-none cursor-pointer w-40 text-left">Show header</label>
+            </div>
+
+            <div class="checkbox-row">
+              <input id="checkDownloadButton" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 mr-2" />
+              <label for="checkDownloadButton" class="text-sm font-medium text-gray-700 select-none cursor-pointer w-40 text-left">Show download button</label>
+            </div>
+
+            <!--
+              Off by default: Uppy renders everything the phone sends, so the
+              widget's own list would show the same files twice. Turn it on to
+              exercise the widget's preview list (and the control below it).
+            -->
+            <div class="checkbox-row">
+              <input id="checkFilePreviews" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 mr-2" />
+              <label for="checkFilePreviews" class="text-sm font-medium text-gray-700 select-none cursor-pointer w-40 text-left">Show file previews</label>
+            </div>
+
+            <div class="flex items-center mt-2">
+              <label for="headerText" class="text-sm font-medium text-gray-700 select-none cursor-pointer w-25 text-left">Header text</label>
+              <input id="headerText" type="text" value="Scan to upload" class="w-60 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-400" placeholder="Enter header text" />
+            </div>
+
+            <div class="flex flex-col gap-0 mt-2">
+              <div class="text-sm font-medium text-gray-700 select-none cursor-pointer text-left">File preview mode</div>
+              <div class="flex flex-row items-start mt-2 space-x-4">
+                <label class="flex items-center cursor-pointer group">
+                  <input type="radio" name="file-preview-mode" value="list" checked class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600" />
+                  <span class="ml-3 text-sm font-medium text-gray-700 group-hover:text-indigo-600 transition-colors">List</span>
+                </label>
+                <label class="flex items-center cursor-pointer group">
+                  <input type="radio" name="file-preview-mode" value="grid" class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600" />
+                  <span class="ml-3 text-sm font-medium text-gray-700 group-hover:text-indigo-600 transition-colors">Grid</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="flex flex-col gap-0 mt-2">
+              <div class="text-sm font-medium text-gray-700 select-none cursor-pointer text-left">Qr Code size</div>
+              <div class="flex flex-row items-start mt-2 space-x-4">
+                <!-- items-start (not items-center) so the radio
+                     stays aligned at the top of the label, even when
+                     the label text wraps to two lines like
+                     "Extra Large". -->
+                <label class="flex items-start cursor-pointer group">
+                  <input type="radio" name="qr-code-size" value="small" class="h-4 w-4 mt-1 border-gray-300 text-indigo-600 focus:ring-indigo-600" />
+                  <span class="ml-3 text-sm font-medium text-gray-700 group-hover:text-indigo-600 transition-colors">Small</span>
+                </label>
+                <label class="flex items-start cursor-pointer group">
+                  <input type="radio" name="qr-code-size" value="medium" class="h-4 w-4 mt-1 border-gray-300 text-indigo-600 focus:ring-indigo-600" />
+                  <span class="ml-3 text-sm font-medium text-gray-700 group-hover:text-indigo-600 transition-colors">Medium</span>
+                </label>
+                <label class="flex items-start cursor-pointer group">
+                  <input type="radio" name="qr-code-size" value="large" checked class="h-4 w-4 mt-1 border-gray-300 text-indigo-600 focus:ring-indigo-600" />
+                  <span class="ml-3 text-sm font-medium text-gray-700 group-hover:text-indigo-600 transition-colors">Large</span>
+                </label>
+                <label class="flex items-start cursor-pointer group">
+                  <input type="radio" name="qr-code-size" value="xlarge" class="h-4 w-4 mt-1 border-gray-300 text-indigo-600 focus:ring-indigo-600" />
+                  <span class="ml-3 text-sm font-medium text-gray-700 group-hover:text-indigo-600 transition-colors">X-Large</span>
+                </label>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="mb-6">
-        <div id="widget-container"></div>
-      </div>
+      <!--
+        One card, two panels: the QR code for uploads from a phone on the left,
+        the Uppy Dashboard for files from this device on the right.
+      -->
+      <section class="upload-box">
+        <div class="half">
+          <h2 class="half-title">From your phone</h2>
+          <div id="widget-container" class="scan-widget"></div>
+        </div>
+
+        <div class="half">
+          <h2 class="half-title">From this device</h2>
+          <div class="uppy-shell">
+            <div id="uppy-container" class="uppy-host"></div>
+            <!-- Decorative badge for the empty drop zone; hidden via the
+                 `has-files` class once a file arrives. -->
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="42"
+              height="42"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.25"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="drop-icon"
+              aria-hidden="true"
+            >
+              <path d="M12 3v12"></path>
+              <path d="m17 8-5-5-5 5"></path>
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <p class="demo-back-link">
+        <a href="https://app.scanupload.net/" class="text-blue-600 hover:text-blue-800 underline">Back to ScanUpload</a>
+      </p>
     </div>
-    <p class="demo-back-link">
-      <a href="https://app.scanupload.net/" class="text-blue-600 hover:text-blue-800 underline">Back to ScanUpload</a>
-    </p>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

@@ -1,6 +1,6 @@
 # Angular + Vite demo
 
-A minimal Vite + Angular app that integrates [`@scanupload/qr-code-generator-angular`](../../packages/angular).
+A minimal Vite + Angular app that integrates [`@scanupload/qr-code-generator-angular`](../../packages/angular) and [`@scanupload/qr-code-generator-uppy`](../../packages/uppy).
 
 ## Run
 
@@ -12,10 +12,58 @@ npm run build:angular
 npm run dev:angular
 ```
 
-`build:angular` builds the core dependency and the Angular package before
-starting this linked-workspace demo.
+`build:angular` builds the core dependency and the Angular package, including the
+stylesheet imported by this demo. Re-run it after changing either package.
 
 The app starts on https://localhost:5175 (HTTPS is required for the hub's `Origin` checks).
+
+## What the demo shows
+
+The settings panel drives the widget's `@Input`s. Beneath it sits one card
+holding the two ways into the same Uppy instance — side by side on wide screens,
+stacked on narrow ones:
+
+- **From your phone** — the ScanUpload QR code. The widget is bound to the
+  plugin's core, so it renders the QR code for the session Uppy is listening on
+  instead of opening a second one.
+- **From this device** — the Uppy Dashboard. Files dropped here upload exactly
+  like the ones that arrive from the phone.
+
+The drop zone mirrors the QR square's measured height, so the two panels sit on
+the same line. Once files are added it grows into the card's spare height and
+only then scrolls, so the list stays readable.
+
+Both halves feed one `Uppy` instance and one `@uppy/xhr-upload` plugin, so
+swapping the destination (Tus, S3) applies to both. By default files go to
+`/demo-upload`, a mock endpoint served by `vite.config.js` that counts the bytes
+and answers. Point `VITE_UPLOAD_ENDPOINT` at a real URL to upload elsewhere.
+
+`Show file previews` is off by default, because Uppy already renders everything
+the phone sends and the widget's own list would show the same files twice.
+Turning it on exercises the `File preview mode` and `Show download button`
+controls too.
+
+Uppy is created in `ngAfterViewInit`, which is the first point at which the
+`.uppy-host` element exists and the Dashboard has anywhere to mount. The host is
+reached by walking down from the component's own `ElementRef` rather than with a
+query, for the same reason the size of the two panels is read with
+`getBoundingClientRect()`: it holds whether the components are compiled ahead of
+time or in the browser.
+
+The widget is behind `@if (core(); as widgetCore)`, so it only renders once
+Uppy's ScanUpload plugin has produced a core. `core` is a signal and the boot
+step runs outside change detection, so the same step calls `detectChanges()`
+once to swap "Connecting…" for the widget immediately instead of waiting for the
+next unrelated tick.
+
+### Build configuration
+
+`main.ts` imports `@angular/compiler`, so the components are compiled in the
+browser, and `vite.config.js` passes `jit: true` to the Angular plugin to say so.
+That flag is required for production builds to work at all: without it the
+plugin's build optimizer inlines `ngJitMode: false` and marks every Angular
+bundle side-effect free, `@angular/compiler` is dropped, and the app dies at
+bootstrap with "JIT compiler unavailable".
 
 ## Configure
 
@@ -24,6 +72,9 @@ Copy `.env.example` to `.env` and fill in:
 ```env
 VITE_SESSION_URL=https://hub.scanupload.net/api/v2/front-end/session
 VITE_CLIENT_ID=your-tenant-id
+
+# Optional — defaults to the mock endpoint in `vite.config.js`.
+VITE_UPLOAD_ENDPOINT=https://your-api.example/uploads
 ```
 
 The browser calls `VITE_SESSION_URL` directly; no client-side proxy is involved.

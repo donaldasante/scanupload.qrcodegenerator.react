@@ -1,10 +1,14 @@
 /*
- * override.css — example overrides for @scanupload/qr-code-generator-vue
+ * override.css — example overrides for @scanupload/qr-code-generator-vanilla
  *
  * Import this file AFTER the package CSS so the cascade picks up these rules:
  *
- *   import "@scanupload/qr-code-generator-vue/dist/index.css";
+ *   import "@scanupload/qr-code-generator-vanilla/dist/index.css";
  *   import './override.css';
+ *
+ * The widget is created with `injectStyles: false` (see `src/main.ts`) so that
+ * order is the one that applies — otherwise the package's injected <style>
+ * lands in <head> after this file and wins every tie.
  *
  * Every class below matches a real .sqg-* class from dist/index.css.
  * Uncomment whichever sections you want to customise.

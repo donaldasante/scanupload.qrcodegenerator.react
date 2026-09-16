@@ -12,6 +12,11 @@ interface ImportMetaEnv {
      * and per-client rules.
      */
     readonly VITE_CLIENT_ID: string;
+    /**
+     * Optional. Where the demo's Uppy instance uploads files, from either half.
+     * Defaults to the mock endpoint defined in `vite.config.js`.
+     */
+    readonly VITE_UPLOAD_ENDPOINT?: string;
 }
 
 interface ImportMeta {
