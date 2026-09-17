@@ -319,6 +319,15 @@ Two things that only bite on Vercel:
   request bodies over roughly 4.5 MB, so phone photos above that size fail
   against `app/demo-upload/route.ts` with a 413. Point
   `NEXT_PUBLIC_UPLOAD_ENDPOINT` at a real backend to accept full-size uploads.
+- **Native binaries must be pinned per platform.** The lockfile is generated on
+  Windows, and npm only records the optional native binaries for the platform it
+  runs on — so `lightningcss` (pulled in by Vite and by `@tailwindcss/postcss`)
+  had no Linux binding to load and the build died in
+  `node_modules/lightningcss/node/index.js`. The root `optionalDependencies`
+  therefore pin the Darwin, Linux (glibc and musl) and Windows binaries, and npm
+  installs whichever one matches. Those pins are exact on purpose: a native
+  binding has to match the JS wrapper of the resolved `lightningcss`, so bump
+  them together with it.
 
 Deployments arrive the same way the packages do: the pipeline's **Mirror repo to
 GitHub** step pushes `HEAD` and tags to the GitHub mirror and Vercel builds from
