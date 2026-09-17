@@ -51,6 +51,16 @@ plugin's build optimizer inlines `ngJitMode: false` and marks every Angular
 bundle side-effect free, `@angular/compiler` is dropped, and the app dies at
 bootstrap with "JIT compiler unavailable".
 
+Because the JIT compiler evaluates generated component code, a deployed copy of
+this demo needs `'unsafe-eval'` in `script-src` — this is the only demo that
+does. `nginx.conf` supplies it, and its comment sits **outside** the policy
+string: a `#` inside a CSP value is parsed as a directive name, and everything up
+to the next `;` is discarded with it, which silently removes `script-src`
+entirely. When that happens the browser only reports that
+"'script-src-elem' was not explicitly set", and both the compiler and
+Cloudflare's beacon are blocked. See
+[CSP](../../README.md#csp) in the root README.
+
 ## Configure
 
 Copy `.env.example` to `.env` and fill in:

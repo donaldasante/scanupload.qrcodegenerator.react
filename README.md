@@ -253,6 +253,29 @@ asset. Multiple CSP headers are all enforced, and
 `Content-Security-Policy-Report-Only` logs a warning without blocking — so check
 whether an extension, CDN, or reverse proxy adds a second policy.
 
+If the host injects **Cloudflare Web Analytics**, it needs two allowances — the
+beacon script comes from one host and POSTs its measurements to another:
+
+```text
+script-src 'self' https://static.cloudflareinsights.com;
+connect-src 'self' https://cloudflareinsights.com;
+```
+
+Keep the policy itself comment-free. A `#` inside the quoted value is parsed as
+a _directive name_, and everything up to the next `;` is discarded along with
+it — so a comment placed above `script-src` deletes that directive silently and
+leaves the site on `default-src 'self'`. The browser then reports only that
+"'script-src-elem' was not explicitly set", which is how a browser JIT compiler
+and the Cloudflare beacon both end up blocked by a policy that appears to allow
+them.
+
+Finally, compilation strategy decides whether `'unsafe-eval'` is needed. The
+[Angular demo](examples/angular-demo#build-configuration) ships the browser JIT
+compiler, so its `script-src` is
+`'self' 'unsafe-eval' https://static.cloudflareinsights.com` — see
+`examples/angular-demo/nginx.conf`. React, Vue, Svelte and Vanilla do not
+compile templates in the browser and keep `script-src 'self'`.
+
 ### CORS, SignalR, and proxies
 
 - Serve the application over HTTPS. An HTTPS page can use `wss://`; an HTTP page

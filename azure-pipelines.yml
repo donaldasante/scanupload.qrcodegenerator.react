@@ -373,8 +373,10 @@ stages:
                   echo "FRAME_SRC=${FRAME_SRC:-https://app.scanupload.net https://hub.scanupload.net}"
                   # wss:// is required alongside https:// because CSP treats
                   # them as separate schemes. The browser opens a WebSocket
-                  # to wss://hub.scanupload.net for SignalR.
-                  echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://static.cloudflareinsights.com wss://hub.scanupload.net}"
+                  # to wss://hub.scanupload.net for SignalR. Cloudflare's
+                  # Web Analytics beacon loads from static.cloudflareinsights.com
+                  # and POSTs its measurements to cloudflareinsights.com.
+                  echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://cloudflareinsights.com https://static.cloudflareinsights.com wss://hub.scanupload.net}"
                   echo "VITE_CLIENT_ID=$(VITE_CLIENT_ID)"
                   echo "VITE_SESSION_URL=$(VITE_SESSION_URL)"
               } > "$outdir/.env"
@@ -397,8 +399,10 @@ stages:
                   echo "FRAME_SRC=${FRAME_SRC:-https://app.scanupload.net https://hub.scanupload.net}"
                   # wss:// is required alongside https:// because CSP treats
                   # them as separate schemes. The browser opens a WebSocket
-                  # to wss://hub.scanupload.net for SignalR.
-                  echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://static.cloudflareinsights.com wss://hub.scanupload.net}"
+                  # to wss://hub.scanupload.net for SignalR. Cloudflare's
+                  # Web Analytics beacon loads from static.cloudflareinsights.com
+                  # and POSTs its measurements to cloudflareinsights.com.
+                  echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://cloudflareinsights.com https://static.cloudflareinsights.com wss://hub.scanupload.net}"
                   echo "VITE_CLIENT_ID=$(VITE_CLIENT_ID)"
                   echo "VITE_SESSION_URL=$(VITE_SESSION_URL)"
               } > "$outdir/.env"
@@ -421,8 +425,10 @@ stages:
                   echo "FRAME_SRC=${FRAME_SRC:-https://app.scanupload.net https://hub.scanupload.net}"
                   # wss:// is required alongside https:// because CSP treats
                   # them as separate schemes. The browser opens a WebSocket
-                  # to wss://hub.scanupload.net for SignalR.
-                  echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://static.cloudflareinsights.com wss://hub.scanupload.net}"
+                  # to wss://hub.scanupload.net for SignalR. Cloudflare's
+                  # Web Analytics beacon loads from static.cloudflareinsights.com
+                  # and POSTs its measurements to cloudflareinsights.com.
+                  echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://cloudflareinsights.com https://static.cloudflareinsights.com wss://hub.scanupload.net}"
                   echo "VITE_CLIENT_ID=$(VITE_CLIENT_ID)"
                   echo "VITE_SESSION_URL=$(VITE_SESSION_URL)"
               } > "$outdir/.env"
@@ -445,8 +451,10 @@ stages:
                   echo "FRAME_SRC=${FRAME_SRC:-https://app.scanupload.net https://hub.scanupload.net}"
                   # wss:// is required alongside https:// because CSP treats
                   # them as separate schemes. The browser opens a WebSocket
-                  # to wss://hub.scanupload.net for SignalR.
-                  echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://static.cloudflareinsights.com wss://hub.scanupload.net}"
+                  # to wss://hub.scanupload.net for SignalR. Cloudflare's
+                  # Web Analytics beacon loads from static.cloudflareinsights.com
+                  # and POSTs its measurements to cloudflareinsights.com.
+                  echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://cloudflareinsights.com https://static.cloudflareinsights.com wss://hub.scanupload.net}"
                   echo "VITE_CLIENT_ID=$(VITE_CLIENT_ID)"
                   echo "VITE_SESSION_URL=$(VITE_SESSION_URL)"
               } > "$outdir/.env"
@@ -469,8 +477,10 @@ stages:
                   echo "FRAME_SRC=${FRAME_SRC:-https://app.scanupload.net https://hub.scanupload.net}"
                   # wss:// is required alongside https:// because CSP treats
                   # them as separate schemes. The browser opens a WebSocket
-                  # to wss://hub.scanupload.net for SignalR.
-                  echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://static.cloudflareinsights.com wss://hub.scanupload.net}"
+                  # to wss://hub.scanupload.net for SignalR. Cloudflare's
+                  # Web Analytics beacon loads from static.cloudflareinsights.com
+                  # and POSTs its measurements to cloudflareinsights.com.
+                  echo "CONNECT_SRC=${CONNECT_SRC:-https://hub.scanupload.net https://cloudflareinsights.com https://static.cloudflareinsights.com wss://hub.scanupload.net}"
                   echo "VITE_CLIENT_ID=$(VITE_CLIENT_ID)"
                   echo "VITE_SESSION_URL=$(VITE_SESSION_URL)"
               } > "$outdir/.env"
