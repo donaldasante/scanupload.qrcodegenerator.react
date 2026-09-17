@@ -4,9 +4,10 @@
 # Stage 2 deploys the demo images on the self-hosted "ScanUpload QA New" agent pool.
 
 trigger:
-  tags:
-    include:
-      - release.*
+    branches:
+        include:
+            - master
+            - main
 
 variables:
   - name: dockerRegistryServiceConnection
