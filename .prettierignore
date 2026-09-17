@@ -1,0 +1,7 @@
+# Azure DevOps parses this file with its own YAML engine, and Prettier's YAML
+# printer reflows long values onto continuation lines. That is what broke the
+# pipeline: the Docker `arguments` values became multi-line plain scalars that
+# begin with `--`, which Azure DevOps reads as a sequence entry and rejects with
+# "There was a YAML error preventing Azure Pipelines from determining if the
+# pipeline should run". Keep this file out of formatting runs and edit it by hand.
+azure-pipelines.yml
