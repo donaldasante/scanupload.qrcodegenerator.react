@@ -2,7 +2,7 @@
   "name": "@scanupload/nextjs-demo",
   "private": true,
   "version": "0.0.2",
-  "description": "Next.js demo app for the ScanUpload QR Code Generator React package. The browser calls the ScanUpload hub directly — no client-side proxy is involved.",
+  "description": "Next.js demo app for the ScanUpload QR Code Generator React package. The browser creates the session through the same-origin /hub-api rewrite in next.config.ts and SignalR connects to the hub directly.",
   "scripts": {
     "dev": "next dev --experimental-https --port 3000 --hostname 0.0.0.0",
     "build": "next build",

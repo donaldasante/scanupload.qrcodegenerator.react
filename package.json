@@ -15,7 +15,7 @@
     "build:angular": "npm run build:core && npm run build --workspace=packages/angular",
     "build:svelte": "npm run build:core && npm run build --workspace=packages/svelte",
     "build:uppy": "npm run build:core && npm run build --workspace=packages/uppy",
-    "build:nextjs": "npm run build:react && npm run build --workspace=examples/nextjs-demo",
+    "build:nextjs": "npm run build:react && npm run build:uppy && npm run build --workspace=examples/nextjs-demo",
     "dev:react": "npm run dev --workspace=examples/react-demo",
     "dev:nextjs": "npm run dev --workspace=examples/nextjs-demo",
     "dev:vanilla": "npm run dev --workspace=examples/vanilla-js",

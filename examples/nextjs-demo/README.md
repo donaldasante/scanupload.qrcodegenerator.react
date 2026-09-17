@@ -112,8 +112,26 @@ the API request and the SignalR negotiation separately in DevTools. Keep the
 rewrite when you want a same-origin session request; if a CDN or reverse proxy
 handles that route instead, preserve the browser `Origin` header.
 
-See [Deploying](../../README.md#deploying) in the root README for the full
-checklist, including CSP, CORS and proxy notes.
+### Vercel
+
+This demo is the one wired up to deploy to Vercel from the monorepo:
+
+- **Root Directory**: `examples/nextjs-demo`.
+- Install and build commands live in `vercel.json` and run from the workspace
+  root (`cd ../.. && npm install`, `cd ../.. && npm run build:nextjs`), because
+  the ScanUpload packages are consumed from their gitignored `dist/` folders and
+  must be built before `next build` can resolve them.
+- Set `NEXT_PUBLIC_SESSION_URL`, `NEXT_PUBLIC_CLIENT_ID` and, if you changed it,
+  `NEXT_PUBLIC_HUB_API_TARGET` in the Vercel project for **Production and
+  Preview**, then redeploy — `NEXT_PUBLIC_*` values are inlined at build time.
+- The mock upload route is a serverless function, so Vercel's ~4.5 MB body limit
+  applies; point `NEXT_PUBLIC_UPLOAD_ENDPOINT` at a real backend for larger
+  files.
+
+See [Deploying → Vercel](../../README.md#vercel) in the root README for the
+origins, CSP and preview-deployment checklist, and
+[Deploying](../../README.md#deploying) for the general origin, CORS and proxy
+notes.
 
 ## Files
 
@@ -123,3 +141,4 @@ checklist, including CSP, CORS and proxy notes.
   `ssr: false`)
 - `app/components/GeneralForm.tsx` — the demo widget + settings panel
 - `.env.example` — environment configuration
+- `vercel.json` — install/build commands that build the workspace packages first

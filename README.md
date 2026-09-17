@@ -30,19 +30,19 @@ npm install @scanupload/qr-code-generator-react
 ```
 
 ```tsx
-import { QrCodeGenerator } from "@scanupload/qr-code-generator-react";
-import "@scanupload/qr-code-generator-react/dist/index.css";
+import { QrCodeGenerator } from '@scanupload/qr-code-generator-react';
+import '@scanupload/qr-code-generator-react/dist/index.css';
 
 export function UploadWidget() {
-  return (
-    <QrCodeGenerator
-      sessionUrl="https://hub.scanupload.net/api/v2/front-end/session"
-      clientId="your-client-id"
-      header="Upload files from your phone"
-      showHeader
-      showDownloadButton
-    />
-  );
+    return (
+        <QrCodeGenerator
+            sessionUrl='https://hub.scanupload.net/api/v2/front-end/session'
+            clientId='your-client-id'
+            header='Upload files from your phone'
+            showHeader
+            showDownloadButton
+        />
+    );
 }
 ```
 
@@ -97,13 +97,11 @@ once, in the place you chose:
 const [received, setReceived] = useState<UploadedFile[]>([]);
 
 <QrCodeGenerator
-  sessionUrl={sessionUrl}
-  showFilePreviews={false}
-  onFileAvailable={(file) => setReceived((prev) => [...prev, file])}
-  onFileRemoved={(file) =>
-    setReceived((prev) => prev.filter((f) => f.id !== file.id))
-  }
-  onFilesCleared={() => setReceived([])}
+    sessionUrl={sessionUrl}
+    showFilePreviews={false}
+    onFileAvailable={(file) => setReceived((prev) => [...prev, file])}
+    onFileRemoved={(file) => setReceived((prev) => prev.filter((f) => f.id !== file.id))}
+    onFilesCleared={() => setReceived([])}
 />;
 ```
 
@@ -113,11 +111,11 @@ transient-404 retry, de-duplication, concurrency and removal mirroring, so your
 integration is only a "given a file, put it here" sink:
 
 ```ts
-import { connectScanUploadFiles } from "@scanupload/qr-code-generator-core";
+import { connectScanUploadFiles } from '@scanupload/qr-code-generator-core';
 
 const connection = connectScanUploadFiles({
-  core: plugin.getCore(),
-  sink: { add: (file) => myUploader.attach(file) },
+    core: plugin.getCore(),
+    sink: { add: (file) => myUploader.attach(file) }
 });
 ```
 
@@ -133,13 +131,11 @@ the only package that depends on Uppy — every other package here works with or
 without it.
 
 ```ts
-import Uppy from "@uppy/core";
-import XHRUpload from "@uppy/xhr-upload";
-import ScanUpload from "@scanupload/qr-code-generator-uppy";
+import Uppy from '@uppy/core';
+import XHRUpload from '@uppy/xhr-upload';
+import ScanUpload from '@scanupload/qr-code-generator-uppy';
 
-const uppy = new Uppy({ autoProceed: true })
-  .use(ScanUpload, { sessionUrl, clientId })
-  .use(XHRUpload, { endpoint: "/api/uploads" });
+const uppy = new Uppy({ autoProceed: true }).use(ScanUpload, { sessionUrl, clientId }).use(XHRUpload, { endpoint: '/api/uploads' });
 ```
 
 Each photo uploaded from the phone is downloaded by the browser and added to
@@ -148,7 +144,7 @@ render the QR code, bind a ScanUpload widget to the plugin's core so both share
 one session:
 
 ```tsx
-const plugin = uppy.getPlugin<ScanUploadPlugin>("ScanUpload");
+const plugin = uppy.getPlugin<ScanUploadPlugin>('ScanUpload');
 
 <QrCodeGenerator sessionUrl={sessionUrl} core={plugin?.getCore()} />;
 ```
@@ -163,8 +159,8 @@ theme every widget at once.
 
 ```css
 :root {
-  --sqg-primary: #6366f1;
-  --sqg-radius: 1rem;
+    --sqg-primary: #6366f1;
+    --sqg-radius: 1rem;
 }
 ```
 
@@ -280,6 +276,54 @@ In DevTools, check the Console for CSP and mixed-content errors, then check
 Network for the session request and the SignalR `negotiate` request. The
 response headers and the request's `Origin` value identify the policy or CORS
 layer that must be updated.
+
+### Vercel
+
+[`examples/nextjs-demo`](examples/nextjs-demo) is the demo that deploys, and it
+deploys from this monorepo rather than from a copy of its source.
+
+| Vercel setting   | Value                                                                        |
+| ---------------- | ---------------------------------------------------------------------------- |
+| Root Directory   | `examples/nextjs-demo`                                                       |
+| Framework Preset | Next.js                                                                      |
+| Install Command  | `cd ../.. && npm install` — from `examples/nextjs-demo/vercel.json`          |
+| Build Command    | `cd ../.. && npm run build:nextjs` — from `examples/nextjs-demo/vercel.json` |
+
+Both commands run from the workspace root on purpose. The demo consumes
+`@scanupload/qr-code-generator-core`, `-react` and `-uppy` from their `dist/`
+folders, and `dist` is gitignored, so a build that runs only `next build` cannot
+resolve them; `build:nextjs` builds those packages first. Keep _Include source
+files outside of the Root Directory in the Build Step_ enabled so the checkout
+contains `packages/`.
+
+`NEXT_PUBLIC_*` values are inlined when the app is built, so add these to the
+Vercel project for **Production and Preview**, then redeploy after changing any
+of them:
+
+| Variable                      | Value                                       |
+| ----------------------------- | ------------------------------------------- |
+| `NEXT_PUBLIC_SESSION_URL`     | `/hub-api/api/v2/front-end/session`         |
+| `NEXT_PUBLIC_CLIENT_ID`       | your client ID from the dashboard           |
+| `NEXT_PUBLIC_HUB_API_TARGET`  | `https://hub.scanupload.net` (the default)  |
+| `NEXT_PUBLIC_UPLOAD_ENDPOINT` | optional; defaults to the demo's mock route |
+
+Two things that only bite on Vercel:
+
+- **Every deployment and branch alias is its own origin.** Production is served
+  from your domain, previews from `<project>-<hash>-<team>.vercel.app` plus a
+  per-branch alias, and the hub's allowed-origin check treats each as a separate
+  origin. Register the production origin (see
+  [Allowed origins](#allowed-origins)) and either register preview origins too
+  or leave **Test Mode** on while previewing.
+- **The built-in upload endpoint is a serverless function.** Vercel rejects
+  request bodies over roughly 4.5 MB, so phone photos above that size fail
+  against `app/demo-upload/route.ts` with a 413. Point
+  `NEXT_PUBLIC_UPLOAD_ENDPOINT` at a real backend to accept full-size uploads.
+
+Deployments arrive the same way the packages do: the pipeline's **Mirror repo to
+GitHub** step pushes `HEAD` and tags to the GitHub mirror and Vercel builds from
+that repository. The mirror currently runs on `release.*` tag pushes only, so a
+connected project deploys on releases rather than on every commit.
 
 ## Development
 

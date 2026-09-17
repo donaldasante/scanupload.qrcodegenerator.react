@@ -18,6 +18,9 @@ dist-ssr
 # Written by the publish step with the npm token in it - never commit.
 .npmrc
 
+# Local Vercel CLI project link (`vercel link` writes .vercel/project.json).
+.vercel
+
 # Screenshots and traces written by the Playwright browser tools.
 .playwright-mcp
 
